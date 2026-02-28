@@ -1,0 +1,100 @@
+# =============================================================================
+# Project specific
+# =============================================================================
+tmp/
+out/
+.root/
+
+
+# =============================================================================
+# LaTeX build artifacts
+# =============================================================================
+*.aux
+*.bbl
+*.blg
+*.brf
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.maf
+*.mtc*
+*.xdv
+*.acn
+*.acr
+*.alg
+*.glg
+*.glsdefs
+*.run.xml
+*.bcf
+*.thm
+*.tdo
+*.pygtex
+*.pygstyle
+*.listing
+*tcbtemp
+
+# PDFs and other generated documents
+*.pdf
+*.ps
+*.dvi
+
+# minted package output
+_minted-*
+*.minted
+
+# latexmk
+latexmkrc
+
+# Build folders
+build/
+_build/
+output/
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json
+
+# Editor/project files
+.idea/
+*.swp
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+svg-inkscape/
+cheatsheet/svg-inkscape/
+
+# Thumbnails
+._*
+
+
+# =============================================================================
+# OS Generated Files
+# =============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+.DocumentRevisions-V100
+.fseventsd

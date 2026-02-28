@@ -1,0 +1,12 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/vsc-latex:latest
+    stdin_open: true
+    tty: true    
+    volumes:
+      - ..:/workspace:cached
+      - ../.root/.claude:/root/.claude:cached
+      - ../.root/.gemini:/root/.gemini:cached

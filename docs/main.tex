@@ -1,0 +1,211 @@
+\documentclass[10pt,landscape]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.4in]{geometry}
+\usepackage{multicol}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+\lstset{
+    backgroundcolor=\color{gray!10},
+    basicstyle=\ttfamily\tiny,
+    breaklines=true,
+    frame=single,
+    showstringspaces=false
+}
+
+\newcommand{\sectionheader}[1]{%
+    \vspace{2pt}\noindent\colorbox{blue!15}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
+    \textbf{#1}}}\vspace{2pt}%
+}
+
+\begin{document}
+\begin{multicols*}{3}
+
+% --- PAGE 1: SETUP & ESSENTIALS ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 1}\\\textit{The Command Center}\end{center}
+
+\sectionheader{1. Setup \& Aliases}
+\begin{lstlisting}
+alias k='kubectl'
+alias kgp='k get pods'
+alias kgs='k get svc'
+export do="--dry-run=client -o yaml"
+export now="--force --grace-period=0"
+# Vim: :set ts=2 sw=2 et
+\end{lstlisting}
+
+\sectionheader{2. Cluster Architecture}
+% [CLI: Insert TikZ for Control Plane: API, etcd, Sched, CM]
+\begin{lstlisting}
+# Static Pod Path: /etc/kubernetes/manifests
+# Kubelet Config: /var/lib/kubelet/config.yaml
+\end{lstlisting}
+
+\sectionheader{3. Imperative Commands}
+\begin{lstlisting}
+k run nginx --image=nginx $do
+k create deploy web --image=nginx --replicas=3 $do
+k expose deploy web --port=80 --type=NodePort
+\end{lstlisting}
+
+\columnbreak
+
+% --- PAGE 2: WORKLOADS & SCHEDULING ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 2}\\\textit{Workloads \& Scheduling}\end{center}
+
+\sectionheader{1. Deployments \& Rollouts}
+\begin{lstlisting}
+k rollout status deploy/web
+k rollout history deploy/web
+k rollout undo deploy/web --to-revision=2
+\end{lstlisting}
+
+\sectionheader{2. Scheduling Logic}
+\begin{lstlisting}
+# NodeSelector (Labels)
+nodeSelector:
+  disktype: ssd
+
+# Taints (Node) & Tolerations (Pod)
+k taint nodes node1 key=value:NoSchedule
+\end{lstlisting}
+
+\sectionheader{3. Resource Management}
+\begin{lstlisting}
+resources:
+  requests: # Scheduling floor
+    memory: "64Mi"
+    cpu: "250m"
+  limits:   # Usage ceiling
+    memory: "128Mi"
+\end{lstlisting}
+
+\columnbreak
+
+% --- PAGE 3: SERVICES & NETWORKING ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 3}\\\textit{Services \& Networking}\end{center}
+
+\sectionheader{1. Service Types}
+\begin{itemize}
+    \item \textbf{ClusterIP}: Internal (Default)
+    \item \textbf{NodePort}: Static port on each node (30000-32767)
+    \item \textbf{LoadBalancer}: Cloud-provider external IP
+\end{itemize}
+
+\sectionheader{2. Ingress Rules}
+% [CLI: Insert TikZ for Ingress: Path /blue -> svc-blue]
+\begin{lstlisting}
+spec:
+  rules:
+  - host: myapp.com
+    http:
+      paths:
+      - path: /blue
+        pathType: Prefix
+        backend:
+          service:
+            name: blue-svc
+            port: {number: 80}
+\end{lstlisting}
+
+\sectionheader{3. Network Policies}
+\begin{lstlisting}
+# Isolation is key. No rule = Deny all.
+podSelector: {matchLabels: {app: db}}
+ingress:
+- from:
+  - podSelector: {matchLabels: {app: web}}
+\end{lstlisting}
+
+\newpage
+% --- PAGE 4: SECURITY ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 4}\\\textit{Security \& RBAC}\end{center}
+
+\sectionheader{1. RBAC Workflow}
+\begin{lstlisting}
+# 1. Create Role (Permissions)
+k create role pod-reader --verb=get,list --resource=pods
+# 2. Create RoleBinding (Link to user/SA)
+k create rolebinding read-pods --role=pod-reader --serviceaccount=default:user-sa
+\end{lstlisting}
+
+\sectionheader{2. Service Accounts}
+\begin{lstlisting}
+k create sa developer-sa
+# Assign to Pod:
+spec:
+  serviceAccountName: developer-sa
+\end{lstlisting}
+
+\sectionheader{3. Security Context}
+\begin{lstlisting}
+securityContext:
+  runAsUser: 1000
+  capabilities:
+    add: ["NET_ADMIN", "SYS_TIME"]
+\end{lstlisting}
+
+\columnbreak
+
+% --- PAGE 5: STORAGE ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 5}\\\textit{Storage \& Volumes}\end{center}
+
+\sectionheader{1. The Storage Handshake}
+% [CLI: Insert TikZ for PV -> PVC -> Pod Mount]
+\begin{lstlisting}
+# PV (Cluster-wide)
+accessModes: [ReadWriteOnce]
+hostPath: {path: "/data"}
+
+# PVC (Namespace-scoped)
+resources:
+  requests: {storage: 1Gi}
+\end{lstlisting}
+
+\sectionheader{2. Volume Mounts}
+\begin{lstlisting}
+spec:
+  containers:
+  - volumeMounts:
+    - mountPath: "/var/www/html"
+      name: my-volume
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: my-pvc
+\end{lstlisting}
+
+\columnbreak
+
+% --- PAGE 6: TROUBLESHOOTING ---
+\begin{center}\textbf{\Large CKA CHEATSHEET: PAGE 6}\\\textit{Maintenance \& Troubleshooting}\end{center}
+
+\sectionheader{1. Etcd Backup}
+\begin{lstlisting}
+export ETCDCTL_API=3
+etcdctl --endpoints=... --cacert=... --cert=... --key=... snapshot save /opt/backup.db
+\end{lstlisting}
+
+\sectionheader{2. Cluster Upgrade}
+\begin{lstlisting}
+1. k drain node-1 --ignore-daemonsets
+2. apt upgrade kubeadm
+3. kubeadm upgrade apply v1.x.y
+4. apt upgrade kubelet kubectl
+5. k uncordon node-1
+\end{lstlisting}
+
+\sectionheader{3. Node Debugging}
+\begin{lstlisting}
+# 1. Status
+systemctl status kubelet
+# 2. Logs
+journalctl -u kubelet -f
+# 3. Desc
+k describe node <name>
+\end{lstlisting}
+
+\end{multicols*}
+\end{document}

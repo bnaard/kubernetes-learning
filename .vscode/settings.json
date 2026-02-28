@@ -1,0 +1,49 @@
+{
+    "latex-workshop.latex.outDir": "./out/",
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "latexmk_lualatex",
+            "tools": [
+                "latexmk_lualatex",
+                // "biber",
+            ]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk_lualatex",
+            "command": "latexmk",
+            "args": [
+                "--shell-escape", // added arg to default
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdflatex=lualatex",
+                "-pdf",
+                "-aux-directory=%OUTDIR%",
+                "-output-directory=%OUTDIR%",
+                "-bibtex",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "biber",
+            "command": "biber",
+            "args": [
+                "--input-directory=out",
+                "--output-directory=out",
+                "%DOCFILE%"
+            ]
+        }
+    ],
+    "latex-workshop.formatting.latex": "latexindent",
+    "latex-workshop.formatting.latexindent.args": [
+        "-c",
+        "%DIR%/",
+        "%TMPFILE%",
+        "-y=defaultIndent: '%INDENT%'",
+        "-l ../config/textwrap.yaml",
+        "-m"
+    ],
+    // "editor.formatOnSave": true,
+}
