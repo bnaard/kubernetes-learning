@@ -1,0 +1,80 @@
+% === Jobs =================================================================
+\tcbsubtitle{Jobs}
+\begin{cheatcode}
+k create job <name> --image=busybox \
+  -- echo hello $do > job.yaml
+# Job spec:
+spec:
+  completions: 3        # total successful completions
+  parallelism: 2        # concurrent pods
+  backoffLimit: 4       # retries before fail
+  ttlSecondsAfterFinished: 60
+  template:
+    spec:
+      restartPolicy: Never  # or OnFailure
+      containers:
+      - name: job
+        image: busybox
+        command: [echo, done]
+k get jobs
+k logs job/<name>
+\end{cheatcode}
+
+% === CronJobs =============================================================
+\tcbsubtitle{CronJobs}
+\begin{cheatcode}
+k create cj <name> --image=busybox \
+  --schedule="*/5 * * * *" -- echo hi
+# Cron format: min hour dom month dow
+# */5 * * * *  = every 5 min
+# 0 2 * * *    = daily at 2am
+# 0 * * * 1-5  = hourly Mon-Fri
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Allow|Forbid|Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  startingDeadlineSeconds: 60
+  jobTemplate:
+    spec: ...          # same as Job spec
+k get cj
+k create job manual-run --from=cronjob/<name>
+\end{cheatcode}
+
+% === DaemonSets ===========================================================
+\tcbsubtitle{DaemonSets}
+\begin{cheatcode}
+# Runs exactly 1 pod per (eligible) node
+# Use: log collectors, monitoring, CNI
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: fluentd, namespace: kube-system}
+spec:
+  selector: {matchLabels: {app: fluentd}}
+  updateStrategy:
+    type: RollingUpdate    # or OnDelete
+  template:
+    metadata: {labels: {app: fluentd}}
+    spec:
+      tolerations:
+      - operator: Exists   # schedule on all nodes
+      containers:
+      - name: fluentd
+        image: fluentd
+k get ds -A
+k rollout restart ds/<name>
+\end{cheatcode}
+
+% === Namespaces ===========================================================
+\tcbsubtitle{Namespaces}
+\begin{cheatcode}
+k create ns <name>
+k get all -n <name>
+k config set-context --current --namespace=<ns>
+# Cross-namespace DNS:
+# <svc>.<ns>.svc.cluster.local
+# Delete namespace + all resources:
+k delete ns <name>
+# List cluster-scoped resources:
+k api-resources --namespaced=false
+\end{cheatcode}

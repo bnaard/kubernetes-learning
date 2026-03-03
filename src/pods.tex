@@ -1,0 +1,88 @@
+% === Pod Creation ==========================================================
+\tcbsubtitle{Pod (Imperative)}
+\begin{cheatcode}
+k run <name> --image=<img> --restart=Never
+k run busybox --image=busybox -- sleep 3600
+k run tmp --image=busybox --rm -it \
+  --restart=Never -- sh          # temp shell
+k run <name> --image=<img> --port=80 \
+  --env="KEY=val" -l "app=web"
+\end{cheatcode}
+
+% === Pod Spec Key Fields ===================================================
+\tcbsubtitle{Pod Spec Essentials}
+\begin{cheatcode}
+spec:
+  restartPolicy: Always|Never|OnFailure
+  serviceAccountName: <sa>
+  hostNetwork: true              # use node network
+  initContainers:
+  - name: init
+    image: busybox
+    command: ['sh','-c','echo init']
+  containers:
+  - name: app
+    image: nginx:1.21
+    ports: [{containerPort: 80}]
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3; done"]
+    env:
+    - name: MY_VAR
+      value: "literal"
+    - name: FROM_CM
+      valueFrom:
+        configMapKeyRef: {name: cm, key: k}
+    - name: FROM_SECRET
+      valueFrom:
+        secretKeyRef: {name: sec, key: k}
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits:   {cpu: 500m, memory: 256Mi}
+    volumeMounts:
+    - {name: vol, mountPath: /data}
+  volumes:
+  - name: vol
+    persistentVolumeClaim:
+      claimName: my-pvc
+\end{cheatcode}
+
+% === Deployments ===========================================================
+\tcbsubtitle{Deployments}
+\begin{cheatcode}
+k create deploy <name> --image=<img> \
+  --replicas=3
+k scale deploy <name> --replicas=5
+k set image deploy/<name> <c>=<img>:tag
+k rollout status  deploy/<name>
+k rollout history deploy/<name>
+k rollout undo    deploy/<name>
+k rollout undo    deploy/<name> --to-revision=2
+k rollout pause   deploy/<name>
+k rollout resume  deploy/<name>
+\end{cheatcode}
+
+Deployment YAML key fields:
+\begin{cheatcode}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: web}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # extra pods during update
+      maxUnavailable: 0    # min available during update
+  template:
+    metadata: {labels: {app: web}}
+    spec: ...              # same as pod spec
+\end{cheatcode}
+
+% === Labels & Selectors ===================================================
+\tcbsubtitle{Labels \& Selectors}
+\begin{cheatcode}
+k label pod <name> env=prod
+k label pod <name> env-           # remove label
+k get pods -l app=web,env=prod
+k get pods -l 'tier in (fe,be)'
+k get pods --show-labels
+k annotate pod <name> note="txt"
+\end{cheatcode}

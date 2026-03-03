@@ -1,0 +1,76 @@
+% === Helm =================================================================
+\tcbsubtitle{Helm}
+\begin{cheatcode}
+helm repo add <name> <url>
+helm repo update
+helm search repo <keyword>
+helm install <release> <chart> \
+  -n <ns> --create-namespace \
+  -f values.yaml --set key=val
+helm upgrade <release> <chart> -f vals.yaml
+helm rollback <release> [revision]
+helm uninstall <release> -n <ns>
+helm list [-A]
+helm status <release>
+helm get values <release>
+helm template <release> <chart>  # dry-run
+helm show values <chart>         # inspect defaults
+\end{cheatcode}
+
+% === Kustomize ============================================================
+\tcbsubtitle{Kustomize}
+\begin{cheatcode}
+# kustomization.yaml:
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+namespace: my-ns
+images:
+- name: nginx
+  newTag: 1.25
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 3
+  target: {kind: Deployment, name: web}
+# Apply:
+kubectl apply -k <dir>
+kubectl kustomize <dir>        # preview only
+\end{cheatcode}
+
+% === CRDs & Operators =====================================================
+\tcbsubtitle{CRDs \& Operators}
+\begin{cheatcode}
+k get crd
+k describe crd <name>
+k get <custom-resource-kind>
+# Operators extend K8s with custom controllers
+# Install via Helm or OLM:
+k get operators                 # if OLM installed
+\end{cheatcode}
+
+% === Extension Interfaces =================================================
+\tcbsubtitle{Extension Interfaces}
+{\small\sffamily
+\begin{tblr}{
+  colspec={lXX},
+  hline{2}={0.4pt},
+  rows={rowsep=0.5pt},
+  row{1}={font=\bfseries},
+}
+IF & Purpose & Examples \\
+CNI & Pod networking & Calico, Flannel, Cilium \\
+CSI & Storage provisioning & EBS, NFS, Rook \\
+CRI & Container runtime & containerd, CRI-O \\
+\end{tblr}}
+\begin{cheatcode}
+# CNI config:  /etc/cni/net.d/
+# Check runtime:
+k get node -o wide          # CONTAINER-RUNTIME col
+crictl ps                   # list containers (node)
+crictl logs <id>
+crictl inspect <id>
+\end{cheatcode}

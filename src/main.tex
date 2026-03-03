@@ -17,8 +17,6 @@
 
 % ----------------------------------------------------------------------------------------------------------------------
 
-%I have placed a screenshot of a handdrawn basic K8s cluster architecture into the main directory.
-
 \documentclass[8pt]{extarticle}
 
 
@@ -31,9 +29,6 @@
 \usepackage[T1]{fontenc}
 
 % Load system fonts via fontspec (requires XeLaTeX or LuaLaTeX)
-% to get a list of installed fonts: luaotfload-tool --list=format 
-% show all fonts: luafindfont -n "*"
-% show font details: luaotfload-tool --find="FiraMono" -i
 \usepackage{fontspec}
 \setmainfont{FreeSans}[Scale=0.95]
 \setsansfont{FreeSans}[Scale=0.95]
@@ -42,12 +37,12 @@
   Scale=0.80
 ]
 
-% Unicode math — supports sizes below 5pt and matches the sans text style better
+% Unicode math
 \usepackage{unicode-math}
 \setmathfont{Latin Modern Math}
 
 % font for the header
-\newfontfamily\headerfont{QTHelvet-Black} 
+\newfontfamily\headerfont{QTHelvet-Black}
 
 % Emoji support
 \usepackage{emoji}
@@ -55,13 +50,12 @@
 
 % --- Page layout --------------------------------------------------------------
 \usepackage[
-    % showframe, 
-    nomarginpar, 
+    nomarginpar,
     a4paper,
-    landscape, 
-    right=0.25cm, 
-    left=0.25cm, 
-    top=1cm, 
+    landscape,
+    right=0.25cm,
+    left=0.25cm,
+    top=1cm,
     bottom=0.65cm,
     headsep=0.1cm,
     headheight=0.75cm,
@@ -89,7 +83,7 @@
 
 \usepackage{graphicx}
 \usepackage{svg}
-\graphicspath{{./figures/}{./icons/}{./logos/}{./assets/}}   
+\graphicspath{{src/figures/}{src/icons/}{src/logos/}{src/assets/}{./figures/}{./icons/}{./logos/}{./assets/}}
 
 \usepackage{bytefield}
 
@@ -107,8 +101,6 @@
   colorlinks=true,
   linktocpage=false,
   hyperindex=true,
-  colorlinks=true,
-  linktocpage=false,
   linkbordercolor=white]{hyperref}
 
 % --- Math Environments --------------------------------------------------------
@@ -117,26 +109,23 @@
 \NiceMatrixOptions{cell-space-limits = 1pt}
 \usepackage[detect-all, locale=US, group-separator={\,}]{siunitx}
 
-% --- Bibliography -------------------------------------------------------------
-\usepackage[autostyle=true]{csquotes} % recommended before biblatex
-\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
-\addbibresource{../bibliography/references.bib}
-
-\renewcommand{\bibfont}{\normalfont\footnotesize}
+% --- Bibliography (disabled — cheatsheet has no citations) --------------------
+% \usepackage[autostyle=true]{csquotes}
+% \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+% \addbibresource{../bibliography/references.bib}
 
 % --- Helpers -----------------------------------------------------------------
 \usepackage{lipsum}
 \usepackage{enumitem}
 
+% --- Input path (needed because tcbposter writes content to out/main.tcbtemp) -
+\makeatletter
+\def\input@path{{src/}{./}}
+\makeatother
+
 
 % --- Default options ---------------------------------------------------------
 \pagestyle{fancy}
-% \pagestyle{empty}
-% \setlength\parindent{0pt}
-% \setlength{\tabcolsep}{2pt}
-% \baselineskip=0pt
-% \setlength\columnsep{1.75mm}
-% \setlength{\parskip}{0.1\baselineskip}
 
 
 \definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
@@ -150,9 +139,9 @@
 
 % --- TColorbox Skins ----------------------------------------------------------
 
-% Skin for orange-based cheat section boxes
+% Skin for cheat section boxes
 \tcbsubskin{cheatboxskin}{standard}{
-    size=title, 
+    size=title,
     left=0.2em,
     right=0.2em,
     bottom=0.2em,
@@ -166,14 +155,13 @@
     bottomtitle=0mm,
     fontupper=\sffamily\small,
     fontlower=\sffamily\small,
-    % halign=left,
     subtitle style={top=0.4mm, bottom=0mm, boxrule=0.2pt, boxsep=0.1mm,
         colback=\primarycolor!20!white,
         colupper=\primarycolor!50!black,
         fontupper=\sffamily\bfseries\small,
         coltext=\primarycolor!10!black,
         height=1.1\baselineskip,
-      }, 
+      },
 }
 
 
@@ -189,13 +177,39 @@
     frame empty,
 }
 
+% --- Code listing environment -------------------------------------------------
+\newtcblisting{cheatcode}{%
+  listing only,%
+  listing engine=listings,%
+  listing options={%
+    basicstyle=\ttfamily\fontsize{6.5}{7.5}\selectfont,%
+    breaklines=true,%
+    breakatwhitespace=false,%
+    showstringspaces=false,%
+    columns=fullflexible,%
+    keepspaces=true,%
+    xleftmargin=0pt,%
+    xrightmargin=0pt,%
+    aboveskip=0pt,%
+    belowskip=0pt,%
+  },%
+  colback=k8sblue!5!white,%
+  colframe=k8sblue!22!white,%
+  boxrule=0.3pt,%
+  left=2pt, right=2pt, top=1.5pt, bottom=1.5pt,%
+  arc=1.5pt,%
+  before skip=1.5pt,%
+  after skip=1.5pt,%
+  size=minimal,%
+}
+
 
 % ----------------------------------------------------------------------------------------------------------------------
 % Header and Footer Settings
 % ----------------------------------------------------------------------------------------------------------------------
 
 \fancyhead[L]{
-    \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} CKA CheatSheet}
+    \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} CheatSheet}
 }
 \fancyhead[C]{}
 \fancyhead[R]{}
@@ -211,33 +225,117 @@
 
 \begin{document}
 
-% === Page 1 =================================================================
+% === Page 1: Cluster Architecture, Setup & Cheats, Pods & Deployments ====
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
-    % === Cluster Architecture ================================================================
-    \begin{posterboxenv}[skin=cheatboxskin,title=Cluster Architecture]
-        {name=clusterarchitecture,column=1,below=top, span=4}
+    % === Cluster Architecture ===================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Cluster Architecture]
+        {name=clusterarchitecture, column=1, below=top, span=5}
         \input{cluster_architecture.tex}
     \end{posterboxenv}
 
+    % === Setup & Cheats =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Setup \& Cheats}]
+        {name=cheats, column=6, below=top, span=3}
+        \input{cheats.tex}
+    \end{posterboxenv}
 
+    % === Pods & Deployments ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Pods \& Deployments}]
+        {name=pods, column=9, below=top, span=4}
+        \input{pods.tex}
+    \end{posterboxenv}
 
 \end{tcbposter}
 
 \pagebreak
 
-% === Page 2 =================================================================
+% === Page 2: Scheduling, Jobs/DaemonSets, ConfigMaps & Secrets ============
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
+    % === Scheduling ============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Scheduling]
+        {name=scheduling, column=1, below=top, span=4}
+        \input{scheduling.tex}
+    \end{posterboxenv}
 
+    % === Jobs, DaemonSets & Namespaces =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs, DaemonSets \& Namespaces}]
+        {name=jobsdaemonsets, column=5, below=top, span=4}
+        \input{jobs_daemonsets.tex}
+    \end{posterboxenv}
+
+    % === ConfigMaps & Secrets ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
+        {name=configmaps, column=9, below=top, span=4}
+        \input{configmaps_secrets.tex}
+    \end{posterboxenv}
+
+\end{tcbposter}
+
+\pagebreak
+
+% === Page 3: Services & Networking, Storage, Autoscaling & Probes =========
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Services & Networking =================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Services \& Networking}]
+        {name=networking, column=1, below=top, span=5}
+        \input{services_networking.tex}
+    \end{posterboxenv}
+
+    % === Storage ===============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
+        {name=storage, column=6, below=top, span=4}
+        \input{storage.tex}
+    \end{posterboxenv}
+
+    % === Autoscaling & Probes ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling \& Probes}]
+        {name=autoscaling, column=10, below=top, span=3}
+        \input{autoscaling.tex}
+    \end{posterboxenv}
+
+\end{tcbposter}
+
+\pagebreak
+
+% === Page 4: RBAC & Security, Troubleshooting, Helm/Kustomize =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === RBAC & Security =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC \& Security}]
+        {name=security, column=1, below=top, span=4}
+        \input{security.tex}
+    \end{posterboxenv}
+
+    % === Troubleshooting =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Troubleshooting]
+        {name=troubleshooting, column=5, below=top, span=5}
+        \input{troubleshooting.tex}
+    \end{posterboxenv}
+
+    % === Helm, Kustomize & Extensions ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
+        {name=helm, column=10, below=top, span=3}
+        \input{helm_kustomize.tex}
+    \end{posterboxenv}
 
 \end{tcbposter}
 

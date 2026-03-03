@@ -1,83 +1,137 @@
-Networking	Services, Ingress vs Gateway API, DNS, and Network Policies.
+% === Service Types =========================================================
+\tcbsubtitle{Service Types}
+{\small\sffamily
+\begin{tblr}{
+  colspec={lX},
+  hline{2}={0.4pt},
+  rows={rowsep=0.5pt},
+  row{1}={font=\bfseries},
+}
+Type & Description \\
+ClusterIP & Internal only (default) \\
+NodePort & Via \texttt{NodeIP:Port} (30000--32767) \\
+LoadBalancer & Cloud LB, external IP \\
+ExternalName & DNS CNAME alias to external host \\
+\end{tblr}}
+\begin{cheatcode}
+k expose deploy <name> --port=80 \
+  --target-port=8080 --type=ClusterIP
+k expose deploy <name> --port=80 \
+  --type=NodePort --node-port=30080
+k get svc
+k get endpoints <svc>    # empty = label mismatch!
+\end{cheatcode}
 
-The Three Main Service Types
-Type	Use Case	Reachability
-ClusterIP	Internal communication (default).	Only inside the cluster.
-NodePort	Exposing a service on a static port on each Node's IP.	Outside the cluster (via NodeIP:Port).
-LoadBalancer	Using a cloud provider's external load balancer.	Outside the cluster (via Public IP).
-Quick Networking Commands
-
-    Expose a deployment: kubectl expose deployment nginx --port=80 --target-port=80 --type=ClusterIP
-
-    Check endpoints: kubectl get endpoints (This shows you which Pod IPs are currently "behind" your service).
-
-Network Policies 🛡️
-the moment you apply a NetworkPolicy to a Pod, that Pod becomes "isolated."
-
-By default, Kubernetes uses an "Allow All" posture. However, as soon as a selector matches a Pod in a NetworkPolicy, that Pod switches to a "Default Deny" posture for the types of traffic (Ingress or Egress) defined in the policy.
-
-🛠️ Key NetworkPolicy Commands
-
-Since you can't create these easily with kubectl create, you'll usually copy a template from the official docs during the exam.
-
-    Check existing policies: kubectl get netpol
-
-    Describe a policy: kubectl describe netpol <name> (This is vital to see which Pods are actually being targeted by the selector).
-
-
-
-🌐 Advanced Networking: Ingress
-
-While we talked about Services (ClusterIP/NodePort), Ingress is how you manage external access to those services, typically via HTTP/HTTPS. It acts as a smart router.
-
-An Ingress resource needs two things to work:
-
-    An Ingress Controller (the software, like NGINX, that does the work).
-
-    An Ingress Resource (the "rules" you write).
-
-
-Imagine you have two services: blue-service and green-service. You want traffic going to myapp.com/blue to hit the blue service, and myapp.com/green to hit the green service.
-
-In the Ingress YAML, what is the name of the field where you define these URL patterns (like /blue or /green)?
-
-It’s part of a hierarchy that looks like this: rules -> http -> paths -> path.
-
-When you define a path, you also have to specify a pathType. For the CKA, you'll mostly use Prefix (matches based on a URL prefix) or Exact.
-
-Here is a quick look at how that structure comes together for your "Blue/Green" scenario:
-YAML
-
+Service YAML:
+\begin{cheatcode}
+apiVersion: v1
+kind: Service
 spec:
+  type: NodePort
+  selector: {app: web}         # matches pod labels
+  ports:
+  - port: 80                   # cluster (virtual) port
+    targetPort: 8080           # pod's containerPort
+    nodePort: 30080            # node port (optional)
+\end{cheatcode}
+
+% === DNS ==================================================================
+\tcbsubtitle{DNS (CoreDNS)}
+\begin{cheatcode}
+# Service DNS:
+<svc>.<ns>.svc.cluster.local
+# Pod DNS:
+<ip-dashes>.<ns>.pod.cluster.local
+# Test DNS:
+k run tmp --image=busybox --rm -it \
+  --restart=Never -- nslookup <svc>.<ns>
+k run tmp --image=busybox --rm -it \
+  --restart=Never -- wget -qO- http://<svc>
+# CoreDNS config:
+k get cm coredns -n kube-system -o yaml
+\end{cheatcode}
+
+% === Network Policies =====================================================
+\tcbsubtitle{Network Policies}
+\begin{cheatcode}
+# Default: all traffic allowed
+# Once a NetworkPolicy selects a pod:
+#   only explicitly allowed traffic passes
+k get netpol -A
+k describe netpol <name>
+
+# Deny all ingress + egress to a pod:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: deny-all, namespace: <ns>}
+spec:
+  podSelector: {}          # matches all pods in ns
+  policyTypes: [Ingress, Egress]
+---
+# Allow ingress only from specific pods:
+spec:
+  podSelector: {matchLabels: {app: db}}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector:          # AND condition within {}
+        matchLabels: {app: web}
+    - namespaceSelector:    # OR: separate list item
+        matchLabels: {env: prod}
+    ports:
+    - {protocol: TCP, port: 5432}
+# Allow egress to DNS only:
+  egress:
+  - ports:
+    - {port: 53, protocol: UDP}
+    - {port: 53, protocol: TCP}
+\end{cheatcode}
+
+% === Ingress ==============================================================
+\tcbsubtitle{Ingress}
+\begin{cheatcode}
+k get ingressclass
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
   rules:
-  - host: myapp.com
+  - host: myapp.example.com
     http:
       paths:
-      - path: /blue
-        pathType: Prefix
+      - path: /api
+        pathType: Prefix   # Prefix|Exact|ImplementationSpecific
         backend:
           service:
-            name: blue-service
-            port:
-              number: 80
-      - path: /green
-        pathType: Prefix
-        backend:
-          service:
-            name: green-service
-            port:
-              number: 80
+            name: api-svc
+            port: {number: 80}
+  tls:
+  - hosts: [myapp.example.com]
+    secretName: tls-secret
+\end{cheatcode}
 
-
-
-In Kubernetes, every Service gets a DNS name that other Pods can use to find it. This prevents you from needing to hardcode IP addresses. The format is usually:
-service-name.namespace.svc.cluster.local
-
-
-
-
-    ClusterIP: Internal only.
-
-    NodePort: Exposed on 30000-32767.
-
-    Ingress: HTTP/HTTPS routing. Remember the pathType: Prefix and backend structure.
+% === Gateway API ===========================================================
+\tcbsubtitle{Gateway API (successor to Ingress)}
+\begin{cheatcode}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata: {name: my-route}
+spec:
+  parentRefs:
+  - name: my-gateway         # references a Gateway object
+  hostnames: ["myapp.example.com"]
+  rules:
+  - matches:
+    - path: {type: PathPrefix, value: /api}
+    backendRefs:
+    - {name: api-svc, port: 80}
+  - matches:
+    - headers:
+      - {name: X-Env, value: canary}
+    backendRefs:
+    - {name: api-svc-v2, port: 80, weight: 100}
+\end{cheatcode}

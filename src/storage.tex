@@ -1,38 +1,82 @@
-Storage	PV/PVC Lifecycle, AccessModes, StorageClasses, and CSI.
+% === PersistentVolume =====================================================
+\tcbsubtitle{PersistentVolume (PV)}
+\begin{cheatcode}
+apiVersion: v1
+kind: PersistentVolume
+metadata: {name: my-pv}
+spec:
+  capacity: {storage: 10Gi}
+  accessModes:
+  - ReadWriteOnce   # RWO: single node r/w
+  # ReadWriteMany   # RWX: many nodes r/w
+  # ReadOnlyMany    # ROX: many nodes r/o
+  persistentVolumeReclaimPolicy: Retain
+  # Retain   = keep PV after PVC delete
+  # Delete   = delete underlying storage
+  # Recycle  = deprecated
+  storageClassName: manual
+  hostPath: {path: /mnt/data, type: Directory}
+  # nfs: {server: 1.2.3.4, path: /share}
+k get pv    # check RECLAIM POLICY, STATUS
+\end{cheatcode}
 
+% === PersistentVolumeClaim ================================================
+\tcbsubtitle{PersistentVolumeClaim (PVC)}
+\begin{cheatcode}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: my-pvc, namespace: default}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: manual  # "" = no dynamic prov.
+  resources:
+    requests: {storage: 5Gi}
+k get pvc    # STATUS: Bound|Pending|Lost
+# Pending reasons: capacity mismatch,
+#   accessMode mismatch, storageClass mismatch
+\end{cheatcode}
 
-💾 The Storage Lifecycle
+% === StorageClass (Dynamic Provisioning) ==================================
+\tcbsubtitle{StorageClass (Dynamic Provisioning)}
+\begin{cheatcode}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: rancher.io/local-path
+# cloud: kubernetes.io/aws-ebs
+# parameters: {type: gp3}
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+k get sc               # list StorageClasses
+# PVC with dynamic provisioning:
+spec:
+  storageClassName: fast  # matches SC name
+  resources:
+    requests: {storage: 5Gi}
+\end{cheatcode}
 
-To remember the flow, think of it as a three-step process:
-
-    PersistentVolume (PV): The actual "chunk" of storage (like a physical disk or NFS share) created by the cluster admin. It exists at the cluster level.
-
-    PersistentVolumeClaim (PVC): A request for storage by a user. It lives in a specific Namespace.
-
-    Pod Volume: The Pod "mounts" the PVC to a specific directory inside the container.
-
-🛠️ Quick Storage Commands
-
-    Check storage classes: kubectl get sc (Use this to see if "dynamic provisioning" is available).
-
-    List all storage components: kubectl get pv,pvc
-
-
-Storage is often the most "manual" part of the CKA. You have to ensure the Access Modes and Capacity match between the provider and the user.
-Component	Responsibility	Key Field to Watch
-PersistentVolume (PV)	Cluster Admin	capacity, accessModes, hostPath or nfs
-PersistentVolumeClaim (PVC)	Developer/App	resources.requests.storage, accessModes
-Pod	Workload	volumes.persistentVolumeClaim.claimName
-
-A Common Pitfall:
-If you create a PVC requesting 10Gi of storage, but your only available PV is 5Gi, what do you think the status of that PVC will be when you run kubectl get pvc?
-The PVC will stay in a Pending state indefinitely because the "contract" between the claim and the volume cannot be fulfilled.
-
-In the CKA, this is a common troubleshooting task. If you see a PVC stuck in Pending, you should immediately check:
-
-    Capacity: Does the PV have enough space?
-
-    AccessModes: Do they match (e.g., ReadWriteOnce vs ReadOnlyMany)?
-
-    StorageClass: Are they using the same class name?
-
+% === Volume Mounts ========================================================
+\tcbsubtitle{Volume Types in Pods}
+\begin{cheatcode}
+spec:
+  volumes:
+  - name: pvc-vol
+    persistentVolumeClaim:
+      claimName: my-pvc
+  - name: tmp
+    emptyDir: {}           # ephemeral, lost on restart
+  - name: cfg
+    configMap: {name: my-cm}
+  - name: sec
+    secret: {secretName: my-secret}
+  - name: host
+    hostPath: {path: /data, type: Directory}
+  containers:
+  - volumeMounts:
+    - {name: pvc-vol, mountPath: /var/data}
+    - {name: cfg, mountPath: /etc/config, readOnly: true}
+\end{cheatcode}

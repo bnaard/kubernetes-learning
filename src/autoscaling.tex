@@ -1,0 +1,93 @@
+% === HPA ==================================================================
+\tcbsubtitle{HPA (Horizontal Pod Autoscaler)}
+\begin{cheatcode}
+# Requires Metrics Server!
+k autoscale deploy <name> \
+  --cpu-percent=50 --min=2 --max=10
+k get hpa
+k describe hpa <name>
+# HPA YAML (autoscaling/v2):
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deploy
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: AverageValue
+        averageValue: 200Mi
+\end{cheatcode}
+
+% === VPA ==================================================================
+\tcbsubtitle{VPA (Vertical Pod Autoscaler)}
+\begin{cheatcode}
+# VPA adjusts resource requests/limits
+# Requires VPA controller installed
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata: {name: my-vpa}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-deploy
+  updatePolicy:
+    updateMode: "Auto"
+    # Off      = recommend only (k describe vpa)
+    # Initial  = set on new pods only
+    # Recreate = evict + restart pods
+    # Auto     = same as Recreate currently
+k get vpa
+k describe vpa <name>  # check Recommendation
+\end{cheatcode}
+
+% === Metrics Server =======================================================
+\tcbsubtitle{Metrics Server}
+\begin{cheatcode}
+# Install:
+kubectl apply -f https://github.com/kubernetes-sigs/\
+  metrics-server/releases/latest/download/components.yaml
+k top nodes
+k top pods [-n <ns>] [--containers]
+\end{cheatcode}
+
+% === Probes ===============================================================
+\tcbsubtitle{Probes}
+{\small\sffamily
+\begin{tblr}{
+  colspec={lX},
+  hline{2}={0.4pt},
+  rows={rowsep=0.5pt},
+  row{1}={font=\bfseries},
+}
+Probe & Triggers \\
+liveness & restart container \\
+readiness & remove from Service endpoints \\
+startup & disables others during slow start \\
+\end{tblr}}
+\begin{cheatcode}
+livenessProbe:      # OR readinessProbe/startupProbe
+  httpGet:
+    path: /healthz
+    port: 8080
+  # OR: tcpSocket: {port: 8080}
+  # OR: exec: {command: [cat, /tmp/healthy]}
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  timeoutSeconds: 1
+\end{cheatcode}
