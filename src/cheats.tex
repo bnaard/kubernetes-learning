@@ -1,0 +1,111 @@
+kubectl aliases, context switching, and imperative commands (dry-run).
+    Setup: The aliases above and bash-completion.
+
+    VIM Basics: (Essential for editing YAML!) Know how to indent multiple lines and search/replace.
+
+    Imperative Shortcuts: k run, k create, k expose, and k edit.
+
+
+
+Using aliases and knowing how to navigate namespaces are the two biggest "speed hacks" for the CKA. Since you have limited time, you don't want to type kubectl hundreds of times.
+⌨️ Top 5 Time-Saving Aliases
+
+You can add these to the ~/.bashrc file at the start of your exam (though many are often pre-configured).
+
+    alias k=kubectl: The holy grail. Turns a 7-letter command into 1.
+
+    alias kgp='k get pods': Quick status checks.
+
+    alias kgs='k get svc': Check your networking.
+
+    export do="--dry-run=client -o yaml": This is a lifesaver. Instead of typing the whole flag, you just run k create deploy my-deploy --image=nginx $do > deploy.yaml.
+
+    export now="--force --grace-period=0": For when a Pod is stuck "Terminating" and you need it gone immediately.
+
+🗺️ Navigating Namespaces
+
+In the exam, every question will tell you which namespace to work in (e.g., -n finance or -n marketing). If you forget the -n flag, you'll be looking at the default namespace and might think your resources are missing!
+
+Instead of typing -n <name> every time, you can switch your "context" so that kubectl defaults to that namespace:
+Bash
+
+# Switch to the 'finance' namespace permanently
+kubectl config set-context --current --namespace=finance
+
+Using Vim efficiently is a massive advantage during the CKA. Since you’ll be editing YAML files constantly, these three tricks will save you from "indentation hell."
+1. The "Fix My Indent" Setup
+
+Before you start editing, run these commands inside Vim (press Esc then type :) to make YAML behave:
+
+    :set ts=2 (Sets tab stop to 2 spaces)
+
+    :set sw=2 (Sets shift width to 2 spaces)
+
+    :set et (Expands tabs into spaces)
+
+    Pro Tip: You can do all three at once: :set ts=2 sw=2 et
+
+2. Visual Block Indentation ↔️
+
+If you copy-paste a snippet from the docs and it's shifted too far left or right:
+
+    Press Ctrl + v to enter Visual Block mode.
+
+    Use the arrow keys to select the lines you want to move.
+
+    Press > to shift right or < to shift left. (Repeat . to do it again!)
+
+3. The "Mass Comment" (or Delete)
+
+Need to quickly disable a whole livenessProbe block?
+
+    Go to the start of the first line.
+
+    Press Ctrl + v and move down to select the first character of every line you want to comment.
+
+    Press Shift + i (capital I), type #, and then hit Esc. After a second, the # will appear on every selected line.
+
+
+
+one of the most powerful tools for the exam: kubectl port-forward.
+
+If you're in the middle of a question and want to verify that a Pod is actually serving the right content, but you haven't set up a Service yet, you can "tunnel" into it directly from your terminal:
+Bash
+
+# Forward local port 8080 to Pod port 80
+kubectl port-forward pod/my-pod 8080:80
+
+
+
+    Use the Docs: You are allowed one tab of kubernetes.io/docs. Use the search bar for "Network Policy" or "Persistent Volume" to grab YAML templates quickly.
+
+
+1. Essential Aliases & Settings
+
+Add these to ~/.bashrc immediately upon starting the exam:
+
+    alias k=kubectl
+
+    alias kgp='k get pods'
+
+    alias kgs='k get svc'
+
+    export do="--dry-run=client -o yaml"
+
+    export now="--force --grace-period=0"
+
+    Vim Setup: :set ts=2 sw=2 et (Run inside Vim to fix YAML indents).
+
+2. Context & Namespaces
+
+    Switch Cluster: k config use-context <cluster-name>
+
+    Switch Namespace: k config set-context --current --namespace=<ns-name>
+
+3. Imperative Template Generation
+
+    Pod: k run nginx --image=nginx $do > pod.yaml
+
+    Deployment: k create deploy web --image=nginx --replicas=3 $do > deploy.yaml
+
+    Service: k expose deploy web --port=80 --target-port=80 --type=NodePort $do

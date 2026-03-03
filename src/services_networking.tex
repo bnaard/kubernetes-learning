@@ -1,0 +1,83 @@
+Networking	Services, Ingress vs Gateway API, DNS, and Network Policies.
+
+The Three Main Service Types
+Type	Use Case	Reachability
+ClusterIP	Internal communication (default).	Only inside the cluster.
+NodePort	Exposing a service on a static port on each Node's IP.	Outside the cluster (via NodeIP:Port).
+LoadBalancer	Using a cloud provider's external load balancer.	Outside the cluster (via Public IP).
+Quick Networking Commands
+
+    Expose a deployment: kubectl expose deployment nginx --port=80 --target-port=80 --type=ClusterIP
+
+    Check endpoints: kubectl get endpoints (This shows you which Pod IPs are currently "behind" your service).
+
+Network Policies 🛡️
+the moment you apply a NetworkPolicy to a Pod, that Pod becomes "isolated."
+
+By default, Kubernetes uses an "Allow All" posture. However, as soon as a selector matches a Pod in a NetworkPolicy, that Pod switches to a "Default Deny" posture for the types of traffic (Ingress or Egress) defined in the policy.
+
+🛠️ Key NetworkPolicy Commands
+
+Since you can't create these easily with kubectl create, you'll usually copy a template from the official docs during the exam.
+
+    Check existing policies: kubectl get netpol
+
+    Describe a policy: kubectl describe netpol <name> (This is vital to see which Pods are actually being targeted by the selector).
+
+
+
+🌐 Advanced Networking: Ingress
+
+While we talked about Services (ClusterIP/NodePort), Ingress is how you manage external access to those services, typically via HTTP/HTTPS. It acts as a smart router.
+
+An Ingress resource needs two things to work:
+
+    An Ingress Controller (the software, like NGINX, that does the work).
+
+    An Ingress Resource (the "rules" you write).
+
+
+Imagine you have two services: blue-service and green-service. You want traffic going to myapp.com/blue to hit the blue service, and myapp.com/green to hit the green service.
+
+In the Ingress YAML, what is the name of the field where you define these URL patterns (like /blue or /green)?
+
+It’s part of a hierarchy that looks like this: rules -> http -> paths -> path.
+
+When you define a path, you also have to specify a pathType. For the CKA, you'll mostly use Prefix (matches based on a URL prefix) or Exact.
+
+Here is a quick look at how that structure comes together for your "Blue/Green" scenario:
+YAML
+
+spec:
+  rules:
+  - host: myapp.com
+    http:
+      paths:
+      - path: /blue
+        pathType: Prefix
+        backend:
+          service:
+            name: blue-service
+            port:
+              number: 80
+      - path: /green
+        pathType: Prefix
+        backend:
+          service:
+            name: green-service
+            port:
+              number: 80
+
+
+
+In Kubernetes, every Service gets a DNS name that other Pods can use to find it. This prevents you from needing to hardcode IP addresses. The format is usually:
+service-name.namespace.svc.cluster.local
+
+
+
+
+    ClusterIP: Internal only.
+
+    NodePort: Exposed on 30000-32767.
+
+    Ingress: HTTP/HTTPS routing. Remember the pathType: Prefix and backend structure.

@@ -1,0 +1,38 @@
+Storage	PV/PVC Lifecycle, AccessModes, StorageClasses, and CSI.
+
+
+💾 The Storage Lifecycle
+
+To remember the flow, think of it as a three-step process:
+
+    PersistentVolume (PV): The actual "chunk" of storage (like a physical disk or NFS share) created by the cluster admin. It exists at the cluster level.
+
+    PersistentVolumeClaim (PVC): A request for storage by a user. It lives in a specific Namespace.
+
+    Pod Volume: The Pod "mounts" the PVC to a specific directory inside the container.
+
+🛠️ Quick Storage Commands
+
+    Check storage classes: kubectl get sc (Use this to see if "dynamic provisioning" is available).
+
+    List all storage components: kubectl get pv,pvc
+
+
+Storage is often the most "manual" part of the CKA. You have to ensure the Access Modes and Capacity match between the provider and the user.
+Component	Responsibility	Key Field to Watch
+PersistentVolume (PV)	Cluster Admin	capacity, accessModes, hostPath or nfs
+PersistentVolumeClaim (PVC)	Developer/App	resources.requests.storage, accessModes
+Pod	Workload	volumes.persistentVolumeClaim.claimName
+
+A Common Pitfall:
+If you create a PVC requesting 10Gi of storage, but your only available PV is 5Gi, what do you think the status of that PVC will be when you run kubectl get pvc?
+The PVC will stay in a Pending state indefinitely because the "contract" between the claim and the volume cannot be fulfilled.
+
+In the CKA, this is a common troubleshooting task. If you see a PVC stuck in Pending, you should immediately check:
+
+    Capacity: Does the PV have enough space?
+
+    AccessModes: Do they match (e.g., ReadWriteOnce vs ReadOnlyMany)?
+
+    StorageClass: Are they using the same class name?
+

@@ -1,3 +1,63 @@
 \tcbsubtitle{Simple}
 
 \tcbsubtitle{High Availability}
+
+\tcbsubtitle{General}
+
+1. Etcd Backup \& Restore 💾
+
+The etcd database holds the entire state of your cluster. You must know how to back it up using etcdctl.
+
+    Snapshot save: ```bash
+    \begin{verbatim}
+        ETCDCTL_API=3 etcdctl --endpoints=https://www.google.com/search?q=https://127.0.0.1:2379
+    \end{verbatim}
+
+    --cacert=<ca-file> --cert=<cert-file> --key=<key-file>
+
+    snapshot save /opt/snapshot-pre-boot.db
+
+
+2. Upgrading the Cluster ⬆️
+    The exam often asks you to upgrade a node (e.g., from v1.29 to v1.30). The sequence is critical:
+
+    Drain the node (move Pods off safely).
+
+    Upgrade the kubeadm tool.
+
+    Upgrade the node configuration (kubeadm upgrade apply or node).
+
+    Upgrade kubelet and kubectl.
+
+    Uncordon the node (let Pods back in).
+
+A Troubleshooting Scenario:
+You are asked to check why a node is showing a status of NotReady. You SSH into the node and notice that the Kubelet service is stopped.
+
+
+On the CKA exam, the standard command you’ll want to have in your muscle memory is:
+Bash
+
+systemctl restart kubelet
+
+And if you need to make sure it starts automatically when the node boots up:
+Bash
+
+systemctl enable kubelet
+
+For this domain of your cheatsheet, remember that the Kubelet is the only component that runs as a regular system service. The others (API Server, Scheduler, etc.) usually run as Static Pods.
+
+If those other components are failing, you won't find them in systemctl; instead, you'll need to look at the manifest files located in /etc/kubernetes/manifests/.
+
+
+3. Upgrades (kubeadm)
+
+    apt upgrade kubeadm
+
+    kubeadm upgrade plan
+
+    kubeadm upgrade apply vX.Y.Z
+
+    apt upgrade kubelet kubectl \& systemctl restart kubelet
+
+

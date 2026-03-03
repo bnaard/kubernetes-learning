@@ -1,0 +1,38 @@
+Security	RBAC (Roles/RoleBindings), ServiceAccounts, and Security Contexts
+
+
+
+Which kubectl command would you use to create that Role imperatively (without writing the YAML from scratch)?
+
+kubectl create role pod-reader -n development --verb=get,list,watch --resource=pods
+
+
+🔗 The Binding Step
+
+A Role is just a set of permissions sitting in a namespace; it doesn't actually grant them to anyone until you "bind" it.
+
+To complete this task, you need to create a RoleBinding. This connects your new pod-reader Role to the developer-sa ServiceAccount.
+
+When you bind to a ServiceAccount, you have to specify the namespace it lives in within the flag itself, using the format namespace:name.
+
+Bash
+
+kubectl create rolebinding bindingname \
+  --role=pod-reader \
+  --serviceaccount=development:developer-sa \
+  -n development
+
+🛡️ RBAC Troubleshooting Tip
+
+In the exam, you can verify your work without even switching users by using the auth can-i command. It's the ultimate way to double-check your Roles.
+
+To see if your ServiceAccount can actually list pods now, you would run:
+k auth can-i list pods --as system:serviceaccount:development:developer-sa -n development
+
+3. RBAC (Role-Based Access Control)
+
+    Create Role: k create role pod-reader --verb=get,list --resource=pods
+
+    Bind Role: k create rolebinding read-pods --role=pod-reader --serviceaccount=default:my-sa
+
+    Verify: k auth can-i get pods --as system:serviceaccount:ns:sa

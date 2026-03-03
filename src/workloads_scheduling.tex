@@ -1,0 +1,63 @@
+Workloads	Deployment YAMLs, ConfigMaps, Secrets, Resource Quotas, Taints/Tolerations, Admission Controllers, and Priority Classes.
+
+
+Create a deployment: kubectl create deployment my-deploy --image=nginx --replicas=3 --dry-run=client -o yaml > deploy.yaml
+Run a temporary pod: kubectl run busybox --image=busybox -it --rm -- restart=Never -- /bin/sh
+
+Scheduling Control
+Sometimes you need to tell Kubernetes exactly where a Pod should go (or where it shouldn't).
+    NodeSelector: Uses labels to pick a node.
+    Taints and Tolerations: A node "repels" pods unless the pod has a matching "permission."
+
+o influence the Scheduler's decision based on node labels, we need to look at the spec.template.spec section of the Deployment.
+
+There are two main ways to handle this:
+
+    nodeSelector: The simplest way. You provide a key-value pair, and the Pod will only run on nodes with that exact label.
+
+    nodeAffinity: A more expressive version that allows for "soft" rules (prefer this node, but run elsewhere if needed) and complex logic (like "In" or "Exists").
+
+Here is how the simple version looks in your YAML:
+YAML
+
+spec:
+  template:
+    spec:
+      nodeSelector:
+        hardware: gpu
+
+
+
+   Requests: The minimum amount the Pod needs to start (the Scheduler uses this).
+    Limits: The maximum amount the Pod is allowed to consume (the Kubelet enforces this).
+When a Pod is killed because it tried to use more memory than its Limit allowed, the status will show as OOMKilled (Out Of Memory Killed).
+If you see this, you know you either need to increase the memory limit in the YAML or optimize the application's memory usage. You can see the specific exit code (usually 137) by running kubectl describe pod [pod-name]
+
+
+
+   NodeSelector: Simplest match via labels.
+
+    Taints/Tolerations: Node "repels" pods unless pod has matching toleration.
+
+        k taint nodes node1 key=value:NoSchedule
+
+    Drain/Cordon: * k drain <node> (Evicts pods for maintenance).
+
+        k uncordon <node> (Allows scheduling again).
+
+  
+2. Network Policies 🛡️
+
+Applied policies cause Default Deny.
+
+    Check targeting: k describe netpol <name>
+
+    Standard Rule:
+    YAML
+
+    ingress:
+    - from:
+      - podSelector:
+          matchLabels: {role: frontend}
+
+

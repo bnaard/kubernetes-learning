@@ -1,0 +1,90 @@
+Maintenance & Troubleshooting	Upgrades, Helm & Kustomize, Node Debugging (journalctl/systemctl), and Static Pods
+
+
+
+node that has gone NotReady is a high-stakes task in the CKA. Since you can't use kubectl to fix a node that isn't communicating with the API server, you have to "get your hands dirty" on the host itself.
+
+The process follows a logical path: Check the Service → Check the Logs → Check the Config.
+1. The Service Level 🛠️
+
+As we discussed, the Kubelet is the most common point of failure because it runs as a system service. If it's down, the node can't check in.
+
+    Check status: systemctl status kubelet
+
+    Restart it: systemctl restart kubelet
+
+    Check dependencies: Sometimes the container runtime (like containerd) is the actual culprit. Check it with systemctl status containerd.
+
+2. The Log Level 📜
+
+If the service is running but the node is still flaky, the logs will tell you why. Since Kubelet is a systemd service, we use journalctl.
+
+    View recent logs: journalctl -u kubelet -f
+
+    Search for errors: journalctl -u kubelet | grep -i error
+
+3. The Config Level 📁
+
+The Kubelet needs to know where the API server is and where its own configuration lives. Common failure points include:
+
+    Wrong paths: The kubeconfig file at /etc/kubernetes/kubelet.conf is missing or corrupt.
+
+    Certificates: Expired certificates (though less common in the exam environment).
+
+    Static Pod path: If the control plane components are missing, check the config file (usually /var/lib/kubelet/config.yaml) to see where the staticPodPath is pointing.
+
+
+
+    🧪 Troubleshooting Scenario
+
+Imagine you SSH into a worker node. You run systemctl status kubelet and see that the service is active (running), yet kubectl get nodes on the control plane still says the node is NotReady.
+
+You decide to check the logs with journalctl -u kubelet. You see an error message saying:
+"Failed to run kubelet" err="failed to load Kubelet config file /var/lib/kubelet/config.yaml: no such file or directory"
+Since the error specifically says the file /var/lib/kubelet/config.yaml is missing, we have to figure out where the "source of truth" is.
+
+In a standard kubeadm setup, the Kubelet configuration isn't just a random file; it's managed by the cluster. If that file is gone, the Kubelet doesn't know its own settings (like which DNS to use or where the certificates are).
+
+Before you try to use kubeadm to fix it, you need to find out where the Kubelet thinks its configuration should be.
+
+Every systemd service has a unit file that defines how it starts. To see the "command line" that starts the Kubelet (and see where it's looking for that missing config file), which command would you use to inspect the kubelet.service unit file?
+
+systemctl cat kubelet 📑
+
+This command dumps the entire service configuration to your screen, including the ExecStart line. That line is the "smoking gun" because it shows exactly which flags the Kubelet is using to start, such as --config=/var/lib/kubelet/config.yaml.
+🛠️ The Fix
+
+Once you find that the path is wrong or the file is missing, you have two main options in a CKA scenario:
+
+    Check for Backup: Sometimes a file is just misnamed (e.g., config.yaml.old).
+
+    Re-generate with Kubeadm: If the node was partially joined, you can often run kubeadm init phase kubelet-start (on a control plane) or check the /etc/kubernetes/kubelet.conf for connection details.
+
+
+
+The Control Plane components (API Server, Scheduler, Controller Manager) usually run as Static Pods.
+
+If the API Server is down, you can't use kubectl to fix it. You have to go to the node where it lives and check the manifest files.
+/etc/kubernetes/manifests is the specific directory the Kubelet watches. Any YAML file placed there is automatically run as a Static Pod.
+
+If the API Server or Etcd is crashing, you won't see them in docker ps or crictl ps for long, and kubectl will simply give you a "Connection Refused" error. In that case, checking the logs of the container engine or looking at these manifest files for configuration errors (like a typo in an IP address) is the only way to get the cluster back online.
+
+
+
+1. Common Pod Statuses
+Status	Meaning	Action
+OOMKilled	Memory limit exceeded.	Increase resources.limits.memory.
+CrashLoopBackOff	App crashing or config error.	Check k logs <pod> and k describe pod.
+Pending	No node fits requirements.	Check Taints, Tolerations, or Resource Requests.
+
+
+2. Node Troubleshooting
+
+    Kubelet: Check systemctl status kubelet and journalctl -u kubelet -f.
+
+    Config: Inspect /var/lib/kubelet/config.yaml or /etc/kubernetes/kubelet.conf.
+
+    Static Pods: Check /etc/kubernetes/manifests if Control Plane components are down.
+
+
+
