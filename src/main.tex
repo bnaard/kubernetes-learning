@@ -1,0 +1,245 @@
+% ----------------------------------------------------------------------------------------------------------------------
+% Kubernetes CKA Learning Sheet
+% ----------------------------------------------------------------------------------------------------------------------
+
+% User guides
+% Latex: https://ftp.agdsn.de/pub/mirrors/latex/dante/macros/latex/base/usrguide.pdf
+% Tabularray: https://mirror.physik.tu-berlin.de/pub/CTAN/macros/latex/contrib/tabularray/tabularray.pdf
+% TColorbox: https://mirror.clientvps.com/CTAN/macros/latex/contrib/tcolorbox/tcolorbox.pdf
+% Posterbox Tutorial: https://mirror.clientvps.com/CTAN/macros/latex/contrib/tcolorbox/tcolorbox-tutorial-poster.pdf#[0,{%22name%22:%22Fit%22}]
+% Xcolor: https://mirror.clientvps.com/CTAN/macros/latex/contrib/xcolor/xcolor.pdf
+% TikZ: https://tikz.dev/
+% Geometry: https://ftp.gwdg.de/pub/ctan/macros/latex/contrib/geometry/geometry.pdf
+% fontspec: https://texdoc.org/serve/fontspec/0
+% fancyhdr: https://ftp.fau.de/ctan/macros/latex/contrib/fancyhdr/fancyhdr.pdf
+% biblatex: https://distrib-coffee.ipsl.jussieu.fr/pub/mirrors/ctan/macros/latex/contrib/biblatex/doc/biblatex.pdf
+% amsmath: https://www.latex-project.org/help/documentation/amsldoc.pdf
+
+% ----------------------------------------------------------------------------------------------------------------------
+
+
+\documentclass[8pt]{extarticle}
+
+
+% --- Hyphenation Rules --------------------------------------------------------
+\usepackage[USenglish]{babel}
+
+% --- Fonts --------------------------------------------------------------------
+
+% Ensure proper font encoding
+\usepackage[T1]{fontenc}
+
+% Load system fonts via fontspec (requires XeLaTeX or LuaLaTeX)
+% to get a list of installed fonts: luaotfload-tool --list=format 
+% show all fonts: luafindfont -n "*"
+% show font details: luaotfload-tool --find="FiraMono" -i
+\usepackage{fontspec}
+\setmainfont{FreeSans}[Scale=0.95]
+\setsansfont{FreeSans}[Scale=0.95]
+\setmonofont{Source Code Pro}[
+  Contextuals=Alternate,
+  Scale=0.80
+]
+
+% Unicode math — supports sizes below 5pt and matches the sans text style better
+\usepackage{unicode-math}
+\setmathfont{Latin Modern Math}
+
+% font for the header
+\newfontfamily\headerfont{QTHelvet-Black} 
+
+% Emoji support
+\usepackage{emoji}
+\setemojifont{Twemoji Mozilla}
+
+% --- Page layout --------------------------------------------------------------
+\usepackage[
+    % showframe, 
+    nomarginpar, 
+    a4paper,
+    landscape, 
+    right=0.25cm, 
+    left=0.25cm, 
+    top=1cm, 
+    bottom=0.65cm,
+    headsep=0.1cm,
+    headheight=0.75cm,
+    footskip=0.35cm,
+]{geometry}
+
+
+\usepackage{fancyhdr}
+
+
+% --- TColorbox ---------------------------------------------------------------
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,raster,listings,breakable,minted,poster}
+
+% --- Tables -------------------------------------------------------------------
+\usepackage{tabularray}
+
+% --- Color Names -------------------------------------------------------------
+\usepackage[svgnames]{xcolor}
+
+
+% --- Graphics -----------------------------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{calc, trees, graphs, fit, matrix, shapes, arrows.meta, positioning, decorations.pathreplacing, calligraphy}
+
+\usepackage{graphicx}
+\usepackage{svg}
+\graphicspath{{./figures/}{./icons/}{./logos/}{./assets/}}   
+
+\usepackage{bytefield}
+
+% --- URL and href -----------------------------------------------------------
+\colorlet{citecolor}{black}
+\colorlet{linkcolor}{black}
+\colorlet{urlcolor}{black}
+\usepackage[
+  bookmarks=true,
+  breaklinks=true,
+  pdfborder={0 0 0},
+  citecolor=citecolor,
+  linkcolor=linkcolor,
+  urlcolor=urlcolor,
+  colorlinks=true,
+  linktocpage=false,
+  hyperindex=true,
+  colorlinks=true,
+  linktocpage=false,
+  linkbordercolor=white]{hyperref}
+
+% --- Math Environments --------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{nicematrix}
+\NiceMatrixOptions{cell-space-limits = 1pt}
+\usepackage[detect-all, locale=US, group-separator={\,}]{siunitx}
+
+% --- Bibliography -------------------------------------------------------------
+\usepackage[autostyle=true]{csquotes} % recommended before biblatex
+\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+\addbibresource{../bibliography/references.bib}
+
+\renewcommand{\bibfont}{\normalfont\footnotesize}
+
+% --- Helpers -----------------------------------------------------------------
+\usepackage{lipsum}
+\usepackage{enumitem}
+
+
+% --- Default options ---------------------------------------------------------
+\pagestyle{fancy}
+% \pagestyle{empty}
+% \setlength\parindent{0pt}
+% \setlength{\tabcolsep}{2pt}
+% \baselineskip=0pt
+% \setlength\columnsep{1.75mm}
+% \setlength{\parskip}{0.1\baselineskip}
+
+
+\definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
+\newcommand{\primarycolor}{k8sblue}
+\newcommand{\secondarycolor}{Navy}
+\newcommand{\graycolor}{SlateGray}
+\newcommand{\maincolspan}{4}
+
+
+% ---- Macros --------------------------------------------------------------------
+
+% --- TColorbox Skins ----------------------------------------------------------
+
+% Skin for orange-based cheat section boxes
+\tcbsubskin{cheatboxskin}{standard}{
+    size=title, 
+    left=0.2em,
+    right=0.2em,
+    bottom=0.2em,
+    arc=0.25mm,
+    colback=\primarycolor!2!white,
+    colframe=\primarycolor!70!black,
+    coltitle=\primarycolor!5!white,
+    colbacktitle=\primarycolor,
+    fonttitle=\sffamily\bfseries,
+    toptitle=0mm,
+    bottomtitle=0mm,
+    fontupper=\sffamily\small,
+    fontlower=\sffamily\small,
+    % halign=left,
+    subtitle style={top=0.4mm, bottom=0mm, boxrule=0.2pt, boxsep=0.1mm,
+        colback=\primarycolor!20!white,
+        colupper=\primarycolor!50!black,
+        fontupper=\sffamily\bfseries\small,
+        coltext=\primarycolor!10!black,
+        height=1.1\baselineskip,
+      }, 
+}
+
+
+% Skin for simple tables inside cheat boxes
+\tcbsubskin{cheatboxtablesimple}{empty}{
+    size=minimal,
+    fontupper=\sffamily\small,
+    fontlower=\sffamily\small,
+    before skip=0.2\baselineskip,
+    after skip=0.2\baselineskip,
+    colback=white,
+    colframe=gray,
+    frame empty,
+}
+
+
+% ----------------------------------------------------------------------------------------------------------------------
+% Header and Footer Settings
+% ----------------------------------------------------------------------------------------------------------------------
+
+\fancyhead[L]{
+    \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} CheatSheet}
+}
+\fancyhead[C]{}
+\fancyhead[R]{}
+\fancyfoot[L]{}
+\fancyfoot[C]{}
+\fancyfoot[R]{\thepage}
+
+
+
+% ----------------------------------------------------------------------------------------------------------------------
+% Main Document
+% ----------------------------------------------------------------------------------------------------------------------
+
+\begin{document}
+
+% === Page 1 =================================================================
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Cluster Architecture ================================================================
+    \begin{posterboxenv}[skin=cheatboxskin,title=Cluster Architecture]
+        {name=clusterarchitecture,column=1,below=top, span=4}
+        \input{cluster_architecture.tex}
+    \end{posterboxenv}
+
+
+
+\end{tcbposter}
+
+\pagebreak
+
+% === Page 2 =================================================================
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+
+
+\end{tcbposter}
+
+
+
+\end{document}

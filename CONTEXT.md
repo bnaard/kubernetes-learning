@@ -209,9 +209,11 @@ If those other components are failing, you won't find them in systemctl; instead
 We’ve touched on the "Big Three" domains. To turn this into your 4-page guide, I recommend organizing it like this:
 Page	Topic	Key Content
 1	The Essentials	kubectl aliases, context switching, and imperative commands (dry-run).
-2	Workloads & Storage	Deployment YAMLs, ConfigMaps, Secrets, and PV/PVCs.
-3	Networking & Security	Services, Ingress, NetworkPolicies, and RBAC (Roles/RoleBindings).
-4	Maintenance & Troubleshooting	Etcd backup, Upgrades, and Kubelet/Log debugging.
+2	Workloads	Deployment YAMLs, ConfigMaps, Secrets, Resource Quotas, Taints/Tolerations, Admission Controllers, and Priority Classes.
+3	Networking	Services, Ingress vs Gateway API, DNS, and Network Policies.
+4	Security	RBAC (Roles/RoleBindings), ServiceAccounts, and Security Contexts.
+5	Storage	PV/PVC Lifecycle, AccessModes, StorageClasses, and CSI.
+6	Maintenance & Troubleshooting	Upgrades, Helm & Kustomize, Node Debugging (journalctl/systemctl), and Static Pods.
 
 Final Step for our session:
 To wrap up your "Page 1" (The Essentials), would you like to see the top 5 aliases that pro CKA takers use to save time during the exam, or should we look at how to quickly switch between different Namespaces?
@@ -835,9 +837,7 @@ Goal: Fix the cluster when things go wrong "under the hood."
 
     apt upgrade kubelet kubectl & systemctl restart kubelet
 
-Shutterstock
-
-This 4-page structure covers the core technical hurdles of the CKA. Since you have this reference ready, would you like to try a Troubleshooting Lab where I describe a node failure and you use these commands to diagnose it, or should we look at Persistent Storage (PV/PVC) in more detail?
+This 6-page structure covers the core technical hurdles of the CKA. Since you have this reference ready, you can now proceed with your mock exams! 🚀
 Du hast gesagt
 
 Good. Can you provide me all pages (including the missing pages 5 and 6) as a latex document (graphics using tikz)?
@@ -1230,12 +1230,12 @@ Page Outlines:
 
     Page 1: The Command Center: Aliases, Vim setup, Imperative shortcuts.
 
-    Page 2: Workloads: Deployments, Rollouts, Resource Limits.
+    Page 2: Workloads: Deployments, Rollouts, Resource Limits, Admission Controllers & Priority Classes.
 
-    Page 3: Networking: Services, Ingress paths, DNS.
+    Page 3: Networking: Services, Ingress vs Gateway API, DNS, NetworkPolicies.
 
-    Page 4: Security: RBAC (Roles/Bindings), ServiceAccounts.
+    Page 4: Security: RBAC (Roles/Bindings), ServiceAccounts, Security Contexts.
 
-    Page 5: Storage: PV/PVC Lifecycle, AccessModes, StorageClasses.
+    Page 5: Storage: PV/PVC Lifecycle, AccessModes, StorageClasses, CSI.
 
-    Page 6: Maintenance & Troubleshooting: Etcd backup, Node failure logs (journalctl), Static Pods.
+    Page 6: Maintenance & Troubleshooting: Upgrades, Helm & Kustomize, Node failure logs (journalctl), Static Pods.

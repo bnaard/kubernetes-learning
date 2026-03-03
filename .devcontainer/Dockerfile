@@ -21,14 +21,16 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Install vanilla TeX Live from TUG with minimal scheme
-RUN wget -qO /tmp/install-tl-unx.tar.gz \
-        https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
+RUN wget -qO /tmp/install-tl-unx.tar.gz https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz && \
     mkdir /tmp/install-tl && \
     tar -xzf /tmp/install-tl-unx.tar.gz -C /tmp/install-tl --strip-components=1 && \
-    perl /tmp/install-tl/install-tl --no-interaction --scheme=basic && \
+    perl /tmp/install-tl/install-tl --no-interaction --scheme scheme-basic && \
+    # Create a symlink so we don't have to guess the year in the next step
+    ln -s /usr/local/texlive/*/bin/aarch64-linux /usr/local/texlive/bin && \
     rm -rf /tmp/install-tl /tmp/install-tl-unx.tar.gz
 
-ENV PATH="/usr/local/texlive/2025/bin/aarch64-linux:${PATH}"
+# Add to PATH using the symlink
+ENV PATH="/usr/local/texlive/bin:${PATH}"
 
 # ---------------------------------------------------------------------------
 # Install all packages in one layer.
@@ -220,12 +222,18 @@ RUN apt-get update && \
         ca-certificates \
         wget \
         perl \
-        npm \
         libfile-homedir-perl \
         libyaml-tiny-perl \
         liblog-log4perl-perl \
         libunicode-linebreak-perl \
         fontconfig \
+        apt-transport-https \
+        gnupg \
+        jq \
+        npm \
+        python3 \
+        python3-pip \
+        python3-venv \
     && ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
@@ -236,9 +244,14 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# Copy the complete TeX Live tree from the builder stage
+# Copy the complete TeX Live tree
 COPY --from=texlive-builder /usr/local/texlive /usr/local/texlive
-ENV PATH="/usr/local/texlive/2025/bin/aarch64-linux:${PATH}"
+
+# Use the symlink created in Stage 1 instead of hardcoding 2025
+ENV PATH="/usr/local/texlive/bin:${PATH}"
+
+# Install MkDocs with Material theme
+RUN pip install --break-system-packages mkdocs-material
 
 # Rebuild font cache so fontspec/luaotfload find TeX Live fonts
 RUN fc-cache -fv
@@ -247,5 +260,6 @@ RUN fc-cache -fv
 ENV PATH="/root/.local/bin:${PATH}"
 RUN curl -fsSL https://claude.ai/install.sh | bash
 RUN npm install -g @google/gemini-cli
+RUN npm install -g @google/jules
 
 WORKDIR /workspaces

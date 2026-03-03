@@ -3,10 +3,51 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: localhost/vsc-latex:latest
+    image: localhost/kubernetes-learning:latest
     stdin_open: true
-    tty: true    
+    tty: true
     volumes:
-      - ..:/workspace:cached
-      - ../.root/.claude:/root/.claude:cached
-      - ../.root/.gemini:/root/.gemini:cached
+      # ── Workspace ─────────────────────────────────────────────────────────
+      - type: bind
+        source: ${WORKSPACE_DIR:-..}
+        target: /workspace
+
+      # ── Persisted configuration (all live under .root/ on the host) ───────
+      # SSH keys — read-only; manage keys only on the host
+      - type: bind
+        source: ${HOST_ROOT:-../.root}/.ssh
+        target: /root/.ssh
+        read_only: true
+
+      # Claude: config file + memory
+      - type: bind
+        source: ${HOST_ROOT:-../.root}/.claude
+        target: /root/.claude
+
+      # Gemini: config file + memory
+      - type: bind
+        source: ${HOST_ROOT:-../.root}/.gemini
+        target: /root/.gemini
+
+      # Jules: config file + memory
+      - type: bind
+        source: ${HOST_ROOT:-../.root}/.config/google-jules
+        target: /root/.config/google-jules
+
+      # Git: global config + credentials helper store
+      - type: bind
+        source: ${HOST_ROOT:-../.root}/.config/git
+        target: /root/.config/git
+
+    environment:
+      - TZ=Europe/Berlin
+      - LANG=en_US.UTF-8
+      - COLORTERM=truecolor
+      - TERM=xterm-256color
+      # Tell git to look for its config in XDG location (matches mount above)
+      - GIT_CONFIG_GLOBAL=/root/.config/git/config
+      - JULES_USE_GEMINI_AUTH=true
+      - JULES_FORCE_HEADLESS=true            
+    working_dir: /workspace
+
+volumes: {}

@@ -1,5 +1,5 @@
 {
-    "name": "latex-env",
+    "name": "kubernetes-learning",
     "dockerComposeFile": "docker-compose.yml",
     "service": "dev",
     "workspaceFolder": "/workspace",
@@ -17,12 +17,12 @@
                     {
                         "name": "lualatex",
                         "command": "lualatex",
-                        "args": ["-synctex=1", "-interaction=nonstopmode", "%DOC%"]
+                        "args": ["-synctex=1", "-interaction=nonstopmode", "-output-directory=%OUTDIR%", "%DOC%"]
                     },
                     {
                         "name": "latexmk",
                         "command": "latexmk",
-                        "args": ["-lualatex", "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "-pdf", "%DOC%"]
+                        "args": ["-lualatex", "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "-pdf", "-outdir=%OUTDIR%", "%DOC%"]
                     }
                 ],
                 "latex-workshop.latex.recipes": [
