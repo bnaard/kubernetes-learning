@@ -1,6 +1,6 @@
 % === Helm =================================================================
 \tcbsubtitle{Helm}
-\begin{cheatcode}
+\begin{cheatcodebash}
 helm repo add <name> <url>
 helm repo update
 helm search repo <keyword>
@@ -15,11 +15,11 @@ helm status <release>
 helm get values <release>
 helm template <release> <chart>  # dry-run
 helm show values <chart>         # inspect defaults
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Kustomize ============================================================
 \tcbsubtitle{Kustomize}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # kustomization.yaml:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -39,18 +39,18 @@ patches:
 # Apply:
 kubectl apply -k <dir>
 kubectl kustomize <dir>        # preview only
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === CRDs & Operators =====================================================
 \tcbsubtitle{CRDs \& Operators}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k get crd
 k describe crd <name>
 k get <custom-resource-kind>
 # Operators extend K8s with custom controllers
 # Install via Helm or OLM:
 k get operators                 # if OLM installed
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Extension Interfaces =================================================
 \tcbsubtitle{Extension Interfaces}
@@ -66,11 +66,11 @@ CNI & Pod networking & Calico, Flannel, Cilium \\
 CSI & Storage provisioning & EBS, NFS, Rook \\
 CRI & Container runtime & containerd, CRI-O \\
 \end{tblr}}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # CNI config:  /etc/cni/net.d/
 # Check runtime:
 k get node -o wide          # CONTAINER-RUNTIME col
 crictl ps                   # list containers (node)
 crictl logs <id>
 crictl inspect <id>
-\end{cheatcode}
+\end{cheatcodebash}

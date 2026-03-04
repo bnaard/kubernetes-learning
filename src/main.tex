@@ -67,6 +67,9 @@
 
 
 % --- TColorbox ---------------------------------------------------------------
+% highlightmode=immediate: minted v3 defaults to 'fastfirst' which shows a
+% <MINTED> placeholder on the first pass; immediate highlights every run.
+\PassOptionsToPackage{highlightmode=immediate}{minted}
 \usepackage{tcolorbox}
 \tcbuselibrary{skins,raster,listings,breakable,minted,poster}
 
@@ -146,7 +149,7 @@
     right=0.2em,
     bottom=0.2em,
     arc=0.25mm,
-    colback=\primarycolor!2!white,
+    colback=white,
     colframe=\primarycolor!70!black,
     coltitle=\primarycolor!5!white,
     colbacktitle=\primarycolor,
@@ -178,31 +181,57 @@
 }
 
 % --- Code listing environment -------------------------------------------------
-\newtcblisting{cheatcode}{%
+% fontsize= in minted/fancyvrb expects a single parameterless command
+\newcommand{\cheatcodefontsize}{\fontsize{6.5}{7.5}\selectfont}
+
+% Shared tcolorbox style for all cheatcodebash/yaml/tex variants
+\tcbset{cheatcodestyle/.style={%
   listing only,%
-  listing engine=listings,%
-  listing options={%
-    basicstyle=\ttfamily\fontsize{6.5}{7.5}\selectfont,%
-    breaklines=true,%
-    breakatwhitespace=false,%
-    showstringspaces=false,%
-    columns=fullflexible,%
-    keepspaces=true,%
-    xleftmargin=0pt,%
-    xrightmargin=0pt,%
-    aboveskip=0pt,%
-    belowskip=0pt,%
-  },%
+  listing engine=minted,%
+  minted options={fontsize=\cheatcodefontsize,breaklines,autogobble, escapeinside=!!},%
   colback=k8sblue!5!white,%
   colframe=k8sblue!22!white,%
   boxrule=0.3pt,%
-  left=2pt, right=2pt, top=1.5pt, bottom=1.5pt,%
-  arc=1.5pt,%
-  before skip=1.5pt,%
-  after skip=1.5pt,%
   size=minimal,%
+  left=5pt, right=2pt, top=1.5pt, bottom=1pt,%
+  arc=1.5pt,%
+  before skip=1pt,%
+  after skip=6pt,%
+}}
+
+% Shell / bash snippets
+\newtcblisting{cheatcodebash}{%
+  cheatcodestyle,%
+  minted language=bash,%
 }
 
+% Important bash snippets — left accent stripe + stronger background
+\newtcblisting{cheatcodebashbold}{%
+  cheatcodestyle,%
+  minted language=bash,%
+  colback=k8sblue!12!white,%
+  colframe=k8sblue!50!white,%
+  borderline west={2.5pt}{0pt}{k8sblue!70!white},%
+  after skip=3pt,%
+}
+
+% YAML manifests
+\newtcblisting{cheatcodeyaml}{%
+  cheatcodestyle,%
+  minted language=yaml,%
+}
+
+% Like cheatcodebash but without the listing engine — LaTeX commands work inside (useful for \textcolor etc.)
+\newtcolorbox{cheatcodetex}{%
+  colback=k8sblue!5!white,%
+  colframe=k8sblue!22!white,%
+  boxrule=0.3pt,%
+  size=minimal,%
+  left=5pt, right=2pt, top=1.5pt, bottom=1pt,%
+  arc=1.5pt,%
+  before skip=1pt,%
+  after skip=6pt,%
+}
 
 % ----------------------------------------------------------------------------------------------------------------------
 % Header and Footer Settings
@@ -234,21 +263,47 @@
 
     % === Cluster Architecture ===================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Cluster Architecture]
-        {name=clusterarchitecture, column=1, below=top, span=5}
+        {name=clusterarchitecture, column=1, below=top, span=4}
         \input{cluster_architecture.tex}
     \end{posterboxenv}
 
-    % === Setup & Cheats =========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Setup \& Cheats}]
-        {name=cheats, column=6, below=top, span=3}
+    % === Cluster Upgrade =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={TO BE MOVED: Cluster Upgrade}]
+        {name=clusterupgrade, column=1, below=clusterarchitecture, span=4}
+        \input{cluster_upgrade.tex}
+    \end{posterboxenv}
+
+    % === Cheats ================================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cheats}]
+        {name=cheats, column=5, below=top, span=3}
         \input{cheats.tex}
     \end{posterboxenv}
 
-    % === Pods & Deployments ====================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Pods \& Deployments}]
-        {name=pods, column=9, below=top, span=4}
+
+    % === Pods ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Pods}]
+        {name=pods, column=8, below=top, span=3}
         \input{pods.tex}
     \end{posterboxenv}
+
+    % === Deployments ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Deployments}]
+        {name=deployments, column=8, below=pods, span=5}
+        \input{deployments.tex}
+    \end{posterboxenv}
+
+    % === Tools ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Tools}]
+        {name=tools, column=11, below=top, span=2}
+        \input{tools.tex}
+    \end{posterboxenv}
+
+    % === labels & Selectors ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Labels \& Selectors}]
+        {name=labelsselectors, column=11, below=tools, span=2}
+        \input{labels_selectors.tex}
+    \end{posterboxenv}
+
 
 \end{tcbposter}
 
@@ -263,19 +318,19 @@
 
     % === Scheduling ============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Scheduling]
-        {name=scheduling, column=1, below=top, span=4}
+        {name=scheduling, column=1, below=top, span=6}
         \input{scheduling.tex}
     \end{posterboxenv}
 
     % === Jobs, DaemonSets & Namespaces =========================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs, DaemonSets \& Namespaces}]
-        {name=jobsdaemonsets, column=5, below=top, span=4}
+        {name=jobsdaemonsets, column=7, below=top, span=3}
         \input{jobs_daemonsets.tex}
     \end{posterboxenv}
 
     % === ConfigMaps & Secrets ==================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
-        {name=configmaps, column=9, below=top, span=4}
+        {name=configmaps, column=10, below=top, span=3}
         \input{configmaps_secrets.tex}
     \end{posterboxenv}
 

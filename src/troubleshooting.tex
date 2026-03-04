@@ -1,6 +1,6 @@
 % === Pod Debugging ========================================================
 \tcbsubtitle{Pod Debugging}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k get pods -A -o wide
 k describe pod <name> -n <ns>   # check Events!
 k logs <pod> [-c <container>]
@@ -13,7 +13,7 @@ k debug -it <pod> \
 # Copy pod for debugging:
 k debug <pod> -it --copy-to=<pod>-debug \
   --image=busybox
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Common Pod States ====================================================
 \tcbsubtitle{Common Pod States}
@@ -36,7 +36,7 @@ ContainerCreating & Volume or image pull in progress \\
 
 % === Node Debugging ========================================================
 \tcbsubtitle{Node Debugging}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k get nodes -o wide
 k describe node <name>      # Conditions, Events
 k cordon <node>             # mark unschedulable
@@ -51,11 +51,11 @@ journalctl -u kubelet -f
 journalctl -u kubelet | grep -i error
 systemctl status containerd
 systemctl cat kubelet       # see config path
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Control Plane Debug ==================================================
 \tcbsubtitle{Control Plane Debug}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Static pods in kube-system:
 k get pods -n kube-system
 k logs kube-apiserver-<node> -n kube-system
@@ -70,11 +70,11 @@ crictl ps                   # list containers on node
 crictl logs <container-id>
 # Kubeconfig:
 export KUBECONFIG=/etc/kubernetes/admin.conf
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Service Debugging =====================================================
 \tcbsubtitle{Service \& Networking Debug}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Check if svc routes to pods:
 k get endpoints <svc>       # empty = label mismatch
 k get pods --show-labels
@@ -88,4 +88,4 @@ k run tmp --image=busybox --rm -it \
   wget -qO- http://<svc>.<ns>:80
 # Check network policy interference:
 k get netpol -A
-\end{cheatcode}
+\end{cheatcodebash}

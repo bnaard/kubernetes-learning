@@ -1,0 +1,22 @@
+
+% === Labels & Selectors ===================================================
+\tcbsubtitle{Imperative}
+\begin{cheatcodebashbold}
+### Add / remove labels
+k label pod <name> env=prod
+k label pod <name> env- # remove
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Filter by label
+k get pods -l app=web,env=prod
+k get pods -l 'tier in (fe,be)'
+k get pods --show-labels
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Annotate
+k annotate pod <name> note="txt"
+\end{cheatcodebashbold}
+
+\vspace{1.5ex}

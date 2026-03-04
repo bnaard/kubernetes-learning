@@ -1,6 +1,6 @@
 % === PersistentVolume =====================================================
 \tcbsubtitle{PersistentVolume (PV)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: v1
 kind: PersistentVolume
 metadata: {name: my-pv}
@@ -18,11 +18,11 @@ spec:
   hostPath: {path: /mnt/data, type: Directory}
   # nfs: {server: 1.2.3.4, path: /share}
 k get pv    # check RECLAIM POLICY, STATUS
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === PersistentVolumeClaim ================================================
 \tcbsubtitle{PersistentVolumeClaim (PVC)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata: {name: my-pvc, namespace: default}
@@ -34,11 +34,11 @@ spec:
 k get pvc    # STATUS: Bound|Pending|Lost
 # Pending reasons: capacity mismatch,
 #   accessMode mismatch, storageClass mismatch
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === StorageClass (Dynamic Provisioning) ==================================
 \tcbsubtitle{StorageClass (Dynamic Provisioning)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -57,11 +57,11 @@ spec:
   storageClassName: fast  # matches SC name
   resources:
     requests: {storage: 5Gi}
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Volume Mounts ========================================================
 \tcbsubtitle{Volume Types in Pods}
-\begin{cheatcode}
+\begin{cheatcodebash}
 spec:
   volumes:
   - name: pvc-vol
@@ -79,4 +79,4 @@ spec:
   - volumeMounts:
     - {name: pvc-vol, mountPath: /var/data}
     - {name: cfg, mountPath: /etc/config, readOnly: true}
-\end{cheatcode}
+\end{cheatcodebash}

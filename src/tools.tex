@@ -1,0 +1,75 @@
+% === Vim: YAML Editing ====================================================
+\tcbsubtitle{Vim: YAML Editing}
+\begin{cheatcodebash}
+### In Vim (run after opening file):
+:set ts=2 sw=2 et    # 2-space YAML indent
+### Visual block indent:
+Ctrl+V  select lines  > or < 
+### Mass prepend # comment:
+Ctrl+V  select lines  Shift+I # Esc
+gg=G        # re-indent entire file
+\end{cheatcodebash}
+
+% === Cron: Scheduling ====================================================
+\tcbsubtitle{Cron: Scheduling}
+
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1,c]X[1,c]X[1,c]X[1,c]X[1,c]},
+    columns={valign=m, colsep=0.15em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{5}{6}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    hline{1,7}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{5}{6}\selectfont\bfseries},
+    }
+    ]
+    \textbf{MIN} & \textbf{HOUR} & \textbf{DOM} & \textbf{MON} & \textbf{DOW}\\
+    0--59        & 0--23         & 1--31        & 1--12        & 0--6\\
+
+\end{tcolorbox}
+
+\vspace{1ex}
+{
+  \ttfamily\fontsize{6.5}{7.5}\selectfont
+  \textbf{Specials:}
+}
+\vspace{0.5ex}
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1,c]X[1,c]X[1,c]X[1,c]X[1,c]},
+    columns={valign=m, colsep=0.15em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{5}{6}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    hline{1,7}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{5}{6}\selectfont\bfseries},
+    }
+    ]
+    *          & */n          & n-m          & n,m          & \\
+    any        & every n      & range        & list         & \\
+
+\end{tcolorbox}
+
+\vspace{1ex}
+{
+  \ttfamily\fontsize{6.5}{7.5}\selectfont
+  \textbf{Examples:}
+}
+\vspace{0.5ex}
+\begin{cheatcodebash}
+* * * * *     # every minute
+0 * * * *     # every hour (on hour)
+0 0 * * *     # daily at midnight
+0 0 * * 1-5   # weekdays (Mo-Fr) 0:00
+*/15 * * * *  # every 15 minutes
+0 2 1 * *     # 1st of month at 02:00
+\end{cheatcodebash}

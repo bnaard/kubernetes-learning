@@ -13,7 +13,7 @@ ClusterRole & cluster-wide permissions \\
 RoleBinding & binds Role/ClusterRole in ns \\
 ClusterRoleBinding & binds ClusterRole cluster-wide \\
 \end{tblr}}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Create Role (namespaced):
 k create role <name> \
   --verb=get,list,watch \
@@ -32,10 +32,10 @@ k auth can-i get pods --as=<user>
 k auth can-i get pods \
   --as=system:serviceaccount:<ns>:<sa>
 k auth can-i --list -n <ns>
-\end{cheatcode}
+\end{cheatcodebash}
 
 Role YAML:
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata: {name: pod-reader, namespace: <ns>}
@@ -46,11 +46,11 @@ rules:
 - apiGroups: ["apps"]
   resources: ["deployments"]
   verbs: ["get","list","create","update"]
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === ServiceAccount =======================================================
 \tcbsubtitle{ServiceAccount}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k create sa <name> -n <ns>
 k get sa -n <ns>
 # Assign to Pod:
@@ -61,11 +61,11 @@ spec:
 k create token <sa-name> --duration=1h
 # Token mounted at:
 # /var/run/secrets/kubernetes.io/serviceaccount/
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === SecurityContext ======================================================
 \tcbsubtitle{SecurityContext}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Pod level (applies to all containers):
 spec:
   securityContext:
@@ -84,4 +84,4 @@ spec:
       capabilities:
         add: ["NET_ADMIN", "SYS_TIME"]
         drop: ["ALL"]
-\end{cheatcode}
+\end{cheatcodebash}

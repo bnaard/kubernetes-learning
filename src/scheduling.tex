@@ -1,6 +1,8 @@
+\begin{minipage}[t]{0.49\linewidth}
+
 % === NodeSelector & nodeName ==============================================
 \tcbsubtitle{NodeSelector \& nodeName}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Add label to node:
 k label node <node> disktype=ssd
 k label node <node> zone=us-east-1a
@@ -9,11 +11,14 @@ nodeSelector:
   disktype: ssd
 # Bypass scheduler entirely:
 nodeName: <node-name>
-\end{cheatcode}
+\end{cheatcodebash}
+
+\smallskip
+
 
 % === Taints & Tolerations =================================================
 \tcbsubtitle{Taints \& Tolerations}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Taint effects:
 # NoSchedule   - no new pods w/o toleration
 # PreferNoSchedule - soft NoSchedule
@@ -28,11 +33,11 @@ tolerations:
   value: "val"
   effect: "NoSchedule"
   tolerationSeconds: 300  # for NoExecute only
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Node Affinity =========================================================
 \tcbsubtitle{Node Affinity}
-\begin{cheatcode}
+\begin{cheatcodebash}
 affinity:
   nodeAffinity:
     # Hard rule (must match):
@@ -48,11 +53,15 @@ affinity:
       preference:
         matchExpressions:
         - {key: zone, operator: In, values: [us-east]}
-\end{cheatcode}
+\end{cheatcodebash}
+
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+
 
 % === Pod Affinity / Anti-Affinity =========================================
 \tcbsubtitle{Pod Affinity / Anti-Affinity}
-\begin{cheatcode}
+\begin{cheatcodebash}
 affinity:
   podAffinity:          # co-locate with matching pods
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -66,11 +75,11 @@ affinity:
         topologyKey: kubernetes.io/hostname
         labelSelector:
           matchLabels: {app: web}
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Resource Requests & Limits ===========================================
 \tcbsubtitle{Resources, LimitRange \& ResourceQuota}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # CPU units: 1 = 1000m (millicores)
 # LimitRange sets namespace defaults:
 apiVersion: v1
@@ -94,15 +103,17 @@ spec:
     requests.memory: 8Gi
     limits.cpu: "8"
     persistentvolumeclaims: "5"
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Static Pods ==========================================================
 \tcbsubtitle{Static Pods}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Place manifest in staticPodPath:
 /etc/kubernetes/manifests/my-pod.yaml
 # Kubelet auto-creates pod; name = <pod>-<node>
 # To delete: remove the manifest file
 # View: k get pods -n kube-system
 # Control plane components ARE static pods
-\end{cheatcode}
+\end{cheatcodebash}
+
+\end{minipage}

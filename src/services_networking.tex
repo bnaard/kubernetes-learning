@@ -13,17 +13,17 @@ NodePort & Via \texttt{NodeIP:Port} (30000--32767) \\
 LoadBalancer & Cloud LB, external IP \\
 ExternalName & DNS CNAME alias to external host \\
 \end{tblr}}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k expose deploy <name> --port=80 \
   --target-port=8080 --type=ClusterIP
 k expose deploy <name> --port=80 \
   --type=NodePort --node-port=30080
 k get svc
 k get endpoints <svc>    # empty = label mismatch!
-\end{cheatcode}
+\end{cheatcodebash}
 
 Service YAML:
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: v1
 kind: Service
 spec:
@@ -33,11 +33,11 @@ spec:
   - port: 80                   # cluster (virtual) port
     targetPort: 8080           # pod's containerPort
     nodePort: 30080            # node port (optional)
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === DNS ==================================================================
 \tcbsubtitle{DNS (CoreDNS)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Service DNS:
 <svc>.<ns>.svc.cluster.local
 # Pod DNS:
@@ -49,11 +49,11 @@ k run tmp --image=busybox --rm -it \
   --restart=Never -- wget -qO- http://<svc>
 # CoreDNS config:
 k get cm coredns -n kube-system -o yaml
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Network Policies =====================================================
 \tcbsubtitle{Network Policies}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Default: all traffic allowed
 # Once a NetworkPolicy selects a pod:
 #   only explicitly allowed traffic passes
@@ -85,11 +85,11 @@ spec:
   - ports:
     - {port: 53, protocol: UDP}
     - {port: 53, protocol: TCP}
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Ingress ==============================================================
 \tcbsubtitle{Ingress}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k get ingressclass
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -112,11 +112,11 @@ spec:
   tls:
   - hosts: [myapp.example.com]
     secretName: tls-secret
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Gateway API ===========================================================
 \tcbsubtitle{Gateway API (successor to Ingress)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata: {name: my-route}
@@ -134,4 +134,4 @@ spec:
       - {name: X-Env, value: canary}
     backendRefs:
     - {name: api-svc-v2, port: 80, weight: 100}
-\end{cheatcode}
+\end{cheatcodebash}

@@ -1,0 +1,49 @@
+% === Deployments ===========================================================
+\begin{minipage}[t]{0.49\linewidth}
+
+\tcbsubtitle{Imperative}
+\begin{cheatcodebashbold}
+### Create and scale
+k create deploy <name> --image=<img> --replicas=3
+k scale deploy <name> --replicas=5
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Update image
+k set image deploy/<name> <c>=<img>:tag
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Rollout management
+k rollout status  deploy/<name>
+k rollout history deploy/<name>
+k rollout undo    deploy/<name>
+k rollout undo    deploy/<name> --to-revision=2
+k rollout pause   deploy/<name>
+k rollout resume  deploy/<name>
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Annotate last section of rollout history
+k annotate deploy/<name> kubernetes.io/change-cause="xy"
+\end{cheatcodebashbold}
+
+
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+
+\tcbsubtitle{Spec Essentials}
+\begin{cheatcodebashbold}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: web}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # extra pods during upd
+      maxUnavailable: 0  # min avail. dur upd
+  template:
+    metadata: {labels: {app: web}}
+    spec: ...              # same as pod spec
+\end{cheatcodebashbold}
+\end{minipage}

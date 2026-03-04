@@ -1,46 +1,36 @@
 % === Simple Setup =========================================================
 \tcbsubtitle{Simple Setup}
-\includegraphics[width=\linewidth]{cluster_architecture_simple.png}
+\includegraphics[width=0.8\linewidth]{simple_cluster_structure.png}
 
 % === High Availability ====================================================
 \tcbsubtitle{High Availability}
 \begin{itemize}[nosep, leftmargin=1em, label={--}]
   \item \textbf{Stacked etcd}: etcd co-located on ctrl-plane nodes (default)
   \item \textbf{External etcd}: separate etcd cluster (more resilient)
-  \item Requires LB in front of multiple API servers
+  \item Requires \textbf{loadbalancer (LB)} in front of multiple API servers
 \end{itemize}
-\begin{cheatcode}
-kubeadm init --control-plane-endpoint="<LB_IP>:6443" \
-  --upload-certs
-# Join additional control-plane nodes:
-kubeadm join <LB>:6443 --control-plane --certificate-key <key>
-\end{cheatcode}
+\includegraphics[width=\linewidth]{ha_cluster_structure.png}
+\vspace{1ex}
+
+Initialize the first control plane node (↓ outputs join commands)
+\begin{cheatcodebash}
+kubeadm init --control-plane-endpoint="<LB_IP>:6443" --upload-certs
+\end{cheatcodebash}
+
+{Join additional {\color{red}control-plane} and {\color{teal}worker} nodes:}
+\begin{cheatcodetex}
+\ttfamily\fontsize{6.5}{7.5}\selectfont
+\textcolor{red}{kubeadm join <LB>:6443 -{}-control-plane -{}-certificate-key <key>}\\
+\textcolor{teal}{kubeadm join <LB\_IP>:6443 ...}
+\end{cheatcodetex}
 
 % === Key Paths ============================================================
 \tcbsubtitle{Key Paths}
-\begin{cheatcode}
+\begin{cheatcodebashbold}
 /etc/kubernetes/manifests/   # static pod manifests
 /var/lib/kubelet/config.yaml # kubelet config
 /etc/kubernetes/pki/         # cluster TLS certs
 /etc/kubernetes/admin.conf   # admin kubeconfig
 /etc/cni/net.d/              # CNI plugin config
-\end{cheatcode}
+\end{cheatcodebashbold}
 
-% === Cluster Upgrade ======================================================
-\tcbsubtitle{Cluster Upgrade (kubeadm)}
-\begin{cheatcode}
-# --- Control Plane ---
-apt-mark unhold kubeadm && apt install -y kubeadm=1.X.Y-1.1
-kubeadm upgrade plan
-kubeadm upgrade apply v1.X.Y
-apt install -y kubelet=1.X.Y-1.1 kubectl=1.X.Y-1.1
-systemctl daemon-reload && systemctl restart kubelet
-
-# --- Each Worker Node ---
-kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
-# SSH to node, then:
-kubeadm upgrade node
-apt install -y kubelet=1.X.Y-1.1 kubectl=1.X.Y-1.1
-systemctl daemon-reload && systemctl restart kubelet
-kubectl uncordon <node>
-\end{cheatcode}

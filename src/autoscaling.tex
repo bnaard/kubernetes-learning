@@ -1,6 +1,6 @@
 % === HPA ==================================================================
 \tcbsubtitle{HPA (Horizontal Pod Autoscaler)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Requires Metrics Server!
 k autoscale deploy <name> \
   --cpu-percent=50 --min=2 --max=10
@@ -29,11 +29,11 @@ spec:
       target:
         type: AverageValue
         averageValue: 200Mi
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === VPA ==================================================================
 \tcbsubtitle{VPA (Vertical Pod Autoscaler)}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # VPA adjusts resource requests/limits
 # Requires VPA controller installed
 apiVersion: autoscaling.k8s.io/v1
@@ -52,17 +52,17 @@ spec:
     # Auto     = same as Recreate currently
 k get vpa
 k describe vpa <name>  # check Recommendation
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Metrics Server =======================================================
 \tcbsubtitle{Metrics Server}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Install:
 kubectl apply -f https://github.com/kubernetes-sigs/\
   metrics-server/releases/latest/download/components.yaml
 k top nodes
 k top pods [-n <ns>] [--containers]
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Probes ===============================================================
 \tcbsubtitle{Probes}
@@ -78,7 +78,7 @@ liveness & restart container \\
 readiness & remove from Service endpoints \\
 startup & disables others during slow start \\
 \end{tblr}}
-\begin{cheatcode}
+\begin{cheatcodebash}
 livenessProbe:      # OR readinessProbe/startupProbe
   httpGet:
     path: /healthz
@@ -90,4 +90,4 @@ livenessProbe:      # OR readinessProbe/startupProbe
   failureThreshold: 3
   successThreshold: 1
   timeoutSeconds: 1
-\end{cheatcode}
+\end{cheatcodebash}

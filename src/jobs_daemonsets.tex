@@ -1,6 +1,6 @@
 % === Jobs =================================================================
 \tcbsubtitle{Jobs}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k create job <name> --image=busybox \
   -- echo hello $do > job.yaml
 # Job spec:
@@ -18,11 +18,11 @@ spec:
         command: [echo, done]
 k get jobs
 k logs job/<name>
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === CronJobs =============================================================
 \tcbsubtitle{CronJobs}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k create cj <name> --image=busybox \
   --schedule="*/5 * * * *" -- echo hi
 # Cron format: min hour dom month dow
@@ -39,11 +39,11 @@ spec:
     spec: ...          # same as Job spec
 k get cj
 k create job manual-run --from=cronjob/<name>
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === DaemonSets ===========================================================
 \tcbsubtitle{DaemonSets}
-\begin{cheatcode}
+\begin{cheatcodebash}
 # Runs exactly 1 pod per (eligible) node
 # Use: log collectors, monitoring, CNI
 apiVersion: apps/v1
@@ -63,11 +63,11 @@ spec:
         image: fluentd
 k get ds -A
 k rollout restart ds/<name>
-\end{cheatcode}
+\end{cheatcodebash}
 
 % === Namespaces ===========================================================
 \tcbsubtitle{Namespaces}
-\begin{cheatcode}
+\begin{cheatcodebash}
 k create ns <name>
 k get all -n <name>
 k config set-context --current --namespace=<ns>
@@ -77,4 +77,4 @@ k config set-context --current --namespace=<ns>
 k delete ns <name>
 # List cluster-scoped resources:
 k api-resources --namespaced=false
-\end{cheatcode}
+\end{cheatcodebash}
