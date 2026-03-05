@@ -1,0 +1,45 @@
+% === JSONPath ================================================================
+\tcbsubtitle{JSONPath — Syntax}
+\begin{cheatcodetex}
+  \ttfamily\fontsize{6.5}{7.5}\selectfont
+  \begin{tabular}{@{}ll@{}}
+    \texttt{.field}              & field access \\
+    \texttt{['field']}           & alternate field access \\
+    \texttt{[n]}                 & element at index $n$ \\
+    \texttt{[*]}                 & all elements \\
+    \texttt{[start:end]}         & slice \\
+    \texttt{[?(@.k=="v")]}       & filter expression \\
+    \texttt{\{range .x[*]\}..\{end\}} & loop \\
+  \end{tabular}
+\end{cheatcodetex}
+
+\tcbsubtitle{JSONPath — kubectl}
+\begin{cheatcodebash}
+### Single field
+k get pod <name>  -o jsonpath='{.status.podIP}'
+k get node <name> -o jsonpath='{.status.nodeInfo.kubeletVersion}'
+### Field from every item
+k get pods -o jsonpath='{.items[*].metadata.name}'
+### Loop with tab + newline formatting
+k get pods -o jsonpath=\
+  '{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"\n"}{end}'
+### Filter: InternalIP of a node
+k get node <name> -o jsonpath=\
+  '{.status.addresses[?(@.type=="InternalIP")].address}'
+### Filter: unschedulable nodes
+k get nodes -o jsonpath=\
+  '{.items[?(@.spec.unschedulable==true)].metadata.name}'
+\end{cheatcodebash}
+
+\tcbsubtitle{Custom Columns \& Sort}
+\begin{cheatcodebash}
+### Custom columns
+k get pods -o custom-columns=\
+  NAME:.metadata.name,\
+  STATUS:.status.phase,\
+  NODE:.spec.nodeName
+### Sort
+k get pods   --sort-by=.metadata.name
+k get pods   --sort-by=.status.startTime
+k get events --sort-by=.lastTimestamp -A
+\end{cheatcodebash}
