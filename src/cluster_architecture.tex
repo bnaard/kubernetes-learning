@@ -1,3 +1,4 @@
+
 % === Simple Setup =========================================================
 \tcbsubtitle{Simple Setup}
 \includegraphics[width=0.8\linewidth]{simple_cluster_structure.png}
@@ -16,6 +17,8 @@ Initialize the first control plane node (↓ outputs join commands)
 \begin{cheatcodebash}
 kubeadm init --control-plane-endpoint="<LB_IP>:6443" --upload-certs
 \end{cheatcodebash}
+
+\vspace{1ex}
 
 {Join additional {\color{red}control-plane} and {\color{teal}worker} nodes:}
 \begin{cheatcodetex}

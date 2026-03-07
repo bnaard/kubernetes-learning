@@ -1,65 +1,137 @@
+\begin{minipage}[t]{0.48\linewidth}
+
 % === Service Types =========================================================
 \tcbsubtitle{Service Types}
-{\small\sffamily
-\begin{tblr}{
-  colspec={lX},
-  hline{2}={0.4pt},
-  rows={rowsep=0.5pt},
-  row{1}={font=\bfseries},
-}
-Type & Description \\
-ClusterIP & Internal only (default) \\
-NodePort & Via \texttt{NodeIP:Port} (30000--32767) \\
-LoadBalancer & Cloud LB, external IP \\
-ExternalName & DNS CNAME alias to external host \\
-\end{tblr}}
+
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1,l]X[2,l]},
+    columns={valign=m, colsep=0.15em},
+    rows={rowsep=0pt, font=\sffamily\footnotesize},   % \fontsize{5}{6}\selectfont
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\bfseries\footnotesize},  % \fontsize{5}{6}\selectfont
+    }
+    ]
+    \textbf{Type}    & \textbf{Description}         \\
+    ClusterIP        & Internal only (default)      \\
+    NodePort         & Via \texttt{NodeIP:Port} (30000--32767)      \\
+    LoadBalancer     & Cloud LB, external IP      \\
+    ExternalName     & DNS CNAME alias to external host      \\
+
+\end{tcolorbox}
+
 \begin{cheatcodebash}
-k expose deploy <name> --port=80 \
-  --target-port=8080 --type=ClusterIP
-k expose deploy <name> --port=80 \
-  --type=NodePort --node-port=30080
+k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
+k expose deploy <name> --port=80 --type=NodePort --node-port=30080
 k get svc
 k get endpoints <svc>    # empty = label mismatch!
 \end{cheatcodebash}
 
-Service YAML:
+
+\begin{cheatcodebash}
+apiVersion: v1
+kind: Service
+spec:
+  type: ClusterIP              # default if omitted
+  selector: {app: web}
+  ports:
+  - port: 80                   # Service (virtual) port
+    targetPort: 8080           # Pod containerPort
+\end{cheatcodebash}
+\begin{center}
+\begin{tikzpicture}[
+  >=Stealth,
+  box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+    font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+    minimum height=1.4em},
+  plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+  caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+  container/.style={draw=teal!40, dashed, rounded corners=2pt,
+    inner sep=3pt, fit=#1},
+  ]
+  \node[caller] (client) {other Pod};
+  \node[box=k8sblue, right=3em of client] (svc) {Service};
+  \node[box=teal, right=4em of svc] (app) {app:8080};
+  \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
+    teal!70!black]below:Pod}] (pod) {};
+  \draw[->, gray, thick]
+    (client) -- (svc) node[plbl=gray, pos=0.5, above] {:80};
+  \draw[->, k8sblue!60, thick]
+    (svc) -- (app)
+    node[plbl=k8sblue, pos=0.15, above] {:80}
+    node[plbl=teal,    pos=0.85, above] {:8080};
+\end{tikzpicture}
+\end{center}
+
 \begin{cheatcodebash}
 apiVersion: v1
 kind: Service
 spec:
   type: NodePort
-  selector: {app: web}         # matches pod labels
+  selector: {app: web}
   ports:
-  - port: 80                   # cluster (virtual) port
-    targetPort: 8080           # pod's containerPort
-    nodePort: 30080            # node port (optional)
+  - port: 80                   # Service (ClusterIP) port
+    targetPort: 8080           # Pod containerPort
+    nodePort: 30080            # Node external port
+\end{cheatcodebash}
+\begin{center}
+\begin{tikzpicture}[
+  >=Stealth,
+  box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+    font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+    minimum height=1.4em},
+  plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+  caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+  container/.style={draw=teal!40, dashed, rounded corners=2pt,
+    inner sep=3pt, fit=#1},
+  ]
+  \node[caller] (ext) {external};
+  \node[box=orange, right=2.5em of ext] (nd) {Node};
+  \node[box=k8sblue, right=3.5em of nd]  (svc) {Service};
+  \node[box=teal, right=4em of svc] (app) {app:8080};
+  \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
+    teal!70!black]below:Pod}] (pod) {};
+  \draw[->, gray, thick]
+    (ext) -- (nd) node[plbl=orange, pos=0.5, above] {:30080};
+  \draw[->, orange!60, thick]
+    (nd) -- (svc)
+    node[plbl=k8sblue, pos=0.85, above] {:80};
+  \draw[->, k8sblue!60, thick]
+    (svc) -- (app)
+    node[plbl=k8sblue, pos=0.15, above] {:80}
+    node[plbl=teal,    pos=0.85, above] {:8080};
+\end{tikzpicture}
+
+% \vspace{1pt}
+{\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+\texttt{curl http://<node-ip>:30080}\\[-1pt]
+kube-proxy catches :30080 on the node and forwards to Service ClusterIP:80, which routes to Pod:8080.\par}
+\end{center}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain service.spec --recursive
+# docs: "service"
 \end{cheatcodebash}
 
-% === DNS ==================================================================
-\tcbsubtitle{DNS (CoreDNS)}
-\begin{cheatcodebash}
-# Service DNS:
-<svc>.<ns>.svc.cluster.local
-# Pod DNS:
-<ip-dashes>.<ns>.pod.cluster.local
-# Test DNS:
-k run tmp --image=busybox --rm -it \
-  --restart=Never -- nslookup <svc>.<ns>
-k run tmp --image=busybox --rm -it \
-  --restart=Never -- wget -qO- http://<svc>
-# CoreDNS config:
-k get cm coredns -n kube-system -o yaml
-\end{cheatcodebash}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
 
 % === Network Policies =====================================================
 \tcbsubtitle{Network Policies}
 \begin{cheatcodebash}
-# Default: all traffic allowed
-# Once a NetworkPolicy selects a pod:
-#   only explicitly allowed traffic passes
+# Default: all traffic allowed. Once a NetworkPolicy
+# selects a pod: only explicitly allowed traffic passes
 k get netpol -A
 k describe netpol <name>
+\end{cheatcodebash}
 
+\begin{cheatcodebash}
 # Deny all ingress + egress to a pod:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -67,9 +139,11 @@ metadata: {name: deny-all, namespace: <ns>}
 spec:
   podSelector: {}          # matches all pods in ns
   policyTypes: [Ingress, Egress]
----
+\end{cheatcodebash}
+
+  \begin{cheatcodebash}
 # Allow ingress only from specific pods:
-spec:
+spec:                  # <networkpolicy>.spec
   podSelector: {matchLabels: {app: db}}
   policyTypes: [Ingress]
   ingress:
@@ -77,9 +151,11 @@ spec:
     - podSelector:          # AND condition within {}
         matchLabels: {app: web}
     - namespaceSelector:    # OR: separate list item
-        matchLabels: {env: prod}
+        matchLabels: 
+          env: prod         # namespace's labels
+          kubernetes.io/metadata.name: production # auto!
     ports:
-    - {protocol: TCP, port: 5432}
+    - {protocol: TCP, port: 5432} # ex. PostgreSQL port
 # Allow egress to DNS only:
   egress:
   - ports:
@@ -87,15 +163,33 @@ spec:
     - {port: 53, protocol: TCP}
 \end{cheatcodebash}
 
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain networkpolicy.spec --recursive
+# docs: "network policies"
+\end{cheatcodebash}
+
+\end{minipage}
+
+\vspace{1.5ex}
+
+\begin{minipage}[t]{0.48\linewidth}
+
+
 % === Ingress ==============================================================
 \tcbsubtitle{Ingress}
 \begin{cheatcodebash}
 k get ingressclass
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
   annotations:
+    # client → myapp.example.com/api →  api-svc receives /
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
@@ -103,8 +197,8 @@ spec:
   - host: myapp.example.com
     http:
       paths:
-      - path: /api
-        pathType: Prefix   # Prefix|Exact|ImplementationSpecific
+      - path: /api  # rewritten to /
+        pathType: Prefix # Prefix|Exact|ImplementationSpecific
         backend:
           service:
             name: api-svc
@@ -114,6 +208,17 @@ spec:
     secretName: tls-secret
 \end{cheatcodebash}
 
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain ingress.spec --recursive
+# docs: "ingress"
+\end{cheatcodebash}
+
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+
+
 % === Gateway API ===========================================================
 \tcbsubtitle{Gateway API (successor to Ingress)}
 \begin{cheatcodebash}
@@ -122,16 +227,28 @@ kind: HTTPRoute
 metadata: {name: my-route}
 spec:
   parentRefs:
-  - name: my-gateway         # references a Gateway object
+    - name: my-gateway         # references a Gateway object
   hostnames: ["myapp.example.com"]
   rules:
-  - matches:
-    - path: {type: PathPrefix, value: /api}
-    backendRefs:
-    - {name: api-svc, port: 80}
-  - matches:
-    - headers:
-      - {name: X-Env, value: canary}
-    backendRefs:
-    - {name: api-svc-v2, port: 80, weight: 100}
+    - matches:
+        - path: {type: PathPrefix, value: /api}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: / # /api/users -> /users
+      backendRefs:
+        - {name: api-svc, port: 80}
+    - matches:
+        - headers:
+            - {name: X-Env, value: canary}
+      backendRefs:
+        - {name: api-svc-v2, port: 80, weight: 100}
 \end{cheatcodebash}
+
+
+\end{minipage}
+
+
+

@@ -1,5 +1,10 @@
 % === PersistentVolume =====================================================
 \tcbsubtitle{PersistentVolume (PV)}
+\begin{cheatcodebashbold}
+k get pv    # check RECLAIM POLICY, STATUS
+k create pv <pv-name> --capacity=<size> --access-modes=<mode> --host-path=<path>
+\end{cheatcodebashbold}
+
 \begin{cheatcodebash}
 apiVersion: v1
 kind: PersistentVolume
@@ -15,13 +20,24 @@ spec:
   # Delete   = delete underlying storage
   # Recycle  = deprecated
   storageClassName: manual
-  hostPath: {path: /mnt/data, type: Directory}
-  # nfs: {server: 1.2.3.4, path: /share}
-k get pv    # check RECLAIM POLICY, STATUS
+  hostPath: {path: /mnt/data, type: Directory} 
+# nfs: {server: 1.2.3.4, path: /x}
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain persistentvolume.spec --recursive
+# docs: "persistent volumes"
 \end{cheatcodebash}
 
 % === PersistentVolumeClaim ================================================
 \tcbsubtitle{PersistentVolumeClaim (PVC)}
+
+\begin{cheatcodebashbold}
+k get pvc    # STATUS: Bound|Pending|Lost
+k create pv my-local-pv --capacity=5Gi --access-modes=ReadWriteOnce --host-path=/data/config
+\end{cheatcodebashbold}
+
 \begin{cheatcodebash}
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -31,13 +47,19 @@ spec:
   storageClassName: manual  # "" = no dynamic prov.
   resources:
     requests: {storage: 5Gi}
-k get pvc    # STATUS: Bound|Pending|Lost
-# Pending reasons: capacity mismatch,
-#   accessMode mismatch, storageClass mismatch
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain persistentvolumeclaim.spec --recursive
+# docs: "persistent volumes"
 \end{cheatcodebash}
 
 % === StorageClass (Dynamic Provisioning) ==================================
 \tcbsubtitle{StorageClass (Dynamic Provisioning)}
+\begin{cheatcodebash}
+k get sc               # list StorageClasses
+\end{cheatcodebash}
 \begin{cheatcodebash}
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -46,23 +68,27 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: rancher.io/local-path
-# cloud: kubernetes.io/aws-ebs
-# parameters: {type: gp3}
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
-k get sc               # list StorageClasses
-# PVC with dynamic provisioning:
-spec:
+\end{cheatcodebash}
+\begin{cheatcodebash}
+spec:  # PVC with dynamic provisioning
   storageClassName: fast  # matches SC name
   resources:
     requests: {storage: 5Gi}
 \end{cheatcodebash}
 
+\begin{cheatcodebash}
+### Exam helpers:
+k explain storageclass --recursive
+# docs: "storage classes"
+\end{cheatcodebash}
+
 % === Volume Mounts ========================================================
 \tcbsubtitle{Volume Types in Pods}
 \begin{cheatcodebash}
-spec:
+spec:                  # <pod>.spec
   volumes:
   - name: pvc-vol
     persistentVolumeClaim:
@@ -79,4 +105,11 @@ spec:
   - volumeMounts:
     - {name: pvc-vol, mountPath: /var/data}
     - {name: cfg, mountPath: /etc/config, readOnly: true}
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.volumes --recursive
+k explain pod.spec.containers.volumeMounts --recursive
+# docs: "volumes"
 \end{cheatcodebash}

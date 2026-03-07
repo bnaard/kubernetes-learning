@@ -1,0 +1,42 @@
+
+% === Metrics Server =======================================================
+\tcbsubtitle{Metrics Server}
+\begin{cheatcodebash}
+# Install:
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/\
+   releases/latest/download/components.yaml
+\end{cheatcodebash}
+\begin{cheatcodebash}
+k top nodes
+k top pods [-n <ns>] [--containers]
+\end{cheatcodebash}
+
+% === Probes ===============================================================
+\tcbsubtitle{Probes}
+{\small\sffamily
+\begin{tblr}{
+  colspec={lX},
+  hline{2}={0.4pt},
+  rows={rowsep=0.5pt},
+  row{1}={font=\bfseries},
+}
+Probe & Triggers \\
+liveness & restart container \\
+readiness & remove from Service endpoints \\
+startup & disables others during slow start \\
+\end{tblr}}
+
+
+\begin{cheatcodebash}
+livenessProbe:      # OR readinessProbe/startupProbe
+  httpGet:
+    path: /healthz
+    port: 8080
+  # OR: tcpSocket: {port: 8080}
+  # OR: exec: {command: [cat, /tmp/healthy]}
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+  timeoutSeconds: 1
+\end{cheatcodebash}

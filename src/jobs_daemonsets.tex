@@ -1,10 +1,13 @@
 % === Jobs =================================================================
 \tcbsubtitle{Jobs}
 \begin{cheatcodebash}
-k create job <name> --image=busybox \
-  -- echo hello $do > job.yaml
-# Job spec:
-spec:
+k create job <name> --image=busybox -- echo hi $do > j.yaml
+k get jobs
+k logs job/<name>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+spec:                         # <job>.spec
   completions: 3        # total successful completions
   parallelism: 2        # concurrent pods
   backoffLimit: 4       # retries before fail
@@ -15,30 +18,38 @@ spec:
       containers:
       - name: job
         image: busybox
-        command: [echo, done]
-k get jobs
-k logs job/<name>
+        command: ["echo", "done"]
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain job.spec --recursive
+# docs: "jobs"
 \end{cheatcodebash}
 
 % === CronJobs =============================================================
 \tcbsubtitle{CronJobs}
 \begin{cheatcodebash}
-k create cj <name> --image=busybox \
-  --schedule="*/5 * * * *" -- echo hi
-# Cron format: min hour dom month dow
-# */5 * * * *  = every 5 min
-# 0 2 * * *    = daily at 2am
-# 0 * * * 1-5  = hourly Mon-Fri
-spec:
+k create cj <name> --image=busybox --schedule="*/5 * * * *" -- echo hi
+k get cj
+k create job manual-run --from=cronjob/<name>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+spec:                         # <cronjob>.spec
   schedule: "0 2 * * *"
-  concurrencyPolicy: Allow|Forbid|Replace
+  concurrencyPolicy: Allow  # or Forbid or Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   startingDeadlineSeconds: 60
   jobTemplate:
     spec: ...          # same as Job spec
-k get cj
-k create job manual-run --from=cronjob/<name>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain cronjob.spec --recursive
+# docs: "cron jobs"
 \end{cheatcodebash}
 
 % === DaemonSets ===========================================================
@@ -46,6 +57,10 @@ k create job manual-run --from=cronjob/<name>
 \begin{cheatcodebash}
 # Runs exactly 1 pod per (eligible) node
 # Use: log collectors, monitoring, CNI
+k get ds -A
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata: {name: fluentd, namespace: kube-system}
@@ -61,20 +76,16 @@ spec:
       containers:
       - name: fluentd
         image: fluentd
-k get ds -A
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+# Triggers a rolling restart of DaemonSet — all pods are replaced one by one using the same spec
 k rollout restart ds/<name>
 \end{cheatcodebash}
 
-% === Namespaces ===========================================================
-\tcbsubtitle{Namespaces}
 \begin{cheatcodebash}
-k create ns <name>
-k get all -n <name>
-k config set-context --current --namespace=<ns>
-# Cross-namespace DNS:
-# <svc>.<ns>.svc.cluster.local
-# Delete namespace + all resources:
-k delete ns <name>
-# List cluster-scoped resources:
-k api-resources --namespaced=false
+### Exam helpers:
+k explain daemonset.spec --recursive
+k explain daemonset.spec.updateStrategy --recursive
+# docs: "daemonset"
 \end{cheatcodebash}

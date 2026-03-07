@@ -1,0 +1,36 @@
+
+% === Namespaces ===========================================================
+\begin{cheatcodebashbold}
+k create ns <name>
+k get all -n <name>
+k config set-context --current --namespace=<ns>
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+# Delete namespace + all resources:
+k delete ns <name>
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+# Cross-namespace DNS:
+# <svc>.<ns>.svc.cluster.local
+\end{cheatcodebashbold}
+
+\begin{cheatcodebash}
+# List cluster-scoped resources:
+k api-resources --namespaced=false
+\end{cheatcodebash}
+
+% === Context & Namespace ==================================================
+\tcbsubtitle{Context \& Namespace}
+\begin{cheatcodebashbold}
+k config set-context --current --namespace=<ns>
+k get all -A          # all namespaces
+\end{cheatcodebashbold}
+
+\begin{cheatcodebash}
+k config get-contexts
+k config use-context <ctx-name>
+k get all -n <ns>
+k api-resources --namespaced=true
+\end{cheatcodebash}

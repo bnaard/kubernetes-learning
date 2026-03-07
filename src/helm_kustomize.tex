@@ -1,18 +1,18 @@
 % === Helm =================================================================
 \tcbsubtitle{Helm}
 \begin{cheatcodebash}
-helm repo add <name> <url>
-helm repo update
-helm search repo <keyword>
+helm repo add <name> <url>       # register chart repo
+helm repo update                 # refresh index
+helm search repo <keyword>       # find charts
 helm install <release> <chart> \
   -n <ns> --create-namespace \
-  -f values.yaml --set key=val
+  -f values.yaml --set key=val   # deploy
 helm upgrade <release> <chart> -f vals.yaml
 helm rollback <release> [revision]
-helm uninstall <release> -n <ns>
-helm list [-A]
-helm status <release>
-helm get values <release>
+helm uninstall <release> -n <ns> # delete release
+helm list [-A]                   # show releases
+helm status <release>            # health + notes
+helm get values <release>        # current overrides
 helm template <release> <chart>  # dry-run
 helm show values <chart>         # inspect defaults
 \end{cheatcodebash}
@@ -36,6 +36,8 @@ patches:
       path: /spec/replicas
       value: 3
   target: {kind: Deployment, name: web}
+\end{cheatcodebash}
+\begin{cheatcodebash}
 # Apply:
 kubectl apply -k <dir>
 kubectl kustomize <dir>        # preview only
@@ -44,12 +46,20 @@ kubectl kustomize <dir>        # preview only
 % === CRDs & Operators =====================================================
 \tcbsubtitle{CRDs \& Operators}
 \begin{cheatcodebash}
-k get crd
-k describe crd <name>
-k get <custom-resource-kind>
+k get crd                       # list all CRDs
+k describe crd <name>           # schema + versions
+k get <custom-resource-kind>    # list custom objects
+\end{cheatcodebash}
+\begin{cheatcodebash}
 # Operators extend K8s with custom controllers
 # Install via Helm or OLM:
 k get operators                 # if OLM installed
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain customresourcedefinition.spec --recursive
+# docs: "custom resources"
 \end{cheatcodebash}
 
 % === Extension Interfaces =================================================
@@ -68,7 +78,7 @@ CRI & Container runtime & containerd, CRI-O \\
 \end{tblr}}
 \begin{cheatcodebash}
 # CNI config:  /etc/cni/net.d/
-# Check runtime:
+# Check runtime (node level tool):
 k get node -o wide          # CONTAINER-RUNTIME col
 crictl ps                   # list containers (node)
 crictl logs <id>

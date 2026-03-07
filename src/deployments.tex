@@ -1,11 +1,14 @@
 % === Deployments ===========================================================
-\begin{minipage}[t]{0.49\linewidth}
-
 \tcbsubtitle{Imperative}
 \begin{cheatcodebashbold}
 ### Create and scale
 k create deploy <name> --image=<img> --replicas=3
 k scale deploy <name> --replicas=5
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+### Define deployment with 3 replicas
+k create deploy <name> --image=<img> --replicas=3 $do > d.yaml
 \end{cheatcodebashbold}
 
 \begin{cheatcodebashbold}
@@ -29,12 +32,9 @@ k annotate deploy/<name> kubernetes.io/change-cause="xy"
 \end{cheatcodebashbold}
 
 
-\end{minipage}\hfill
-\begin{minipage}[t]{0.49\linewidth}
-
 \tcbsubtitle{Spec Essentials}
 \begin{cheatcodebashbold}
-spec:
+spec:                          # <deployment>.spec
   replicas: 3
   selector: {matchLabels: {app: web}}
   strategy:
@@ -46,4 +46,10 @@ spec:
     metadata: {labels: {app: web}}
     spec: ...              # same as pod spec
 \end{cheatcodebashbold}
-\end{minipage}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain deployment.spec --recursive
+k explain deployment.spec.strategy --recursive
+# docs: "deployments"
+\end{cheatcodebash}

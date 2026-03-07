@@ -18,14 +18,26 @@
 ### Single field
 k get pod <name>  -o jsonpath='{.status.podIP}'
 k get node <name> -o jsonpath='{.status.nodeInfo.kubeletVersion}'
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 ### Field from every item
 k get pods -o jsonpath='{.items[*].metadata.name}'
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 ### Loop with tab + newline formatting
 k get pods -o jsonpath=\
   '{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"\n"}{end}'
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 ### Filter: InternalIP of a node
 k get node <name> -o jsonpath=\
   '{.status.addresses[?(@.type=="InternalIP")].address}'
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 ### Filter: unschedulable nodes
 k get nodes -o jsonpath=\
   '{.items[?(@.spec.unschedulable==true)].metadata.name}'
@@ -38,6 +50,9 @@ k get pods -o custom-columns=\
   NAME:.metadata.name,\
   STATUS:.status.phase,\
   NODE:.spec.nodeName
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 ### Sort
 k get pods   --sort-by=.metadata.name
 k get pods   --sort-by=.status.startTime

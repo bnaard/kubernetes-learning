@@ -1,14 +1,21 @@
+\begin{minipage}[t]{0.48\linewidth}
 % === Cluster Upgrade ======================================================
-\tcbsubtitle{Cluster Upgrade (kubeadm)}
+\tcbsubtitle{Control Plane}
 \begin{cheatcodebash}
-# --- Control Plane ---
 apt-mark unhold kubeadm && apt install -y kubeadm=1.X.Y-1.1
 kubeadm upgrade plan
 kubeadm upgrade apply v1.X.Y
 apt install -y kubelet=1.X.Y-1.1 kubectl=1.X.Y-1.1
 systemctl daemon-reload && systemctl restart kubelet
 
-# --- Each Worker Node ---
+\end{cheatcodebash}
+
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+
+\tcbsubtitle{Worker Nodes}
+
+\begin{cheatcodebash}
 kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
 # SSH to node, then:
 kubeadm upgrade node
@@ -16,3 +23,6 @@ apt install -y kubelet=1.X.Y-1.1 kubectl=1.X.Y-1.1
 systemctl daemon-reload && systemctl restart kubelet
 kubectl uncordon <node>
 \end{cheatcodebash}
+
+\end{minipage}
+

@@ -1,40 +1,63 @@
+% === ServiceAccount =======================================================
+\tcbsubtitle{ServiceAccount}
+\begin{cheatcodebash}
+k create sa <name> -n <ns>
+k get sa -n <ns>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+# Assign to Pod:
+spec:                  # <pod>.spec
+  serviceAccountName: <name>
+  automountServiceAccountToken: false
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+# Create token (K8s 1.24+) → manual, prints token to terminal, admin/CI use
+k create token <sa-name> --duration=1h
+# Token mounted at: → automatically by kubelet for pods with a service account
+# /var/run/secrets/kubernetes.io/serviceaccount/
+\end{cheatcodebash}
+
+\begin{cheatcodebashbold}
+### Create role and bind it
+k create role r --verb=get,list --resource=pods
+k create rolebinding rb --role=r --serviceaccount=<ns>:<sa>
+\end{cheatcodebashbold}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain serviceaccount
+k explain pod.spec.serviceAccountName
+# docs: "service accounts"
+\end{cheatcodebash}
+
 % === RBAC Overview ========================================================
 \tcbsubtitle{RBAC}
-{\small\sffamily
-\begin{tblr}{
-  colspec={lX},
-  hline{2}={0.4pt},
-  rows={rowsep=0.5pt},
-  row{1}={font=\bfseries},
-}
-Resource & Scope \\
-Role & namespaced permissions \\
-ClusterRole & cluster-wide permissions \\
-RoleBinding & binds Role/ClusterRole in ns \\
-ClusterRoleBinding & binds ClusterRole cluster-wide \\
-\end{tblr}}
+
 \begin{cheatcodebash}
-# Create Role (namespaced):
-k create role <name> \
-  --verb=get,list,watch \
-  --resource=pods,deployments -n <ns>
-# Create ClusterRole:
-k create clusterrole <name> \
-  --verb='*' --resource='*'
+# Create Role (namespaced permissions):
+k create role <name> --verb=get,list,watch --resource=pods,deployments -n <ns>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+# Create ClusterRole (non-namespaced, cluster-wide permissions):
+k create clusterrole <name> --verb='*' --resource='*'
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 # Bind to ServiceAccount:
-k create rolebinding <name> \
-  --role=<role> \
-  --serviceaccount=<ns>:<sa> -n <ns>
-k create clusterrolebinding <name> \
-  --clusterrole=<cr> --user=<user>
+k create rolebinding <name> --role=<role> --serviceaccount=<ns>:<sa> -n <ns>
+k create clusterrolebinding <name> --clusterrole=<cr> --user=<user>
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
 # Verify:
 k auth can-i get pods --as=<user>
-k auth can-i get pods \
-  --as=system:serviceaccount:<ns>:<sa>
+k auth can-i get pods --as=system:serviceaccount:<ns>:<sa>
 k auth can-i --list -n <ns>
 \end{cheatcodebash}
 
-Role YAML:
 \begin{cheatcodebash}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -48,26 +71,33 @@ rules:
   verbs: ["get","list","create","update"]
 \end{cheatcodebash}
 
-% === ServiceAccount =======================================================
-\tcbsubtitle{ServiceAccount}
 \begin{cheatcodebash}
-k create sa <name> -n <ns>
-k get sa -n <ns>
-# Assign to Pod:
-spec:
-  serviceAccountName: <name>
-  automountServiceAccountToken: false
-# Create token (K8s 1.24+):
-k create token <sa-name> --duration=1h
-# Token mounted at:
-# /var/run/secrets/kubernetes.io/serviceaccount/
+#  - "" (empty string) = the core group (/api/v1) — includes pods, services, configmaps, secrets, nodes, namespaces, persistentvolumeclaims, etc.
+#  - "apps" = the apps group (/apis/apps/v1) — includes deployments, statefulsets, daemonsets, replicasets
+#  - "rbac.authorization.k8s.io" — roles, rolebindings, etc.
+#  - "networking.k8s.io" — networkpolicies, ingresses
+#  - "batch" — jobs, cronjobs
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+#  Check which group a resource belongs to:
+k api-resources    # GROUP column shows the apiGroup
+\end{cheatcodebash}
+
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain role.rules --recursive
+k explain clusterrole.rules --recursive
+k explain rolebinding.roleRef --recursive
+# docs: "rbac authorization"
 \end{cheatcodebash}
 
 % === SecurityContext ======================================================
 \tcbsubtitle{SecurityContext}
 \begin{cheatcodebash}
 # Pod level (applies to all containers):
-spec:
+spec:                  # <pod>.spec
   securityContext:
     runAsUser: 1000
     runAsGroup: 3000
@@ -84,4 +114,11 @@ spec:
       capabilities:
         add: ["NET_ADMIN", "SYS_TIME"]
         drop: ["ALL"]
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.securityContext --recursive
+k explain pod.spec.containers.securityContext --recursive
+# docs: "security context"
 \end{cheatcodebash}

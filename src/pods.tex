@@ -11,15 +11,53 @@ k run busybox --image=busybox -- sleep 3600
 k run tmp --image=busybox --rm -it [--restart=Never] -- sh
 \end{cheatcodebashbold}
 
-\begin{cheatcodebashbold}
+\begin{cheatcodebash}
 ### With port, env var and label
 k run <name> --image=<img> --port=80 --env="K=v" -l "a=b"
+\end{cheatcodebash}
+
+\begin{cheatcodebashbold}
+### Get pod spec, tee prints on tty and into file
+k run <name> --image=<img> $do | tee pod.yaml
 \end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+# Force delete pod
+k delete pod <name> $now
+\end{cheatcodebashbold}
+
+
+% === InitContainers & SideCars ===================================================
+\tcbsubtitle{InitContainers \& SideCars}
+
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1.1,l]X[2,l]X[2,l]},
+    columns={valign=t, colsep=0.4em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+    }
+    ]
+    Feature                       & Standard Init Container             & Native Sidecar Container          \\
+    Location                      & \texttt{spec.initContainers}        & \texttt{spec.initContainers}      \\
+    \texttt{restartPolicy}        & (Default)\texttt{Never} / Not set   & \texttt{Always}                   \\
+    Lifecycle                     & Runs to completion then exits.      & Starts, then stays running for Pod life.      \\
+    Startup Order                 & Blocks next container until completion.      & Blocks next container until startup/ready.     \\
+    Termination                   & Exits before app starts.            & Terminated after main containers exit.     \\
+    
+\end{tcolorbox}
+
 
 % === Pod Spec Key Fields ===================================================
 \tcbsubtitle{Spec Essentials}
 \begin{cheatcodebashbold}
-spec:
+spec:                            # <pod>.spec
   restartPolicy: Always|Never|OnFailure
   serviceAccountName: <sa>
   hostNetwork: true              # use node network
@@ -36,12 +74,6 @@ spec:
     env:
     - name: MY_VAR
       value: "literal"
-    - name: FROM_CM
-      valueFrom:
-        configMapKeyRef: {name: cm, key: k}
-    - name: FROM_SECRET
-      valueFrom:
-        secretKeyRef: {name: sec, key: k}
     resources:
       requests: {cpu: 100m, memory: 128Mi}
       limits:   {cpu: 500m, memory: 256Mi}
@@ -52,6 +84,16 @@ spec:
     persistentVolumeClaim:
       claimName: my-pvc
 \end{cheatcodebashbold}
+
+
+\tcbsubtitle{Help}
+
+\begin{cheatcodebash}
+k explain pod.spec --recursive
+k explain pod.spec.containers --recursive
+k explain pod.spec.initContainers --recursive
+# docs: "pods"
+\end{cheatcodebash}
 
 
 

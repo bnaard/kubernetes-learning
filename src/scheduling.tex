@@ -1,4 +1,4 @@
-\begin{minipage}[t]{0.49\linewidth}
+\begin{minipage}[t]{0.48\linewidth}
 
 % === NodeSelector & nodeName ==============================================
 \tcbsubtitle{NodeSelector \& nodeName}
@@ -6,39 +6,62 @@
 # Add label to node:
 k label node <node> disktype=ssd
 k label node <node> zone=us-east-1a
-# In pod spec (hard requirement):
-nodeSelector:
-  disktype: ssd
-# Bypass scheduler entirely:
-nodeName: <node-name>
 \end{cheatcodebash}
 
-\smallskip
-
-
-% === Taints & Tolerations =================================================
-\tcbsubtitle{Taints \& Tolerations}
 \begin{cheatcodebash}
-# Taint effects:
-# NoSchedule   - no new pods w/o toleration
-# PreferNoSchedule - soft NoSchedule
-# NoExecute    - evict existing pods too
-k taint node <node> key=val:NoSchedule
-k taint node <node> key=val:NoExecute
-k taint node <node> key-           # remove
-# Toleration in pod spec:
-tolerations:
-- key: "key"
-  operator: "Equal"   # or "Exists"
-  value: "val"
-  effect: "NoSchedule"
-  tolerationSeconds: 300  # for NoExecute only
+# In pod spec (hard requirement):
+nodeSelector:          # <pod>.spec.nodeSelector
+  disktype: ssd
 \end{cheatcodebash}
+
+\begin{cheatcodebashbold}
+# Bypass scheduler entirely in .spec.nodeName:
+nodeName: <node-name>  # <pod>.spec.nodeName
+\end{cheatcodebashbold}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.nodeSelector
+k explain pod.spec.nodeName
+# docs: "assign pods nodes"
+\end{cheatcodebash}
+
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+
+
+% === Static Pods ==========================================================
+\tcbsubtitle{Static Pods}
+{\footnotesize
+  \textbf{kube-apiserver}, \textbf{kube-controller-manager}, \textbf{kube-scheduler}, \textbf{etcd}
+  \\
+  (\textit{kube-proxy} is a DaemonSet and \textit{CoreDNS} is a Deployment)
+}
+
+\vspace{1ex}
+\begin{cheatcodebashbold}
+# Place manifest in staticPodPath:
+/etc/kubernetes/manifests/my-pod.yaml
+# Kubelet auto-creates pod; name = <pod>-<node>
+# To delete: remove the manifest file
+\end{cheatcodebashbold}
+
+\begin{cheatcodebashbold}
+# View static pods
+k get pods -n kube-system
+\end{cheatcodebashbold}
+
+
+\end{minipage}
+
+\vspace{1.5ex}
+
+\begin{minipage}[t]{0.48\linewidth}
 
 % === Node Affinity =========================================================
 \tcbsubtitle{Node Affinity}
 \begin{cheatcodebash}
-affinity:
+affinity:              # <pod>.spec.affinity
   nodeAffinity:
     # Hard rule (must match):
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -55,14 +78,20 @@ affinity:
         - {key: zone, operator: In, values: [us-east]}
 \end{cheatcodebash}
 
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.affinity.nodeAffinity --recursive
+# docs: "node affinity"
+\end{cheatcodebash}
+
 \end{minipage}\hfill
-\begin{minipage}[t]{0.49\linewidth}
+\begin{minipage}[t]{0.48\linewidth}
 
 
 % === Pod Affinity / Anti-Affinity =========================================
 \tcbsubtitle{Pod Affinity / Anti-Affinity}
 \begin{cheatcodebash}
-affinity:
+affinity:              # <pod>.spec.affinity
   podAffinity:          # co-locate with matching pods
     requiredDuringSchedulingIgnoredDuringExecution:
     - topologyKey: kubernetes.io/hostname
@@ -77,6 +106,24 @@ affinity:
           matchLabels: {app: web}
 \end{cheatcodebash}
 
+\begin{cheatcodebash}
+# For each node, scheduler checks every preferred rule. If node satisfies, rule's weight (1-100) adds to node's score. Node with highest total score wins. Required rules have no weight — they're binary.
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.affinity.podAffinity --recursive
+k explain pod.spec.affinity.podAntiAffinity --recursive
+# docs: "inter-pod affinity"
+\end{cheatcodebash}
+
+\end{minipage}
+
+\vspace{1.5ex}
+
+\begin{minipage}[t]{0.48\linewidth}
+
+
 % === Resource Requests & Limits ===========================================
 \tcbsubtitle{Resources, LimitRange \& ResourceQuota}
 \begin{cheatcodebash}
@@ -88,10 +135,14 @@ metadata: {name: lr, namespace: <ns>}
 spec:
   limits:
   - type: Container
+    # limit applied none specified (resources.limits)
     default:        {cpu: 500m, memory: 256Mi}
+    # request applied none requested (resources.requests)
     defaultRequest: {cpu: 100m, memory: 128Mi}
+    # maximum allowed limit a container may set
     max:            {cpu: "2",  memory: 1Gi}
----
+\end{cheatcodebash}
+\begin{cheatcodebash}
 # ResourceQuota caps total namespace usage:
 apiVersion: v1
 kind: ResourceQuota
@@ -105,15 +156,44 @@ spec:
     persistentvolumeclaims: "5"
 \end{cheatcodebash}
 
-% === Static Pods ==========================================================
-\tcbsubtitle{Static Pods}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+
+% === Taints & Tolerations =================================================
+\tcbsubtitle{Taints \& Tolerations}
 \begin{cheatcodebash}
-# Place manifest in staticPodPath:
-/etc/kubernetes/manifests/my-pod.yaml
-# Kubelet auto-creates pod; name = <pod>-<node>
-# To delete: remove the manifest file
-# View: k get pods -n kube-system
-# Control plane components ARE static pods
+# Taint effects:
+# NoSchedule        - no new pods w/o toleration
+# PreferNoSchedule  - soft NoSchedule
+# NoExecute         - evict existing pods too
+k taint node <node> key=val:NoSchedule
+k taint node <node> key=val:NoExecute
+k taint node <node> key-       # remove
+# Node has this taint:                                                                                                                                                                                
+k taint node <node> dedicated=gpu:NoSchedule
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+  # Pod must have this toleration to be scheduled there:
+  tolerations:           # <pod>.spec.tolerations[]
+  - key: "dedicated"
+    operator: "Equal"    # Exists
+    value: "gpu"
+    effect: "NoSchedule"
+\end{cheatcodebash}
+
+\note{\footnotesize
+  \begin{itemize}
+    \item With \textbf{affinity} one selects nodes by their labels
+    \item With \textbf{taints/tolerations} the node repels pods, and the pod explicitly opts in by declaring a matching toleration.
+  \end{itemize}
+}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain node.spec.taints --recursive
+k explain pod.spec.tolerations --recursive
+# docs: "taints tolerations"
 \end{cheatcodebash}
 
 \end{minipage}

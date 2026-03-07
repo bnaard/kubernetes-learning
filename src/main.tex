@@ -196,7 +196,7 @@
   left=5pt, right=2pt, top=1.5pt, bottom=1pt,%
   arc=1.5pt,%
   before skip=1pt,%
-  after skip=6pt,%
+  after skip=3pt,%
 }}
 
 % Shell / bash snippets
@@ -233,6 +233,32 @@
   after skip=6pt,%
 }
 
+
+%textmarker style from colorbox doc
+\tcbset{textmarker/.style={%
+        enhanced,
+        parbox=false,boxrule=0mm,boxsep=0mm,arc=0mm,
+        outer arc=0mm,left=6mm,right=3mm,top=5pt,bottom=5pt,
+        toptitle=1mm,bottomtitle=1mm}}
+
+
+% define new colorboxes
+\newtcolorbox{hintBox}{textmarker,
+    borderline west={6pt}{0pt}{yellow!30!white},
+    colback=yellow!5!white}
+\newtcolorbox{importantBox}{textmarker,
+    borderline west={6pt}{0pt}{red!30!white},
+    colback=red!5!white}
+\newtcolorbox{noteBox}{textmarker,
+    borderline west={6pt}{0pt}{green!30!white},
+    colback=green!5!white}
+
+% define commands for easy access
+\newcommand{\note}[1]{\begin{noteBox} \textbf{Note:} #1 \end{noteBox}}
+\newcommand{\warning}[1]{\begin{hintBox} \textbf{Warning:} #1 \end{hintBox}}
+\newcommand{\important}[1]{\begin{importantBox} \textbf{Important:} #1 \end{importantBox}}
+
+
 % ----------------------------------------------------------------------------------------------------------------------
 % Header and Footer Settings
 % ----------------------------------------------------------------------------------------------------------------------
@@ -241,10 +267,10 @@
     \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} CheatSheet}
 }
 \fancyhead[C]{}
-\fancyhead[R]{}
+\fancyhead[R]{\thepage}
 \fancyfoot[L]{}
 \fancyfoot[C]{}
-\fancyfoot[R]{\thepage}
+\fancyfoot[R]{}
 
 
 
@@ -256,45 +282,39 @@
 
 % === Page 1: Cluster Architecture, Setup & Cheats, Pods & Deployments ====
 \begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12},
+        poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
     % === Cluster Architecture ===================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Cluster Architecture]
-        {name=clusterarchitecture, column=1, below=top, span=4}
+        {name=clusterarchitecture, column=1, between=top and bottom, span=4}
         \input{cluster_architecture.tex}
     \end{posterboxenv}
 
-    % === Cluster Upgrade =========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={TO BE MOVED: Cluster Upgrade}]
-        {name=clusterupgrade, column=1, below=clusterarchitecture, span=4}
-        \input{cluster_upgrade.tex}
-    \end{posterboxenv}
-
-    % === Cheats ================================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cheats}]
-        {name=cheats, column=5, below=top, span=3}
-        \input{cheats.tex}
-    \end{posterboxenv}
-
-
     % === Pods ====================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Pods}]
-        {name=pods, column=8, below=top, span=3}
+        {name=pods, column=5, between=top and bottom, span=3}
         \input{pods.tex}
     \end{posterboxenv}
 
     % === Deployments ====================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Deployments}]
-        {name=deployments, column=8, below=pods, span=5}
+        {name=deployments, column=8, below=top, span=3}
         \input{deployments.tex}
+    \end{posterboxenv}
+
+
+    % === Shell Helper ================================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Shell Helper}]
+        {name=shellhelper, column=11, below=top, span=2}
+        \input{shell_helper.tex}
     \end{posterboxenv}
 
     % === Tools ====================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Tools}]
-        {name=tools, column=11, below=top, span=2}
+        {name=tools, column=11, below=shellhelper, span=2}
         \input{tools.tex}
     \end{posterboxenv}
 
@@ -303,6 +323,8 @@
         {name=labelsselectors, column=11, below=tools, span=2}
         \input{labels_selectors.tex}
     \end{posterboxenv}
+
+
 
 
 \end{tcbposter}
@@ -322,10 +344,23 @@
         \input{scheduling.tex}
     \end{posterboxenv}
 
-    % === Jobs, DaemonSets & Namespaces =========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs, DaemonSets \& Namespaces}]
+    % === Cluster Upgrade =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cluster Upgrade}]
+        {name=clusterupgrade, column=1, below=scheduling, span=6}
+        \input{cluster_upgrade.tex}
+    \end{posterboxenv}
+
+
+    % === Jobs, DaemonSets =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs \& DaemonSets }]
         {name=jobsdaemonsets, column=7, below=top, span=3}
         \input{jobs_daemonsets.tex}
+    \end{posterboxenv}
+
+    % === Namesets =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Namespaces}]
+        {name=namespaces, column=7, below=jobsdaemonsets, span=3}
+        \input{namespaces.tex}
     \end{posterboxenv}
 
     % === ConfigMaps & Secrets ==================================================
@@ -347,21 +382,28 @@
 
     % === Services & Networking =================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Services \& Networking}]
-        {name=networking, column=1, below=top, span=5}
+        {name=networking, column=1, below=top, span=6}
         \input{services_networking.tex}
+    \end{posterboxenv}
+
+    % === CNS (CoreDNS) ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={CoreDNS}]
+        {name=dns, column=7, below=top, span=3}
+        \input{dns.tex}
+    \end{posterboxenv}
+
+    % === Autoscaling ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling}]
+        {name=autoscaling, column=7, below=dns, span=3}
+        \input{autoscaling.tex}
     \end{posterboxenv}
 
     % === Storage ===============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
-        {name=storage, column=6, below=top, span=4}
+        {name=storage, column=10, below=top, span=3}
         \input{storage.tex}
     \end{posterboxenv}
 
-    % === Autoscaling & Probes ==================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling \& Probes}]
-        {name=autoscaling, column=10, below=top, span=3}
-        \input{autoscaling.tex}
-    \end{posterboxenv}
 
 \end{tcbposter}
 
@@ -382,20 +424,43 @@
 
     % === Troubleshooting =======================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Troubleshooting]
-        {name=troubleshooting, column=5, below=top, span=5}
+        {name=troubleshooting, column=5, below=top, span=8}
         \input{troubleshooting.tex}
+    \end{posterboxenv}
+
+
+\end{tcbposter}
+
+
+\pagebreak
+
+
+% === Page 5: .... =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Metrics Server & Probes ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
+        {name=probes, column=1, below=top, span=4}
+        \input{probes.tex}
+    \end{posterboxenv}
+
+    % === JsonPath ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
+        {name=jsonpath, column=5, below=top, span=4}
+        \input{jsonpath.tex}
     \end{posterboxenv}
 
     % === Helm, Kustomize & Extensions ==========================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
-        {name=helm, column=10, below=top, span=3}
+        {name=helm, column=9, below=top, span=4}
         \input{helm_kustomize.tex}
     \end{posterboxenv}
 
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
-        {name=jsonpath, column=10, below=helm, span=4}
-        \input{jsonpath.tex}
-    \end{posterboxenv}
+
 
 \end{tcbposter}
 
