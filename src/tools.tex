@@ -1,11 +1,18 @@
 % === Vim: YAML Editing ====================================================
 \tcbsubtitle{Vim: YAML Editing}
+
+\cmdhead{2-space YAML indent}
 \begin{cheatcodebash}
-### In Vim (run after opening file):
-:set ts=2 sw=2 et    # 2-space YAML indent
-### Visual block indent:
+:set ts=2 sw=2 et 
+\end{cheatcodebash}
+
+\cmdhead{Visual block indent}
+\begin{cheatcodebash}
 Ctrl+V  select lines  > or < 
-### Mass prepend # comment:
+\end{cheatcodebash}
+
+\cmdhead{Mass prepend \# comment}
+\begin{cheatcodebash}
 Ctrl+V  select lines  Shift+I # Esc
 gg=G        # re-indent entire file
 \end{cheatcodebash}
@@ -13,6 +20,7 @@ gg=G        # re-indent entire file
 % === Cron: Scheduling ====================================================
 \tcbsubtitle{Cron: Scheduling}
 
+\cmdhead{Structure}
 \begin{tcolorbox}
     [
     skin=cheatboxtablesimple,
@@ -32,13 +40,9 @@ gg=G        # re-indent entire file
     0--59        & 0--23         & 1--31        & 1--12        & 0--6\\
 
 \end{tcolorbox}
+\vspace{0.8ex}
 
-\vspace{1ex}
-{
-  \ttfamily\fontsize{6.5}{7.5}\selectfont
-  \textbf{Specials:}
-}
-\vspace{0.5ex}
+\cmdhead{Specials}
 \begin{tcolorbox}
     [
     skin=cheatboxtablesimple,
@@ -58,13 +62,9 @@ gg=G        # re-indent entire file
     any        & every n      & range        & list         & \\
 
 \end{tcolorbox}
+\vspace{0.8ex}
 
-\vspace{1ex}
-{
-  \ttfamily\fontsize{6.5}{7.5}\selectfont
-  \textbf{Examples:}
-}
-\vspace{0.5ex}
+\cmdhead{Examples}
 \begin{cheatcodebash}
 * * * * *     # every minute
 0 * * * *     # every hour (on hour)

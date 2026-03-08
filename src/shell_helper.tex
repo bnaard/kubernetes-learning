@@ -1,14 +1,13 @@
-% === Shell Aliases & Env Vars =============================================
+% === Shell Helper  =============================================
+\cmdhead{Aliases}
 \begin{cheatcodebashbold}
 alias k='kubectl'
 export do='--dry-run=client -o yaml'
+export now='--force --grace-period=0'
 \end{cheatcodebashbold}
 
+\cmdhead{Autocompletion}
 \begin{cheatcodebash}
-alias kgp='kubectl get pods'
-alias kgs='kubectl get svc'
-alias kgn='kubectl get nodes'
-export now='--force --grace-period=0'
 source <(kubectl completion bash)
 complete -F __start_kubectl k
 \end{cheatcodebash}

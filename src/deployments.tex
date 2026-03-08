@@ -1,23 +1,24 @@
 % === Deployments ===========================================================
 \tcbsubtitle{Imperative}
+
+\cmdhead{Create and scale}
 \begin{cheatcodebashbold}
-### Create and scale
 k create deploy <name> --image=<img> --replicas=3
 k scale deploy <name> --replicas=5
 \end{cheatcodebashbold}
 
+\cmdhead{Define deployment with 3 replicas}
 \begin{cheatcodebashbold}
-### Define deployment with 3 replicas
 k create deploy <name> --image=<img> --replicas=3 $do > d.yaml
 \end{cheatcodebashbold}
 
+\cmdhead{Update image}
 \begin{cheatcodebashbold}
-### Update image
-k set image deploy/<name> <c>=<img>:tag
+k set image deploy/<name> <c>=<img>:tag # container id/name
 \end{cheatcodebashbold}
 
+\cmdhead{Rollout management}
 \begin{cheatcodebashbold}
-### Rollout management
 k rollout status  deploy/<name>
 k rollout history deploy/<name>
 k rollout undo    deploy/<name>
@@ -26,30 +27,57 @@ k rollout pause   deploy/<name>
 k rollout resume  deploy/<name>
 \end{cheatcodebashbold}
 
+\cmdhead{Annotate last section of rollout history}
 \begin{cheatcodebashbold}
-### Annotate last section of rollout history
 k annotate deploy/<name> kubernetes.io/change-cause="xy"
 \end{cheatcodebashbold}
 
 
 \tcbsubtitle{Spec Essentials}
 \begin{cheatcodebashbold}
-spec:                          # <deployment>.spec
+spec:                    # <deployment>.spec
   replicas: 3
-  selector: {matchLabels: {app: web}}
+  selector: {matchLabels: {app: web}} # must match template metadata labels
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1        # extra pods during upd
       maxUnavailable: 0  # min avail. dur upd
   template:
-    metadata: {labels: {app: web}}
-    spec: ...              # same as pod spec
+    metadata: {labels: {app: web}} # injected in every pod
+    spec: ...            # same as pod spec
 \end{cheatcodebashbold}
 
+
+    % metadata: {labels: !\tikz[remember picture,overlay]\coordinate(mk-ta);!{app: web}!\tikz[remember picture,overlay]\coordinate(mk-tb);!} # injected in every pod
+
+% \begin{tikzpicture}[remember picture, overlay,
+%   brace/.style={decorate, decoration={calligraphic brace, amplitude=3pt, raise=1pt}},
+%   bracedn/.style={decorate, decoration={calligraphic brace, amplitude=3pt, raise=1pt, mirror}},
+% ]
+%   % Brace below selector's {app: web} (opens downward)
+%   \draw[bracedn, very thick, k8sblue]
+%     (mk-sa |- mk-sb) -- (mk-sb)
+%     node[midway, below=5pt, font=\tiny\ttfamily, k8sblue] {selector label};
+%   % Brace above template's {app: web} (opens upward)
+%   \draw[brace, very thick, teal]
+%     (mk-ta) -- (mk-tb |- mk-ta)
+%     node[midway, above=5pt, font=\tiny\ttfamily, teal] {template label};
+%   % Arrow from peak of lower brace to peak of upper brace
+%   \draw[->, thick, gray!70]
+%     ($(mk-sa)!0.5!(mk-sb) + (0, -6pt)$) -- ($(mk-ta)!0.5!(mk-tb) + (0, 6pt)$);
+% \end{tikzpicture}
+
+\tcbsubtitle{Help}
+\cmdhead{kubectl}
 \begin{cheatcodebash}
-### Exam helpers:
 k explain deployment.spec --recursive
 k explain deployment.spec.strategy --recursive
-# docs: "deployments"
 \end{cheatcodebash}
+
+\cmdhead{\url{https://kubernetes.io/docs/}}
+\begin{cheatcodebash}
+search: "deployments"
+\end{cheatcodebash}
+
+\warning{Any pod created outside of a deployment with same labels \texttt{app: web} also counts against the deployments replica count.}

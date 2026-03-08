@@ -10,17 +10,18 @@
   \item \textbf{External etcd}: separate etcd cluster (more resilient)
   \item Requires \textbf{loadbalancer (LB)} in front of multiple API servers
 \end{itemize}
-\includegraphics[width=\linewidth]{ha_cluster_structure.png}
-\vspace{1ex}
+\includegraphics[angle=1, width=\linewidth]{ha_cluster_structure.png}
 
-Initialize the first control plane node (↓ outputs join commands)
+\vspace{0.5ex}
+
+\cmdhead{Initialize the first control plane node (↓ outputs join commands)}
 \begin{cheatcodebash}
 kubeadm init --control-plane-endpoint="<LB_IP>:6443" --upload-certs
 \end{cheatcodebash}
 
-\vspace{1ex}
+\vspace{0.8ex}
 
-{Join additional {\color{red}control-plane} and {\color{teal}worker} nodes:}
+\cmdhead{Join additional {\color{red}control-plane} and {\color{teal}worker} nodes}
 \begin{cheatcodetex}
 \ttfamily\fontsize{6.5}{7.5}\selectfont
 \textcolor{red}{kubeadm join <LB>:6443 -{}-control-plane -{}-certificate-key <key>}\\

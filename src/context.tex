@@ -1,0 +1,16 @@
+\cmdhead{Set namespace of current context}
+\begin{cheatcodebashbold}
+k config set-context --current -n <ns>
+\end{cheatcodebashbold}
+
+\cmdhead{Creation}
+\begin{cheatcodebashbold}
+# Context = named combination of cluster + user + namespace
+k config set-context <ctx-name> --cluster=<cluster-name> --user=<user-name> --namespace=<ns>
+\end{cheatcodebashbold}
+
+\cmdhead{List \& Switch}
+\begin{cheatcodebash}
+k config get-contexts
+k config use-context <ctx-name>
+\end{cheatcodebash}

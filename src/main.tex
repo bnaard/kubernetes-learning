@@ -142,6 +142,24 @@
 
 % --- TColorbox Skins ----------------------------------------------------------
 
+% subtitle style extracted for reusability
+\tcbset{
+  cheat subtitle/.style={
+    subtitle style={
+      left=0.2em,
+      top=0.4mm, 
+      bottom=0mm, 
+      boxrule=0.2pt, 
+      boxsep=0.1mm,
+      colback=\primarycolor!30!white,
+      colupper=\primarycolor!50!black,
+      fontupper=\sffamily\bfseries\small,
+      coltext=\primarycolor!10!black,
+      height=1.1\baselineskip,
+    }
+  }
+}
+
 % Skin for cheat section boxes
 \tcbsubskin{cheatboxskin}{standard}{
     size=title,
@@ -158,13 +176,14 @@
     bottomtitle=0mm,
     fontupper=\sffamily\small,
     fontlower=\sffamily\small,
-    subtitle style={top=0.4mm, bottom=0mm, boxrule=0.2pt, boxsep=0.1mm,
-        colback=\primarycolor!20!white,
-        colupper=\primarycolor!50!black,
-        fontupper=\sffamily\bfseries\small,
-        coltext=\primarycolor!10!black,
-        height=1.1\baselineskip,
-      },
+    cheat subtitle
+    % subtitle style={top=0.4mm, bottom=0mm, boxrule=0.2pt, boxsep=0.1mm,
+    %     colback=\primarycolor!30!white,
+    %     colupper=\primarycolor!50!black,
+    %     fontupper=\sffamily\bfseries\small,
+    %     coltext=\primarycolor!10!black,
+    %     height=1.1\baselineskip,
+    %   },
 }
 
 
@@ -189,14 +208,14 @@
   listing only,%
   listing engine=minted,%
   minted options={fontsize=\cheatcodefontsize,breaklines,autogobble, escapeinside=!!},%
-  colback=k8sblue!5!white,%
+  colback=k8sblue!3!white,%
   colframe=k8sblue!22!white,%
   boxrule=0.3pt,%
   size=minimal,%
-  left=5pt, right=2pt, top=1.5pt, bottom=1pt,%
-  arc=1.5pt,%
+  left=5pt, right=1pt, top=1.5pt, bottom=1pt,%
+  arc=1.5pt,outer arc=1.5pt,%
   before skip=1pt,%
-  after skip=3pt,%
+  after skip=4pt,%
 }}
 
 % Shell / bash snippets
@@ -209,10 +228,10 @@
 \newtcblisting{cheatcodebashbold}{%
   cheatcodestyle,%
   minted language=bash,%
-  colback=k8sblue!12!white,%
+  colback=k8sblue!9!white,%
   colframe=k8sblue!50!white,%
   borderline west={2.5pt}{0pt}{k8sblue!70!white},%
-  after skip=3pt,%
+  after skip=4pt,%
 }
 
 % YAML manifests
@@ -223,7 +242,7 @@
 
 % Like cheatcodebash but without the listing engine — LaTeX commands work inside (useful for \textcolor etc.)
 \newtcolorbox{cheatcodetex}{%
-  colback=k8sblue!5!white,%
+  colback=k8sblue!3!white,%
   colframe=k8sblue!22!white,%
   boxrule=0.3pt,%
   size=minimal,%
@@ -236,28 +255,46 @@
 
 %textmarker style from colorbox doc
 \tcbset{textmarker/.style={%
-        enhanced,
-        parbox=false,boxrule=0mm,boxsep=0mm,arc=0mm,
-        outer arc=0mm,left=6mm,right=3mm,top=5pt,bottom=5pt,
-        toptitle=1mm,bottomtitle=1mm}}
+        outer arc=0mm,left=5mm,right=2mm,top=3pt,bottom=5pt,
+size=small,skin=bicolor,
+    fontupper=\fontsize{9}{8}\selectfont,
+    fontlower=\fontsize{5}{6}\selectfont,
+    righthand width=0.85\linewidth,sidebyside,sidebyside gap=3pt,
+    lower separated=false,
+        }}
 
 
 % define new colorboxes
 \newtcolorbox{hintBox}{textmarker,
+    colframe=yellow!30!white,%
     borderline west={6pt}{0pt}{yellow!30!white},
-    colback=yellow!5!white}
+    colback=yellow!15!white,
+    colbacklower=yellow!5!white,
+    }
 \newtcolorbox{importantBox}{textmarker,
+    colframe=red!30!white,%
     borderline west={6pt}{0pt}{red!30!white},
-    colback=red!5!white}
+    colback=red!15!white,
+    colbacklower=red!5!white,
+    }
 \newtcolorbox{noteBox}{textmarker,
+    colframe=green!30!white,%
     borderline west={6pt}{0pt}{green!30!white},
-    colback=green!5!white}
+    colback=green!15!white,
+    colbacklower=green!5!white,
+    }
 
 % define commands for easy access
-\newcommand{\note}[1]{\begin{noteBox} \textbf{Note:} #1 \end{noteBox}}
-\newcommand{\warning}[1]{\begin{hintBox} \textbf{Warning:} #1 \end{hintBox}}
-\newcommand{\important}[1]{\begin{importantBox} \textbf{Important:} #1 \end{importantBox}}
+\newcommand{\note}[1]{\begin{noteBox}\emoji{information} \tcblower #1\end{noteBox}}
+\newcommand{\warning}[1]{\begin{hintBox} \emoji{warning} \tcblower #1 \end{hintBox}}
+\newcommand{\important}[1]{\begin{importantBox}\emoji{stop-sign} \tcblower #1 \end{importantBox}}
 
+
+\newcommand{\cmdhead}[1]{{
+  \fontsize{6}{7}\selectfont
+  \vspace{0.5ex}
+  \textbf{#1}
+}}
 
 % ----------------------------------------------------------------------------------------------------------------------
 % Header and Footer Settings
@@ -305,23 +342,35 @@
         \input{deployments.tex}
     \end{posterboxenv}
 
+    % === Namespaces =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Namespaces}]
+        {name=namespaces, column=8, between=deployments and bottom, span=3}
+        \input{namespaces.tex}
+    \end{posterboxenv}
+
+
+    % === Labels & Selectors ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Labels \& Selectors}]
+        {name=labelsselectors, column=11, below=top, span=2}
+        \input{labels_selectors.tex}
+    \end{posterboxenv}
+
+    % === Context =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Context}]
+        {name=context, column=11, below=labelsselectors, span=2}
+        \input{context.tex}
+    \end{posterboxenv}
 
     % === Shell Helper ================================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Shell Helper}]
-        {name=shellhelper, column=11, below=top, span=2}
+        {name=shellhelper, column=11, below=context, span=2}
         \input{shell_helper.tex}
     \end{posterboxenv}
 
     % === Tools ====================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Tools}]
-        {name=tools, column=11, below=shellhelper, span=2}
+        {name=tools, column=11, between=shellhelper and bottom, span=2}
         \input{tools.tex}
-    \end{posterboxenv}
-
-    % === labels & Selectors ====================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Labels \& Selectors}]
-        {name=labelsselectors, column=11, below=tools, span=2}
-        \input{labels_selectors.tex}
     \end{posterboxenv}
 
 
@@ -333,41 +382,25 @@
 
 % === Page 2: Scheduling, Jobs/DaemonSets, ConfigMaps & Secrets ============
 \begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12},
+        poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
     % === Scheduling ============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Scheduling]
-        {name=scheduling, column=1, below=top, span=6}
+        {name=scheduling, column=1, below=top, span=9}
         \input{scheduling.tex}
-    \end{posterboxenv}
-
-    % === Cluster Upgrade =========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cluster Upgrade}]
-        {name=clusterupgrade, column=1, below=scheduling, span=6}
-        \input{cluster_upgrade.tex}
     \end{posterboxenv}
 
 
     % === Jobs, DaemonSets =========================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs \& DaemonSets }]
-        {name=jobsdaemonsets, column=7, below=top, span=3}
+        {name=jobsdaemonsets, column=10, between=top and bottom, span=3}
         \input{jobs_daemonsets.tex}
     \end{posterboxenv}
 
-    % === Namesets =========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Namespaces}]
-        {name=namespaces, column=7, below=jobsdaemonsets, span=3}
-        \input{namespaces.tex}
-    \end{posterboxenv}
 
-    % === ConfigMaps & Secrets ==================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
-        {name=configmaps, column=10, below=top, span=3}
-        \input{configmaps_secrets.tex}
-    \end{posterboxenv}
 
 \end{tcbposter}
 
@@ -375,7 +408,7 @@
 
 % === Page 3: Services & Networking, Storage, Autoscaling & Probes =========
 \begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12},
+        poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
@@ -386,22 +419,17 @@
         \input{services_networking.tex}
     \end{posterboxenv}
 
-    % === CNS (CoreDNS) ==================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={CoreDNS}]
-        {name=dns, column=7, below=top, span=3}
-        \input{dns.tex}
-    \end{posterboxenv}
 
     % === Autoscaling ==================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling}]
-        {name=autoscaling, column=7, below=dns, span=3}
+        {name=autoscaling, column=10, below=top, span=3}
         \input{autoscaling.tex}
     \end{posterboxenv}
 
-    % === Storage ===============================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
-        {name=storage, column=10, below=top, span=3}
-        \input{storage.tex}
+    % === CNS (CoreDNS) ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={CoreDNS}]
+        {name=dns, column=10, below=autoscaling, span=3}
+        \input{dns.tex}
     \end{posterboxenv}
 
 
@@ -411,7 +439,7 @@
 
 % === Page 4: RBAC & Security, Troubleshooting, Helm/Kustomize =============
 \begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12},
+        poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
@@ -437,7 +465,7 @@
 
 % === Page 5: .... =============
 \begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12},
+        poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
@@ -461,6 +489,38 @@
     \end{posterboxenv}
 
 
+    % === ConfigMaps & Secrets ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
+        {name=configmaps, column=1, below=probes, span=3}
+        \input{configmaps_secrets.tex}
+    \end{posterboxenv}
+
+
+
+\end{tcbposter}
+
+
+\pagebreak
+
+
+% === Page 6: .... =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Cluster Upgrade =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cluster Upgrade}]
+        {name=clusterupgrade, column=1, below=top, span=6}
+        \input{cluster_upgrade.tex}
+    \end{posterboxenv}
+
+    % === Storage ===============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
+        {name=storage, column=10, below=top, span=3}
+        \input{storage.tex}
+    \end{posterboxenv}
 
 \end{tcbposter}
 

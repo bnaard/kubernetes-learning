@@ -1,28 +1,28 @@
 % === Pod Creation ==========================================================
 \tcbsubtitle{Imperative}
+\cmdhead{Basic pod} 
 \begin{cheatcodebashbold}
-### Basic pod
 k run <name> --image=<img> --restart=Never
 k run busybox --image=busybox -- sleep 3600
 \end{cheatcodebashbold}
 
+\cmdhead{Temporary interactive shell}
 \begin{cheatcodebashbold}
-### Temporary interactive shell
 k run tmp --image=busybox --rm -it [--restart=Never] -- sh
 \end{cheatcodebashbold}
 
+\cmdhead{With port, env var and label}
 \begin{cheatcodebash}
-### With port, env var and label
 k run <name> --image=<img> --port=80 --env="K=v" -l "a=b"
 \end{cheatcodebash}
 
+\cmdhead{Get pod spec, tee prints on tty and into file}
 \begin{cheatcodebashbold}
-### Get pod spec, tee prints on tty and into file
 k run <name> --image=<img> $do | tee pod.yaml
 \end{cheatcodebashbold}
 
+\cmdhead{Force delete pod}
 \begin{cheatcodebashbold}
-# Force delete pod
 k delete pod <name> $now
 \end{cheatcodebashbold}
 
@@ -46,7 +46,7 @@ k delete pod <name> $now
     ]
     Feature                       & Standard Init Container             & Native Sidecar Container          \\
     Location                      & \texttt{spec.initContainers}        & \texttt{spec.initContainers}      \\
-    \texttt{restartPolicy}        & (Default)\texttt{Never} / Not set   & \texttt{Always}                   \\
+    \texttt{restartPolicy}        & (Default) \texttt{Never} / Not set   & \texttt{Always}                   \\
     Lifecycle                     & Runs to completion then exits.      & Starts, then stays running for Pod life.      \\
     Startup Order                 & Blocks next container until completion.      & Blocks next container until startup/ready.     \\
     Termination                   & Exits before app starts.            & Terminated after main containers exit.     \\
@@ -88,11 +88,16 @@ spec:                            # <pod>.spec
 
 \tcbsubtitle{Help}
 
+\cmdhead{kubctl}
 \begin{cheatcodebash}
 k explain pod.spec --recursive
 k explain pod.spec.containers --recursive
 k explain pod.spec.initContainers --recursive
-# docs: "pods"
+\end{cheatcodebash}
+
+\cmdhead{\url{https://kubernetes.io/docs/}}
+\begin{cheatcodebash}
+search: "pods"
 \end{cheatcodebash}
 
 

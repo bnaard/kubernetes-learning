@@ -1,13 +1,15 @@
 % === Jobs =================================================================
 \tcbsubtitle{Jobs}
+\cmdhead{Imperative}
 \begin{cheatcodebash}
 k create job <name> --image=busybox -- echo hi $do > j.yaml
-k get jobs
-k logs job/<name>
+k get jobs              # List jobs
+k logs job/<name>       # Get log of job <name>
 \end{cheatcodebash}
 
+\cmdhead{Spec Essentials}
 \begin{cheatcodebash}
-spec:                         # <job>.spec
+spec:                   # <job>.spec
   completions: 3        # total successful completions
   parallelism: 2        # concurrent pods
   backoffLimit: 4       # retries before fail
@@ -21,71 +23,46 @@ spec:                         # <job>.spec
         command: ["echo", "done"]
 \end{cheatcodebash}
 
+\cmdhead{Help}
 \begin{cheatcodebash}
-### Exam helpers:
 k explain job.spec --recursive
-# docs: "jobs"
+\end{cheatcodebash}
+
+\cmdhead{\url{https://kubernetes.io/docs/}}
+\begin{cheatcodebash}
+search: "jobs"
 \end{cheatcodebash}
 
 % === CronJobs =============================================================
 \tcbsubtitle{CronJobs}
+
+\cmdhead{Imperative}
 \begin{cheatcodebash}
 k create cj <name> --image=busybox --schedule="*/5 * * * *" -- echo hi
 k get cj
 k create job manual-run --from=cronjob/<name>
 \end{cheatcodebash}
 
+\cmdhead{Spec Essentials}
 \begin{cheatcodebash}
-spec:                         # <cronjob>.spec
+spec:                       # <cronjob>.spec
   schedule: "0 2 * * *"
   concurrencyPolicy: Allow  # or Forbid or Replace
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   startingDeadlineSeconds: 60
   jobTemplate:
-    spec: ...          # same as Job spec
+    spec: ...               # same as Job spec
 \end{cheatcodebash}
 
+\cmdhead{Help}
 \begin{cheatcodebash}
-### Exam helpers:
 k explain cronjob.spec --recursive
-# docs: "cron jobs"
 \end{cheatcodebash}
 
-% === DaemonSets ===========================================================
-\tcbsubtitle{DaemonSets}
+\cmdhead{\url{https://kubernetes.io/docs/}}
 \begin{cheatcodebash}
-# Runs exactly 1 pod per (eligible) node
-# Use: log collectors, monitoring, CNI
-k get ds -A
+search: "cron jobs"
 \end{cheatcodebash}
 
-\begin{cheatcodebash}
-apiVersion: apps/v1
-kind: DaemonSet
-metadata: {name: fluentd, namespace: kube-system}
-spec:
-  selector: {matchLabels: {app: fluentd}}
-  updateStrategy:
-    type: RollingUpdate    # or OnDelete
-  template:
-    metadata: {labels: {app: fluentd}}
-    spec:
-      tolerations:
-      - operator: Exists   # schedule on all nodes
-      containers:
-      - name: fluentd
-        image: fluentd
-\end{cheatcodebash}
 
-\begin{cheatcodebash}
-# Triggers a rolling restart of DaemonSet — all pods are replaced one by one using the same spec
-k rollout restart ds/<name>
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-### Exam helpers:
-k explain daemonset.spec --recursive
-k explain daemonset.spec.updateStrategy --recursive
-# docs: "daemonset"
-\end{cheatcodebash}

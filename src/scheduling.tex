@@ -1,199 +1,256 @@
-\begin{minipage}[t]{0.48\linewidth}
+\begin{tcbitemize}[
+  raster columns=3, raster equal height=rows,
+  blanker, cheat subtitle
+]
 
-% === NodeSelector & nodeName ==============================================
-\tcbsubtitle{NodeSelector \& nodeName}
-\begin{cheatcodebash}
-# Add label to node:
-k label node <node> disktype=ssd
-k label node <node> zone=us-east-1a
-\end{cheatcodebash}
+  % === Taints & Tolerations =================================================
+  \tcbitem
+    \tcbsubtitle{Taints \& Tolerations}
+    \cmdhead{Taint Node}
+    \begin{cheatcodebash}
+    # Taint effects:
+    # NoSchedule        - no new pods w/o toleration
+    # PreferNoSchedule  - soft NoSchedule
+    # NoExecute         - evict existing pods too
+    k taint node <node> key=val:NoSchedule
+    k taint node <node> key=val:NoExecute
+    k taint node <node> key-       # remove
+    \end{cheatcodebash}
 
-\begin{cheatcodebash}
-# In pod spec (hard requirement):
-nodeSelector:          # <pod>.spec.nodeSelector
-  disktype: ssd
-\end{cheatcodebash}
+    \cmdhead{Tolerations}
+    \begin{cheatcodebash}
+      # Node has this taint:                                                                                                                                                                                
+      k taint node <node> dedicated=gpu:NoSchedule
+      # Pod must have this toleration to be scheduled there:
+      tolerations:           # <pod>.spec.tolerations[]
+      - key: "dedicated"
+        operator: "Equal"    # Exists
+        value: "gpu"
+        effect: "NoSchedule"
+    \end{cheatcodebash}
 
-\begin{cheatcodebashbold}
-# Bypass scheduler entirely in .spec.nodeName:
-nodeName: <node-name>  # <pod>.spec.nodeName
-\end{cheatcodebashbold}
+    \note{\footnotesize
+      \begin{itemize}[leftmargin=*,nosep]
+        \item With \textbf{affinity} one selects nodes by their labels
+        \item With \textbf{taints/tolerations} the node repels pods, and the pod explicitly opts in by declaring a matching toleration.
+      \end{itemize}
+    }
 
-\begin{cheatcodebash}
-### Exam helpers:
-k explain pod.spec.nodeSelector
-k explain pod.spec.nodeName
-# docs: "assign pods nodes"
-\end{cheatcodebash}
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain node.spec.taints --recursive
+    k explain pod.spec.tolerations --recursive
+    \end{cheatcodebash}
 
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "taints tolerations"
+    \end{cheatcodebash}
 
+  % === Resource Requests & Limits ===========================================
+  \tcbitem
+    \tcbsubtitle{LimitRange \& ResourceQuota}
+    \cmdhead{LimitRange sets namespace defaults}
+    \begin{cheatcodebash}
+    # CPU units: 1 = 1000m (millicores)
+    apiVersion: v1
+    kind: LimitRange
+    metadata: {name: lr, namespace: <ns>}
+    spec:
+      limits:
+      - type: Container
+        # limit applied none specified (resources.limits)
+        default:        {cpu: 500m, memory: 256Mi}
+        # request applied none requested (resources.requests)
+        defaultRequest: {cpu: 100m, memory: 128Mi}
+        # maximum allowed limit a container may set
+        max:            {cpu: "2",  memory: 1Gi}
+    \end{cheatcodebash}
 
-% === Static Pods ==========================================================
-\tcbsubtitle{Static Pods}
-{\footnotesize
-  \textbf{kube-apiserver}, \textbf{kube-controller-manager}, \textbf{kube-scheduler}, \textbf{etcd}
-  \\
-  (\textit{kube-proxy} is a DaemonSet and \textit{CoreDNS} is a Deployment)
-}
+    \cmdhead{ResourceQuota caps total namespace usage}
+    \begin{cheatcodebash}
+    apiVersion: v1
+    kind: ResourceQuota
+    metadata: {name: rq, namespace: <ns>}
+    spec:
+      hard:
+        pods: "10"
+        requests.cpu: "4"
+        requests.memory: 8Gi
+        limits.cpu: "8"
+        persistentvolumeclaims: "5"
+    \end{cheatcodebash}
 
-\vspace{1ex}
-\begin{cheatcodebashbold}
-# Place manifest in staticPodPath:
-/etc/kubernetes/manifests/my-pod.yaml
-# Kubelet auto-creates pod; name = <pod>-<node>
-# To delete: remove the manifest file
-\end{cheatcodebashbold}
+  \tcbitem
+    % === DaemonSets ===========================================================
+    \tcbsubtitle{DaemonSets}
 
-\begin{cheatcodebashbold}
-# View static pods
-k get pods -n kube-system
-\end{cheatcodebashbold}
+    \cmdhead{Imperative}
+    \begin{cheatcodebash}
+    # Runs exactly 1 pod per (eligible) node
+    # Use: log collectors, monitoring, CNI
+    k get ds -A
+    # Rolling restart: replace all pods one by one
+    k rollout restart ds/<name>
+    \end{cheatcodebash}
 
+    \cmdhead{Spec Essentials}
+    \begin{cheatcodebash}
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata: {name: fluentd, namespace: kube-system}
+    spec:
+      selector: {matchLabels: {app: fluentd}}
+      updateStrategy:
+        type: RollingUpdate    # or OnDelete
+      template:
+        metadata: {labels: {app: fluentd}}
+        spec:
+          tolerations:
+          - operator: Exists   # schedule on all nodes
+          containers:
+          - name: fluentd
+            image: fluentd
+    \end{cheatcodebash}
 
-\end{minipage}
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain daemonset.spec --recursive
+    k explain daemonset.spec.updateStrategy --recursive
+    \end{cheatcodebash}
 
-\vspace{1.5ex}
-
-\begin{minipage}[t]{0.48\linewidth}
-
-% === Node Affinity =========================================================
-\tcbsubtitle{Node Affinity}
-\begin{cheatcodebash}
-affinity:              # <pod>.spec.affinity
-  nodeAffinity:
-    # Hard rule (must match):
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: disktype
-          operator: In     # In|NotIn|Exists|DoesNotExist
-          values: [ssd]
-    # Soft rule (prefer):
-    preferredDuringSchedulingIgnoredDuringExecution:
-    - weight: 1
-      preference:
-        matchExpressions:
-        - {key: zone, operator: In, values: [us-east]}
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-### Exam helpers:
-k explain pod.spec.affinity.nodeAffinity --recursive
-# docs: "node affinity"
-\end{cheatcodebash}
-
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
-
-
-% === Pod Affinity / Anti-Affinity =========================================
-\tcbsubtitle{Pod Affinity / Anti-Affinity}
-\begin{cheatcodebash}
-affinity:              # <pod>.spec.affinity
-  podAffinity:          # co-locate with matching pods
-    requiredDuringSchedulingIgnoredDuringExecution:
-    - topologyKey: kubernetes.io/hostname
-      labelSelector:
-        matchLabels: {app: cache}
-  podAntiAffinity:      # spread away from matching pods
-    preferredDuringSchedulingIgnoredDuringExecution:
-    - weight: 100
-      podAffinityTerm:
-        topologyKey: kubernetes.io/hostname
-        labelSelector:
-          matchLabels: {app: web}
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-# For each node, scheduler checks every preferred rule. If node satisfies, rule's weight (1-100) adds to node's score. Node with highest total score wins. Required rules have no weight — they're binary.
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-### Exam helpers:
-k explain pod.spec.affinity.podAffinity --recursive
-k explain pod.spec.affinity.podAntiAffinity --recursive
-# docs: "inter-pod affinity"
-\end{cheatcodebash}
-
-\end{minipage}
-
-\vspace{1.5ex}
-
-\begin{minipage}[t]{0.48\linewidth}
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "daemonset"
+    \end{cheatcodebash}
 
 
-% === Resource Requests & Limits ===========================================
-\tcbsubtitle{Resources, LimitRange \& ResourceQuota}
-\begin{cheatcodebash}
-# CPU units: 1 = 1000m (millicores)
-# LimitRange sets namespace defaults:
-apiVersion: v1
-kind: LimitRange
-metadata: {name: lr, namespace: <ns>}
-spec:
-  limits:
-  - type: Container
-    # limit applied none specified (resources.limits)
-    default:        {cpu: 500m, memory: 256Mi}
-    # request applied none requested (resources.requests)
-    defaultRequest: {cpu: 100m, memory: 128Mi}
-    # maximum allowed limit a container may set
-    max:            {cpu: "2",  memory: 1Gi}
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# ResourceQuota caps total namespace usage:
-apiVersion: v1
-kind: ResourceQuota
-metadata: {name: rq, namespace: <ns>}
-spec:
-  hard:
-    pods: "10"
-    requests.cpu: "4"
-    requests.memory: 8Gi
-    limits.cpu: "8"
-    persistentvolumeclaims: "5"
-\end{cheatcodebash}
+  % === Node Affinity =========================================================
+  \tcbitem 
+    \tcbsubtitle{Node Affinity}
+    \cmdhead{Spec}
+    \begin{cheatcodebash}
+    affinity:              # <pod>.spec.affinity
+      nodeAffinity:
+        # Hard rule (must match):
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: disktype
+              operator: In     # In|NotIn|Exists|DoesNotExist
+              values: [ssd]
+        # Soft rule (prefer):
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+            - {key: zone, operator: In, values: [us-east]}
+    \end{cheatcodebash}
 
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain pod.spec.affinity.nodeAffinity --recursive
+    \end{cheatcodebash}  
+  
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "node affinity"
+    \end{cheatcodebash}  
 
-% === Taints & Tolerations =================================================
-\tcbsubtitle{Taints \& Tolerations}
-\begin{cheatcodebash}
-# Taint effects:
-# NoSchedule        - no new pods w/o toleration
-# PreferNoSchedule  - soft NoSchedule
-# NoExecute         - evict existing pods too
-k taint node <node> key=val:NoSchedule
-k taint node <node> key=val:NoExecute
-k taint node <node> key-       # remove
-# Node has this taint:                                                                                                                                                                                
-k taint node <node> dedicated=gpu:NoSchedule
-\end{cheatcodebash}
+  % === Pod Affinity / Anti-Affinity =========================================
+  \tcbitem
+    \tcbsubtitle{Pod Affinity / Anti-Affinity}
+    
+    \note{For each node, scheduler checks every preferred rule. If node satisfies, rule's weight (1-100) adds to node's score. Node with highest total score wins. Required rules have no weight — they're binary.}
+ 
+    \cmdhead{Spec}
+    \begin{cheatcodebash}
+    affinity:              # <pod>.spec.affinity
+      podAffinity:          # co-locate with matching pods
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels: {app: cache}
+      podAntiAffinity:      # spread away from matching pods
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels: {app: web}
+    \end{cheatcodebash}
 
-\begin{cheatcodebash}
-  # Pod must have this toleration to be scheduled there:
-  tolerations:           # <pod>.spec.tolerations[]
-  - key: "dedicated"
-    operator: "Equal"    # Exists
-    value: "gpu"
-    effect: "NoSchedule"
-\end{cheatcodebash}
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain pod.spec.affinity.podAffinity --recursive
+    k explain pod.spec.affinity.podAntiAffinity --recursive
+    \end{cheatcodebash}
 
-\note{\footnotesize
-  \begin{itemize}
-    \item With \textbf{affinity} one selects nodes by their labels
-    \item With \textbf{taints/tolerations} the node repels pods, and the pod explicitly opts in by declaring a matching toleration.
-  \end{itemize}
-}
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "inter-pod affinity"
+    \end{cheatcodebash}
 
-\begin{cheatcodebash}
-### Exam helpers:
-k explain node.spec.taints --recursive
-k explain pod.spec.tolerations --recursive
-# docs: "taints tolerations"
-\end{cheatcodebash}
 
-\end{minipage}
+  % === NodeSelector & nodeName ==============================================
+  \tcbitem
+    \tcbsubtitle{NodeSelector \& nodeName}
+    \cmdhead{Add label to node}
+    \begin{cheatcodebash}
+    k label node <node> disktype=ssd
+    k label node <node> zone=us-east-1a
+    \end{cheatcodebash}
+
+    \begin{cheatcodebash}
+    \cmdhead{In pod spec (hard requirement)}
+    nodeSelector:          # <pod>.spec.nodeSelector
+      disktype: ssd
+    \end{cheatcodebash}
+
+    \begin{cheatcodebashbold}
+    \cmdhead{Bypass scheduler entirely in .spec.nodeName}
+    nodeName: <node-name>  # <pod>.spec.nodeName
+    \end{cheatcodebashbold}
+
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain pod.spec.nodeSelector
+    k explain pod.spec.nodeName
+    \cmdhead{Help}
+    \end{cheatcodebash}
+
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "assign pods nodes"
+    \end{cheatcodebash}
+
+  
+
+
+  % === Static Pods ==========================================================
+  \tcbitem
+    \tcbsubtitle{Static Pods}
+    {\footnotesize
+      \textbf{kube-apiserver}, \textbf{kube-controller-manager}, \textbf{kube-scheduler}, \textbf{etcd}
+      \\
+      (\textit{kube-proxy} is a DaemonSet and \textit{CoreDNS} is a Deployment)
+    }
+
+    \vspace{1ex}
+
+    \cmdhead{Create \& Delete}
+    \begin{cheatcodebashbold}
+    # Create: Place manifest in staticPodPath
+    /etc/kubernetes/manifests/my-pod.yaml
+    # Kubelet auto-creates pod; name = <pod>-<node>
+    # Delete: remove the manifest file
+    \end{cheatcodebashbold}
+
+    \cmdhead{View static pods}
+    \begin{cheatcodebashbold}
+    k get pods -n kube-system
+    \end{cheatcodebashbold}
+
+
+\end{tcbitemize}
+
