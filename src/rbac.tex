@@ -1,0 +1,137 @@
+    % === RBAC Overview ========================================================
+    \cmdhead{Create Role (namespaced permissions)}
+    \begin{cheatcodebash}
+    k create role <name> --verb=get,list,watch --resource=pods,deployments -n <ns>
+    \end{cheatcodebash}
+
+    \cmdhead{Create ClusterRole (non-namespaced, cluster-wide permissions)}
+    \begin{cheatcodebash}
+    k create clusterrole <name> --verb='*' --resource='*'
+    \end{cheatcodebash}
+
+    \cmdhead{Bind to ServiceAccount}
+    \begin{cheatcodebash}
+    k create rolebinding <name> --role=<role> --serviceaccount=<ns>:<sa> -n <ns>
+    k create clusterrolebinding <name> --clusterrole=<cr> --user=<user>
+    \end{cheatcodebash}
+
+    \cmdhead{Verify}
+    \begin{cheatcodebash}
+    k auth can-i get pods --as=<user>
+    k auth can-i get pods --as=system:serviceaccount:<ns>:<sa>
+    k auth can-i --list -n <ns>
+    \end{cheatcodebash}
+
+    \cmdhead{Spec Essentials}
+    \begin{cheatcodebash}
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata: {name: pod-reader, namespace: <ns>}
+    rules:
+    - apiGroups: [""]           # "" = core API group
+      resources: ["pods", "pods/log"]
+      verbs: ["get","list","watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments"]
+      verbs: ["get","list","create","update"]
+    \end{cheatcodebash}
+
+    \vspace{0.5ex}
+
+    \cmdhead{API Groups}
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[1.4,l]X[2,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+      apiGroup & Resources \\
+      \texttt{""} (core, \texttt{/api/v1}) & pods, services, configmaps, secrets, nodes, namespaces, pvc \\
+      \texttt{apps} & deployments, statefulsets, daemonsets, replicasets \\
+      \texttt{rbac.authorization.k8s.io} & roles, rolebindings, clusterroles \\
+      \texttt{networking.k8s.io} & networkpolicies, ingresses \\
+      \texttt{batch} & jobs, cronjobs \\
+        
+    \end{tcolorbox}
+
+    \vspace{0.8ex}
+
+    \cmdhead{Common Verbs}
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[1.4,l]X[2,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+      Verb & Description \\
+      \texttt{get} & Read a single resource by name \\
+      \texttt{list} & List all resources of a type \\
+      \texttt{watch} & Stream changes (used by controllers) \\
+      \texttt{create} & Create a new resource \\
+      \texttt{update} & Modify an existing resource (full replace) \\
+      \texttt{patch} & Partially modify a resource \\
+      \texttt{delete} & Delete a resource \\
+      \texttt{deletecollection} & Delete multiple resources at once \\
+      \texttt{*} & All verbs (wildcard) \\
+        
+    \end{tcolorbox}
+
+    \vspace{0.5ex}
+
+    \cmdhead{Check which group a resource belongs to}
+    \begin{cheatcodebash}
+    k api-resources    # GROUP column shows the apiGroup
+    \end{cheatcodebash}
+
+
+    \cmdhead{Variations}
+    \begin{cheatcodebash}
+    # ClusterRoleBinding for a group: read-only across cluster
+    k create clusterrole view-all --verb=get,list,watch --resource='*'
+    k create clusterrolebinding view-all-binding \
+      --clusterrole=view-all --group=dev-team
+    \end{cheatcodebash}
+    \begin{cheatcodebash}
+    # ClusterRoleBinding for a single user: manage pods
+    k create clusterrole pod-mgr \
+      --verb=get,list,watch,create,update,delete --resource=pods
+    k create clusterrolebinding pod-mgr-binding \
+      --clusterrole=pod-mgr --user=jane
+    \end{cheatcodebash}
+    \begin{cheatcodebash}
+    # Role in a specific namespace
+    k create role deploy-mgr \
+      --verb=get,list,create,update --resource=deployments -n staging
+    k create rolebinding deploy-mgr-binding \
+      --role=deploy-mgr --user=jane -n staging
+    \end{cheatcodebash}
+
+
+    \cmdhead{Help}
+    \begin{cheatcodebash}
+    k explain role.rules --recursive
+    k explain clusterrole.rules --recursive
+    k explain rolebinding.roleRef --recursive
+    \end{cheatcodebash}
+
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "rbac authorization"
+    \end{cheatcodebash}
+

@@ -1,0 +1,92 @@
+% === Pod Disruption Budgets ================================================
+\tcbsubtitle{Overview}
+{\fontsize{6.5}{7.5}\selectfont\sffamily
+A PDB limits how many Pods of a workload can be \textbf{voluntarily disrupted} at the same time (e.g.\ during \texttt{k drain}, cluster upgrades, autoscaler scale-down). Does \emph{not} protect against involuntary disruptions (node crash, OOM kill).\par}
+
+\tcbsubtitle{Imperative}
+\begin{cheatcodebash}
+k get pdb -A
+k describe pdb <name>
+\end{cheatcodebash}
+
+\tcbsubtitle{Spec Essentials}
+\cmdhead{Using minAvailable}
+\begin{cheatcodebashbold}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: web-pdb}
+spec:
+  minAvailable: 2      # or "80%" — at least this many must stay
+  selector:
+    matchLabels: {app: web} # must match the Pods to protect
+\end{cheatcodebashbold}
+
+\cmdhead{Using maxUnavailable}
+\begin{cheatcodebash}
+spec:
+  maxUnavailable: 1    # or "20%" — at most this many can be down
+  selector:
+    matchLabels: {app: web}
+\end{cheatcodebash}
+
+\note{Set \textbf{either} \texttt{minAvailable} or \texttt{maxUnavailable} — not both.}
+
+\tcbsubtitle{Key Fields}
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1.4,l]X[2,l]},
+    columns={valign=t, colsep=0.4em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+    }
+    ]
+  Field & Meaning \\
+  \texttt{minAvailable} & Min Pods that must remain running (absolute or \%) \\
+  \texttt{maxUnavailable} & Max Pods that can be disrupted (absolute or \%) \\
+  \texttt{selector} & Label selector matching the target Pods \\
+  \texttt{status.disruptionsAllowed} & Current number of Pods that can be evicted \\
+  \texttt{status.currentHealthy} & Number of healthy Pods right now \\
+
+\end{tcolorbox}
+
+\tcbsubtitle{Voluntary vs Involuntary Disruptions}
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1,l]X[1,l]},
+    columns={valign=t, colsep=0.4em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+    }
+    ]
+  Voluntary (PDB protects) & Involuntary (PDB does not) \\
+  \texttt{k drain <node>} & Node hardware failure \\
+  Cluster autoscaler scale-down & OOM kill \\
+  \texttt{k delete pod} (via Eviction API) & Kernel panic \\
+  Rolling upgrades & Preemption by higher-priority Pod \\
+
+\end{tcolorbox}
+
+\tcbsubtitle{Help}
+\cmdhead{kubectl}
+\begin{cheatcodebash}
+k explain pdb.spec --recursive
+\end{cheatcodebash}
+
+\cmdhead{\url{https://kubernetes.io/docs/}}
+\begin{cheatcodebash}
+search: "pod disruption budgets"
+\end{cheatcodebash}
+
+\warning{\texttt{k drain} will \textbf{block} if evicting a Pod would violate the PDB. Use \texttt{--timeout} or fix the PDB first.}

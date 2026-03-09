@@ -1,0 +1,283 @@
+
+\begin{tcbitemize}[
+  raster columns=3, raster equal height=rows,
+  blanker, cheat subtitle
+]
+
+  \tcbitem
+    \tcbsubtitle{Check Certificate Details}
+    \cmdhead{Check certificates}
+    \begin{cheatcodebash}
+    # View full certificate info (issuer, subject, SANs, dates)
+    openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+    # Check expiry date only
+    openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout -enddate
+    # Check issuer + subject
+    openssl x509 -in /etc/kubernetes/pki/apiserver.crt -noout \
+      -issuer -subject
+    # Decode base64-encoded cert (e.g. from kubeconfig or Secret)
+    echo "<base64-cert-data>" | base64 -d | openssl x509 -text -noout
+    \end{cheatcodebash}
+
+
+    \tcbsubtitle{Common Certificate Paths}
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[1.4,l]X[2,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+      Component & Path \\
+      API Server & \texttt{/etc/kubernetes/pki/apiserver.crt} \\
+      API Server Key & \texttt{/etc/kubernetes/pki/apiserver-key.pem} \\
+      CA Certificate & \texttt{/etc/kubernetes/pki/ca.crt} \\
+      etcd Server & \texttt{/etc/kubernetes/pki/etcd/server.crt} \\
+      Kubelet & \texttt{/var/lib/kubelet/pki/kubelet-client-current.pem} \\
+        
+    \end{tcolorbox}
+
+    \tcbsubtitle{Renew \& Manage (kubeadm)}
+    \begin{cheatcodebash}
+    # Check expiration of all cluster certificates
+    kubeadm certs check-expiration
+    # Renew all certificates
+    kubeadm certs renew all
+    # Renew a specific certificate
+    kubeadm certs renew apiserver
+    \end{cheatcodebash}
+
+    \warning{After renewing certs, restart control-plane Pods (or move manifests out of \texttt{/etc/kubernetes/manifests/} and back).}
+
+
+  \tcbitem
+    \tcbsubtitle{User Certificate Signing Flow}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    Grant a user (or CI service) API access via a client certificate signed by the cluster CA — no ServiceAccount token needed.\par}
+
+    \cmdhead{1. Generate private key \& CSR}
+    \begin{cheatcodebash}
+    openssl genrsa -out jane.key 2048
+    openssl req -new -key jane.key -subj "/CN=jane/O=dev-team" -out jane.csr
+    \end{cheatcodebash}
+
+    \cmdhead{2. Create Kubernetes CSR object}
+    \begin{cheatcodebash}
+    cat <<EOF | kubectl apply -f -
+    apiVersion: certificates.k8s.io/v1
+    kind: CertificateSigningRequest
+    metadata:
+      name: jane
+    spec:
+      request: $(cat jane.csr | base64 | tr -d '\n')
+      signerName: kubernetes.io/kube-apiserver-client
+      usages: ["client auth"]
+    EOF
+    \end{cheatcodebash}
+
+    \cmdhead{3. Admin approves the CSR}
+    \begin{cheatcodebash}
+    kubectl certificate approve jane
+    kubectl get csr jane    # STATUS: Approved,Issued
+    \end{cheatcodebash}
+
+    \cmdhead{4. Retrieve the signed certificate}
+    \begin{cheatcodebash}
+    kubectl get csr jane -o jsonpath='{.status.certificate}' \
+      | base64 -d > jane.crt
+    \end{cheatcodebash}
+
+    \cmdhead{5. Add user credentials to kubeconfig}
+    \begin{cheatcodebash}
+    kubectl config set-credentials jane \
+      --client-certificate=jane.crt --client-key=jane.key
+    kubectl config set-context jane-ctx \
+      --cluster=kubernetes --user=jane
+    kubectl config use-context jane-ctx
+    \end{cheatcodebash}
+    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group — use RBAC (Role + RoleBinding) to grant permissions.}
+
+
+  \tcbitem
+    \tcbsubtitle{Setup Separate Kubeconfig}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    After signing (steps 1--5), create a standalone kubeconfig file to hand off to the user.\par}
+
+    \cmdhead{6a. Create kubeconfig from template}
+    \begin{cheatcodebash}
+    # Copy existing config as template, then clean it
+    cp ~/.kube/config batman.config
+    KC="KUBECONFIG=batman.config"
+    eval $KC k config unset users.default
+    eval $KC k config delete-context default
+    eval $KC k config unset current-context
+    \end{cheatcodebash}
+
+    \cmdhead{6b. Set user credentials (embed certs)}
+    \begin{cheatcodebash}
+    eval $KC k config set-credentials batman \
+      --client-certificate=batman.crt \
+      --client-key=batman.key \
+      --embed-certs=true
+    \end{cheatcodebash}
+
+    \cmdhead{6c. Set context and activate}
+    \begin{cheatcodebash}
+    eval $KC k config set-context default \
+      --cluster=default --user=batman
+    eval $KC k config use-context default
+    \end{cheatcodebash}
+
+    \cmdhead{Shortcut: use variables for CSR YAML}
+    \begin{cheatcodebash}
+    CSR_DATA=$(base64 batman.csr | tr -d '\n')
+    CSR_USER=batman
+    # Then use $CSR_DATA and $CSR_USER in the YAML
+    \end{cheatcodebash}
+
+    \note{\texttt{--embed-certs=true} inlines cert data into the kubeconfig — the file is self-contained and portable.}
+
+
+  \end{tcbitemize}
+
+\vspace{1ex}
+
+\tcbsubtitle{How Certificates, Users, Groups \& RBAC Connect}
+
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
+
+  \tcbitem
+
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    Kubernetes has \textbf{no User object}. It does not store or manage users — identity comes from \textbf{outside} (certificates, OIDC tokens, etc.). The API server only \emph{extracts} identity from the presented credential and matches it against RBAC rules.\par}
+
+    \vspace{0.5ex}
+
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[1.2,l]X[1.2,l]X[2.5,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0.5pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+      Certificate Field & K8s Identity & Example \\
+      \texttt{CN} (Common Name) & Username & \texttt{/CN=jane} → user \texttt{jane} \\
+      \texttt{O} (Organization) & Group(s) & \texttt{/O=dev-team} → group \texttt{dev-team} \\
+      Multiple \texttt{O} & Multiple groups & \texttt{/O=dev-team/O=admins} → both groups \\
+
+    \end{tcolorbox}
+
+    \cmdhead{The full chain: Certificate → Identity → RBAC → Access}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+      \item \textbf{Certificate is created} with \texttt{-subj "/CN=jane/O=dev-team"} and signed by the cluster CA.
+      \item \textbf{User authenticates} — presents the client certificate (via kubeconfig) to the API server.
+      \item \textbf{API server extracts} \texttt{CN} → username \texttt{jane}, \texttt{O} → group \texttt{dev-team}. No lookup, no database — identity is \emph{in} the certificate.
+      \item \textbf{RBAC matches} — the API server checks RoleBindings/ClusterRoleBindings for \texttt{subjects} that reference \texttt{user: jane} or \texttt{group: dev-team}.
+      \item \textbf{Access granted or denied} based on the bound Role's \texttt{rules} (verbs, resources, apiGroups).
+    \end{enumerate}}
+
+    \vspace{0.5ex}
+
+    \cmdhead{Certificate Trust \& TLS Authentication Flow}
+    \begin{center}
+    \begin{tikzpicture}[
+      >=Stealth,
+      every node/.style={font=\sffamily\fontsize{5.5}{6.5}\selectfont},
+      actor/.style={draw=#1!60, fill=#1!10, rounded corners=2pt,
+        font=\sffamily\fontsize{5.5}{6.5}\selectfont\bfseries,
+        inner sep=3pt, minimum height=1.6em, minimum width=4.5em},
+      steplbl/.style={font=\sffamily\fontsize{5}{6}\selectfont, text width=5.8cm, align=left},
+      steplbll/.style={font=\sffamily\fontsize{5}{6}\selectfont, text width=5.2cm, align=right},
+      arr/.style={->, thick, #1!60},
+      phase/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont\itshape, gray},
+    ]
+      % Actors
+      \node[actor=teal] (user) {User (jane)};
+      \node[actor=k8sblue, right=9.5em of user] (api) {API Server};
+      \node[actor=orange, right=7em of api] (ca) {Cluster CA};
+
+      % Phase 1: Signing
+      \node[phase, above=0.2em of api] {One-time signing};
+
+      \draw[arr=teal] ([yshift=2pt]user.east) -- ([yshift=2pt]api.west)
+        node[midway, above, steplbl] {1. \texttt{openssl genrsa} → private key (secret!)};
+      \draw[arr=teal] ([yshift=-4pt]user.east) -- ([yshift=-4pt]api.west)
+        node[midway, below, steplbl] {2. CSR (public key + \texttt{CN=jane/O=dev}) → K8s};
+
+      \draw[arr=k8sblue] ([yshift=2pt]api.east) -- ([yshift=2pt]ca.west)
+        node[midway, above, steplbl] {3. Admin approves CSR};
+      \draw[arr=orange] ([yshift=-4pt]ca.west) -- ([yshift=-4pt]api.east)
+        node[midway, below, steplbl] {4. CA signs: public key + identity → certificate};
+
+      \draw[arr=k8sblue, dashed] (api.south) -- ++(0,-0.9)
+        node[below, steplbl, text width=7cm, align=center] {5. Signed cert returned to user (\texttt{jane.crt})};
+
+      % Phase 2: Every API call
+      \node[actor=teal, below=3.5em of user] (user2) {User (jane)};
+      \node[actor=k8sblue, below=3.5em of api] (api2) {API Server};
+
+      \node[phase, above=0.2em of api2] {Every \texttt{kubectl} call (mTLS handshake)};
+
+      \draw[arr=teal] ([yshift=4pt]user2.east) -- ([yshift=4pt]api2.west)
+        node[midway, above, steplbl] {6a. Sends \texttt{jane.crt} (signed cert with public key)};
+      \draw[arr=teal] ([yshift=-2pt]user2.east) -- ([yshift=-2pt]api2.west)
+        node[midway, below, steplbl] {6b. TLS handshake: API server sends a random challenge,
+        user encrypts it with \textbf{private key}, API server decrypts
+        with the \textbf{public key} from the cert → proves ownership};
+
+      \draw[arr=k8sblue] (api2.south) -- ++(0,-0.7)
+        node[below, steplbl, text width=9cm, align=center] {7. Cert signature valid (signed by CA)? → extract \texttt{CN}=jane, \texttt{O}=dev → RBAC check → allow/deny};
+
+    \end{tikzpicture}
+    \end{center}
+
+
+  \tcbitem
+
+    {\fontsize{6}{7}\selectfont\sffamily
+    \textbf{Why the private key never leaves the user:} The TLS handshake (step 6b) is a cryptographic proof of possession. The API server sends a challenge that only the holder of the private key can correctly sign. The private key itself is never transmitted — only the mathematical proof that the user has it. This is called \textbf{mutual TLS (mTLS)}: both sides authenticate (server cert + client cert).\par}
+
+    \vspace{0.5ex}
+
+    \cmdhead{RBAC binding examples}
+    \begin{cheatcodebash}
+    # Bind to user (matches CN)
+    k create rolebinding jane-edit --clusterrole=edit \
+      --user=jane -n dev
+
+    # Bind to group (matches O)
+    k create clusterrolebinding dev-view \
+      --clusterrole=view --group=dev-team
+    \end{cheatcodebash}
+
+    \cmdhead{Verify identity extracted from cert}
+    \begin{cheatcodebash}
+    # "Who am I?" — shows username and groups from the certificate
+    k auth whoami
+    # Test permissions as that user/group
+    k auth can-i list pods --as=jane
+    k auth can-i list pods --as-group=dev-team
+    \end{cheatcodebash}
+
+    \important{Changing a user's name or group requires issuing a \textbf{new certificate} — you cannot revoke or modify a cert field. Plan \texttt{CN}/\texttt{O} values carefully.}
+
+  \end{tcbitemize}
+

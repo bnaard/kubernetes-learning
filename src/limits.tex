@@ -1,0 +1,25 @@
+
+\begin{tcolorbox}
+    [
+    skin=cheatboxtablesimple,
+    before skip=0pt,
+    after skip=0pt,
+    tabularray={
+    colspec={X[1,l]X[2,l]},
+    columns={valign=t, colsep=0.4em},
+    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+    hline{2}={solid, wd=0.3pt, fg=gray!40},
+    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+    }
+    ]
+    \textbf{Feature}                       & \textbf{Typical Limit}              \\
+    Nodes                                  & $\leq $ \num{5000} nodes/cluster              \\
+    Pods                                   & $\leq $ \num{110} pods/node and $\leq $ \num{150000} pods/cluster               \\
+    Containers                             & $\leq $ \num{300000} containers/cluster             \\
+    Namespaces                             & $\leq $ \num{49000} namespaces/cluster              \\
+    Deployments                            & $\leq $ \num{10000} replicas/deployment              \\
+    Services                               & $\leq $ \num{50000} services/cluster              \\
+    Endpoints                              & $\leq $ \num{100000} services/cluster               \\
+    
+\end{tcolorbox}

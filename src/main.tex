@@ -389,15 +389,20 @@ size=small,skin=bicolor,
 
     % === Scheduling ============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Scheduling]
-        {name=scheduling, column=1, below=top, span=9}
+        {name=scheduling, column=1, between=top and bottom, span=9}
         \input{scheduling.tex}
     \end{posterboxenv}
 
+    % === Jobs =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs}]
+        {name=jobs, column=10, below=top, span=3}
+        \input{jobs.tex}
+    \end{posterboxenv}
 
-    % === Jobs, DaemonSets =========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs \& DaemonSets }]
-        {name=jobsdaemonsets, column=10, between=top and bottom, span=3}
-        \input{jobs_daemonsets.tex}
+    % === Typical Limits =========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical Limits}]
+        {name=limits, column=10, between=jobs and bottom, span=3}
+        \input{limits.tex}
     \end{posterboxenv}
 
 
@@ -415,7 +420,7 @@ size=small,skin=bicolor,
 
     % === Services & Networking =================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Services \& Networking}]
-        {name=networking, column=1, below=top, span=6}
+        {name=networking, column=1, between=top and bottom, span=9}
         \input{services_networking.tex}
     \end{posterboxenv}
 
@@ -426,34 +431,69 @@ size=small,skin=bicolor,
         \input{autoscaling.tex}
     \end{posterboxenv}
 
-    % === CNS (CoreDNS) ==================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={CoreDNS}]
-        {name=dns, column=10, below=autoscaling, span=3}
-        \input{dns.tex}
-    \end{posterboxenv}
-
 
 \end{tcbposter}
 
+
 \pagebreak
 
-% === Page 4: RBAC & Security, Troubleshooting, Helm/Kustomize =============
+% === Page 4: XXX  =========
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
-    % === RBAC & Security =======================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC \& Security}]
-        {name=security, column=1, below=top, span=4}
+    % === ConfigMaps & Secrets ==================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
+        {name=configmaps, column=1, below=top, span=9}
+        \input{configmaps_secrets.tex}
+    \end{posterboxenv}
+
+    % === Security =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Security}]
+        {name=security, column=1, between=configmaps and bottom, span=9}
         \input{security.tex}
     \end{posterboxenv}
 
+    % === Helm, Kustomize & Extensions ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
+        {name=helm, column=10, between=top and bottom, span=3}
+        \input{helm_kustomize.tex}
+    \end{posterboxenv}
+
+
+
+
+\end{tcbposter}
+
+
+\pagebreak
+
+% === Page X: xxx =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+
     % === Troubleshooting =======================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Troubleshooting]
-        {name=troubleshooting, column=5, below=top, span=8}
+        {name=troubleshooting, column=1, below=top, span=8}
         \input{troubleshooting.tex}
+    \end{posterboxenv}
+
+    % === Cluster Upgrade =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cluster Upgrade}]
+        {name=clusterupgrade, column=1, between=troubleshooting and bottom, span=6}
+        \input{cluster_upgrade.tex}
+    \end{posterboxenv}
+
+    % === Typical CKA Tasks =====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical CKA Tasks}]
+        {name=ckatasks, column=9, between=top and bottom, span=4}
+        \input{cka_tasks.tex}
     \end{posterboxenv}
 
 
@@ -470,30 +510,33 @@ size=small,skin=bicolor,
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
-    % === Metrics Server & Probes ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
-        {name=probes, column=1, below=top, span=4}
-        \input{probes.tex}
-    \end{posterboxenv}
 
     % === JsonPath ==========================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
-        {name=jsonpath, column=5, below=top, span=4}
+        {name=jsonpath, column=1, below=top, span=4}
         \input{jsonpath.tex}
     \end{posterboxenv}
 
-    % === Helm, Kustomize & Extensions ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
-        {name=helm, column=9, below=top, span=4}
-        \input{helm_kustomize.tex}
+    % === Volumes in Pods ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Volume Types in Pods}]
+        {name=volumesinpods, column=1, between=jsonpath and bottom, span=4}
+        \input{volumes_in_pods.tex}
     \end{posterboxenv}
 
 
-    % === ConfigMaps & Secrets ==================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={ConfigMaps \& Secrets}]
-        {name=configmaps, column=1, below=probes, span=3}
-        \input{configmaps_secrets.tex}
+    % === Storage ===============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
+        {name=storage, column=5, between=top and bottom, span=4}
+        \input{storage.tex}
     \end{posterboxenv}
+
+    % === StatfulSets ===============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=StatefulSets]
+        {name=statefulsets, column=9, between=top and bottom, span=4}
+        \input{statefulsets.tex}
+    \end{posterboxenv}
+
+
 
 
 
@@ -510,17 +553,45 @@ size=small,skin=bicolor,
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
-    % === Cluster Upgrade =========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cluster Upgrade}]
-        {name=clusterupgrade, column=1, below=top, span=6}
-        \input{cluster_upgrade.tex}
+    % === Certificates =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Certificates}]
+        {name=certificates, column=1, below=top, span=9}
+        \input{certificates.tex}
     \end{posterboxenv}
 
-    % === Storage ===============================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
-        {name=storage, column=10, below=top, span=3}
-        \input{storage.tex}
+    % === RBAC =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC}]
+        {name=rbac, column=10, between=top and bottom, span=3}
+        \input{rbac.tex}
     \end{posterboxenv}
+
+
+\end{tcbposter}
+
+
+
+\pagebreak
+
+
+% === Page 6: .... =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Pod Disruptions Budgets =========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Pod Disruption Budget}]
+        {name=pdb, column=1, between=top and bottom, span=3}
+        \input{pdb.tex}
+    \end{posterboxenv}
+
+    % === Metrics Server & Probes ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
+        {name=probes, column=4, below=top, span=3}
+        \input{probes.tex}
+    \end{posterboxenv}
+
 
 \end{tcbposter}
 

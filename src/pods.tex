@@ -48,7 +48,7 @@ k delete pod <name> $now
     Location                      & \texttt{spec.initContainers}        & \texttt{spec.initContainers}      \\
     \texttt{restartPolicy}        & (Default) \texttt{Never} / Not set   & \texttt{Always}                   \\
     Lifecycle                     & Runs to completion then exits.      & Starts, then stays running for Pod life.      \\
-    Startup Order                 & Blocks next container until completion.      & Blocks next container until startup/ready.     \\
+    Startup Order                 & Blocks next container until completion.      & Blocks next container until own startup/ready.     \\
     Termination                   & Exits before app starts.            & Terminated after main containers exit.     \\
     
 \end{tcolorbox}
@@ -58,13 +58,16 @@ k delete pod <name> $now
 \tcbsubtitle{Spec Essentials}
 \begin{cheatcodebashbold}
 spec:                            # <pod>.spec
-  restartPolicy: Always|Never|OnFailure
+  restartPolicy: Always|Never|OnFailure  # Pod level
   serviceAccountName: <sa>
   hostNetwork: true              # use node network
   initContainers:
-  - name: init
+  - name: init                   # regular init container
     image: busybox
     command: ['sh','-c','echo init']
+  - name: sidecar                # native sidecar
+    image: fluentd
+    restartPolicy: Always        # ← container level!
   containers:
   - name: app
     image: nginx:1.21

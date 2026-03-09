@@ -13,7 +13,7 @@ spec:                   # <job>.spec
   completions: 3        # total successful completions
   parallelism: 2        # concurrent pods
   backoffLimit: 4       # retries before fail
-  ttlSecondsAfterFinished: 60
+  ttlSecondsAfterFinished: 60 # time to live job obj.
   template:
     spec:
       restartPolicy: Never  # or OnFailure

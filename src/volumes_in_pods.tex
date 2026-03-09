@@ -1,0 +1,28 @@
+% === Volume Mounts ========================================================
+% \tcbsubtitle{Volume Types in Pods}
+\begin{cheatcodebash}
+spec:                  # <pod>.spec
+  volumes:
+  - name: pvc-vol
+    persistentVolumeClaim:
+      claimName: my-pvc
+  - name: tmp
+    emptyDir: {}           # ephemeral, lost on restart
+  - name: cfg
+    configMap: {name: my-cm}
+  - name: sec
+    secret: {secretName: my-secret}
+  - name: host
+    hostPath: {path: /data, type: Directory}
+  containers:
+  - volumeMounts:
+    - {name: pvc-vol, mountPath: /var/data}
+    - {name: cfg, mountPath: /etc/config, readOnly: true}
+\end{cheatcodebash}
+
+\begin{cheatcodebash}
+### Exam helpers:
+k explain pod.spec.volumes --recursive
+k explain pod.spec.containers.volumeMounts --recursive
+# docs: "volumes"
+\end{cheatcodebash}
