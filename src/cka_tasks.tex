@@ -82,3 +82,13 @@ ETCDCTL_API=3 etcdctl snapshot restore /tmp/backup.db \
   \item \warning{An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.}
   \item Test: \texttt{k exec <pod> -- wget -qO- -T2 <target>}
 \end{enumerate}}
+
+\tcbsubtitle{RBAC: ServiceAccount + ClusterRole}
+{\fontsize{6.5}{7.5}\selectfont\sffamily
+Task: Create SA \texttt{deploy-admin}, ClusterRole with \texttt{get} on Pods, bind them.
+\begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+  \item Create SA: \texttt{k create sa deploy-admin}
+  \item Create ClusterRole: \texttt{k create clusterrole cr --verb=get --resource=pods}
+  \item Bind: \texttt{k create clusterrolebinding crb --clusterrole=cr --serviceaccount=default:deploy-admin}
+  \item Verify: \texttt{k auth can-i get pods --as system:serviceaccount:default:deploy-admin}
+\end{enumerate}}
