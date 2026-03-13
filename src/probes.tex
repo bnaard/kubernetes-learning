@@ -1,6 +1,11 @@
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
 
 % === Metrics Server =======================================================
 
+  \tcbitem
     \tcbsubtitle{Metrics Server}
 
     \begin{cheatcodebash}
@@ -13,7 +18,8 @@
     k top pods [-n <ns>] [--containers]
     \end{cheatcodebash}
 
-  
+
+  \tcbitem
     \tcbsubtitle{Probes}
 
         % === Probes ===============================================================
@@ -44,3 +50,4 @@
           timeoutSeconds: 1
         \end{cheatcodebash}
 
+\end{tcbitemize}

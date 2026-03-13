@@ -1,88 +1,220 @@
-% === PersistentVolume =====================================================
-\tcbsubtitle{PersistentVolume (PV)}
-\begin{cheatcodebashbold}
-k get pv    # check RECLAIM POLICY, STATUS
-k create pv <pv-name> --capacity=<size> --access-modes=<mode> --host-path=<path>
-\end{cheatcodebashbold}
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
 
-\begin{cheatcodebash}
-apiVersion: v1
-kind: PersistentVolume
-metadata: {name: my-pv}
-spec:
-  capacity: {storage: 10Gi}
-  accessModes:
-  - ReadWriteOnce   # RWO: single node r/w
-  # ReadWriteMany   # RWX: many nodes r/w
-  # ReadOnlyMany    # ROX: many nodes r/o
-  persistentVolumeReclaimPolicy: Retain
-  # Retain   = keep PV after PVC delete
-  # Delete   = delete underlying storage
-  # Recycle  = deprecated
-  storageClassName: manual
-  hostPath: {path: /mnt/data, type: Directory} 
-# nfs: {server: 1.2.3.4, path: /x}
-\end{cheatcodebash}
+  % === Storage Hierarchy Diagram (full width) =================================
+  \tcbitem[raster multicolumn=2]
+    \tcbsubtitle{Storage Hierarchy}
+    \begin{center}
+    \begin{tikzpicture}[
+      node distance=0.15cm and 0.3cm,
+      every node/.style={font=\sffamily\fontsize{6}{7}\selectfont},
+      box/.style={draw=k8sblue!70!black, fill=k8sblue!8!white, rounded corners=1.5pt,
+        minimum height=0.45cm, inner sep=2pt, font=\sffamily\fontsize{5.5}{6.5}\selectfont\bfseries},
+      desc/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont\color{gray!70!black}, anchor=north, inner sep=0pt},
+      arr/.style={-{Stealth[length=2pt]}, k8sblue!60!black, thick},
+    ]
+      \node[box] (sc)   {StorageClass};
+      \node[box, right=0.8cm of sc]  (pv)   {PV};
+      \node[box, right=0.8cm of pv]  (pvc)  {PVC};
+      \node[box, right=0.8cm of pvc] (vol)  {Pod volumes};
+      \node[box, right=0.8cm of vol] (vm)   {volumeMounts};
 
-\begin{cheatcodebash}
-### Exam helpers:
-k explain persistentvolume.spec --recursive
-# docs: "persistent volumes"
-\end{cheatcodebash}
+      \draw[arr] (sc)  -- node[above, font=\sffamily\fontsize{4.5}{5}\selectfont\itshape] {provisions} (pv);
+      \draw[arr] (pv)  -- node[above, font=\sffamily\fontsize{4.5}{5}\selectfont\itshape] {binds} (pvc);
+      \draw[arr] (pvc) -- node[above, font=\sffamily\fontsize{4.5}{5}\selectfont\itshape] {references} (vol);
+      \draw[arr] (vol) -- node[above, font=\sffamily\fontsize{4.5}{5}\selectfont\itshape] {mounts} (vm);
 
-% === PersistentVolumeClaim ================================================
-\tcbsubtitle{PersistentVolumeClaim (PVC)}
+      \node[desc, below=0.05cm of sc]  {provisioner config};
+      \node[desc, below=0.05cm of pv]  {piece of storage};
+      \node[desc, below=0.05cm of pvc] {storage request};
+      \node[desc, below=0.05cm of vol] {pod-level def};
+      \node[desc, below=0.05cm of vm]  {container path};
+    \end{tikzpicture}
+    \end{center}
 
-\begin{cheatcodebashbold}
-k get pvc    # STATUS: Bound|Pending|Lost
-k create pv my-local-pv --capacity=5Gi --access-modes=ReadWriteOnce --host-path=/data/config
-\end{cheatcodebashbold}
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
 
-\begin{cheatcodebash}
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata: {name: my-pvc, namespace: default}
-spec:
-  accessModes: [ReadWriteOnce]
-  storageClassName: manual  # "" = no dynamic prov.
-  resources:
-    requests: {storage: 5Gi}
-\end{cheatcodebash}
+      \tcbitem
 
-\begin{cheatcodebash}
-### Exam helpers:
-k explain persistentvolumeclaim.spec --recursive
-# docs: "persistent volumes"
-\end{cheatcodebash}
+        % === StorageClass (Dynamic Provisioning) ==================================
+        \tcbsubtitle{StorageClass (Dynamic Provisioning)}
+        \begin{cheatcodebash}
+        k get sc               # list StorageClasses
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: fast
+          annotations:
+            storageclass.kubernetes.io/is-default-class: "true"
+        provisioner: rancher.io/local-path
+        reclaimPolicy: Delete
+        allowVolumeExpansion: true
+        volumeBindingMode: WaitForFirstConsumer
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        spec:  # PVC with dynamic provisioning
+          storageClassName: fast  # matches SC name
+          resources:
+            requests: {storage: 5Gi}
+        \end{cheatcodebash}
 
-% === StorageClass (Dynamic Provisioning) ==================================
-\tcbsubtitle{StorageClass (Dynamic Provisioning)}
-\begin{cheatcodebash}
-k get sc               # list StorageClasses
-\end{cheatcodebash}
-\begin{cheatcodebash}
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: rancher.io/local-path
-reclaimPolicy: Delete
-allowVolumeExpansion: true
-volumeBindingMode: WaitForFirstConsumer
-\end{cheatcodebash}
-\begin{cheatcodebash}
-spec:  # PVC with dynamic provisioning
-  storageClassName: fast  # matches SC name
-  resources:
-    requests: {storage: 5Gi}
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-### Exam helpers:
-k explain storageclass --recursive
-# docs: "storage classes"
-\end{cheatcodebash}
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        k explain storageclass --recursive
+        \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "storage classes"
+        \end{cheatcodebash}
 
 
+      \tcbitem
+
+        % === PersistentVolume =====================================================
+        \tcbsubtitle{PersistentVolume (PV)}
+        \begin{cheatcodebashbold}
+        k get pv    # check RECLAIM POLICY, STATUS
+        k create pv <pv-name> --capacity=<size> --access-modes=ReadWriteOnce --host-path=<path>
+        \end{cheatcodebashbold}
+
+        \begin{cheatcodebash}
+        apiVersion: v1
+        kind: PersistentVolume
+        metadata: {name: my-pv}
+        spec:
+          capacity: {storage: 10Gi}
+          accessModes:
+          - ReadWriteOnce   # RWO: single node r/w
+          # ReadWriteMany   # RWX: many nodes r/w
+          # ReadOnlyMany    # ROX: many nodes r/o
+          persistentVolumeReclaimPolicy: Retain
+          # Retain   = keep PV after PVC delete
+          # Delete   = delete underlying storage
+          # Recycle  = deprecated
+          storageClassName: manual  # static provisioning (pre-created PV)
+          hostPath: {path: /mnt/data, type: Directory}
+        # nfs: {server: 1.2.3.4, path: /x}
+        \end{cheatcodebash}
+
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        k explain persistentvolume.spec --recursive
+        \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "persistent volumes"
+        \end{cheatcodebash}
+
+    \end{tcbitemize}
+
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+      \tcbitem
+
+        % === PersistentVolumeClaim ================================================
+        \tcbsubtitle{PersistentVolumeClaim (PVC)}
+
+        \begin{cheatcodebashbold}
+        k get pvc    # STATUS: Bound|Pending|Lost
+        # No "k create pvc" — use YAML (apply -f)
+        \end{cheatcodebashbold}
+
+        \begin{cheatcodebash}
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata: {name: my-pvc, namespace: default}
+        spec:
+          accessModes: [ReadWriteOnce]
+          storageClassName: manual  # non-existent SC → static prov. ("" works too)
+          resources:
+            requests: {storage: 5Gi}
+        \end{cheatcodebash}
+
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        k explain persistentvolumeclaim.spec --recursive
+        \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "persistent volumes"
+        \end{cheatcodebash}
+
+      \tcbitem
+
+        % === Pod Volumes & Volume Mounts ================================================
+        \tcbsubtitle{Pod Volumes \& Volume Mounts}
+        \begin{cheatcodebash}
+        spec:                  # <pod>.spec
+          volumes:
+          - name: pvc-vol
+            persistentVolumeClaim:
+              claimName: my-pvc
+          - name: tmp
+            emptyDir: {}           # ephemeral, lost on restart
+          - name: cfg
+            configMap: {name: my-cm}
+          - name: sec
+            secret: {secretName: my-secret}
+          - name: host
+            hostPath: {path: /data, type: Directory}
+          containers:
+          - volumeMounts:
+            - {name: pvc-vol, mountPath: /var/data}
+            - {name: cfg, mountPath: /etc/config, readOnly: true}
+        \end{cheatcodebash}
+
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        k explain pod.spec.volumes --recursive
+        k explain pod.spec.containers.volumeMounts --recursive
+        \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "volumes"
+        \end{cheatcodebash}
+
+
+      \tcbitem
+
+        % === hostPath Volume vs PV with hostPath =================================
+        \tcbsubtitle{hostPath Volume vs PV with hostPath}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[0.9,l]X[0.9,l]X[1,l]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          Property & \texttt{hostPath} in Pod & PV with \texttt{hostPath} \\
+          PV/PVC abstraction & \emoji{cross-mark} direct in pod spec & \emoji{check-mark-button} PV + PVC \\
+          Pod knows node path & \emoji{check-mark-button} path in pod YAML & \emoji{cross-mark} only PVC name \\
+          Capacity tracked & \emoji{cross-mark} no quota enforced & declared but not enforced \\
+          Reusable across pods & \emoji{cross-mark} copy volume def & \emoji{check-mark-button} many pods bind PVC \\
+          Admin/dev separation & \emoji{cross-mark} dev sets path & \emoji{check-mark-button} admin creates PV \\
+          Reclaim policy & \emoji{cross-mark} pod lifecycle & Retain / Delete on PV \\
+          Access modes & N/A & RWO / ROX / RWX \\
+          Portability & node-specific & still node-specific \\
+
+        \end{tcolorbox}
+
+    \end{tcbitemize}
+
+\end{tcbitemize}

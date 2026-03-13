@@ -1,122 +1,169 @@
-% === StatefulSets ==========================================================
-\tcbsubtitle{Overview}
-{\fontsize{6.5}{7.5}\selectfont\sffamily
-Like a Deployment but for \textbf{stateful} workloads. Each Pod gets a \textbf{stable identity} (ordinal index), a \textbf{persistent hostname}, and its own \textbf{PVC} that survives rescheduling. Pods are created/deleted \textbf{in order} (0, 1, 2\ldots).\par}
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
 
-\tcbsubtitle{Imperative}
-\cmdhead{Exam shortcut: scaffold from Deployment}
-\begin{cheatcodebash}
-k create deploy db --image=mysql:8 --replicas=3 $do > sts.yaml
-# Then edit sts.yaml:
-#  1. kind: Deployment → StatefulSet
-#  2. Add spec.serviceName: <headless-svc>
-#  3. Add spec.volumeClaimTemplates (if needed)
-#  4. Remove spec.strategy (uses updateStrategy instead)
-\end{cheatcodebash}
+  % === Overview (full width) ==================================================
+  \tcbitem[raster multicolumn=2]
+    \tcbsubtitle{Overview}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    Like a Deployment but for \textbf{stateful} workloads. Each Pod gets a \textbf{stable identity} (ordinal index), a \textbf{persistent hostname}, and its own \textbf{PVC} that survives rescheduling. Pods are created/deleted \textbf{in order} (0, 1, 2\ldots).\par}
 
-\cmdhead{Create and scale}
-\begin{cheatcodebash}
-# No direct "k create statefulset" — use YAML
-k get statefulsets      # or: k get sts
-k scale sts <name> --replicas=5
-k delete sts <name>                # keeps PVCs!
-k delete sts <name> --cascade=orphan  # keeps Pods too
-\end{cheatcodebash}
-
-\tcbsubtitle{Spec Essentials}
-\begin{cheatcodebashbold}
-apiVersion: apps/v1
-kind: StatefulSet
-metadata: {name: db}
-spec:
-  serviceName: db-headless   # required! headless Service
-  replicas: 3
-  selector: {matchLabels: {app: db}}
-  template:
-    metadata: {labels: {app: db}}
-    spec:
-      containers:
-      - name: mysql
-        image: mysql:8
-        ports: [{containerPort: 3306}]
-        volumeMounts:
-        - {name: data, mountPath: /var/lib/mysql}
-  volumeClaimTemplates:      # one PVC per Pod
-  - metadata: {name: data}
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      resources:
-        requests: {storage: 10Gi}
-\end{cheatcodebashbold}
-
-\tcbsubtitle{Headless Service (required)}
-\begin{cheatcodebash}
-apiVersion: v1
-kind: Service
-metadata: {name: db-headless}
-spec:
-  clusterIP: None            # headless!
-  selector: {app: db}
-  ports:
-  - {port: 3306, targetPort: 3306}
-\end{cheatcodebash}
-
-\tcbsubtitle{Stable Network Identity}
-\begin{tcolorbox}
-    [
-    skin=cheatboxtablesimple,
-    before skip=0pt,
-    after skip=0pt,
-    tabularray={
-    colspec={X[1.2,l]X[2,l]},
-    columns={valign=t, colsep=0.4em},
-    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
-    hline{2}={solid, wd=0.3pt, fg=gray!40},
-    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
-    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
-    }
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
     ]
-  Property & Pattern \\
-  Pod names & \texttt{db-0}, \texttt{db-1}, \texttt{db-2} (ordinal) \\
-  DNS per Pod & \texttt{db-0.db-headless.<ns>.svc.cluster.local} \\
-  PVC per Pod & \texttt{data-db-0}, \texttt{data-db-1}, \texttt{data-db-2} \\
 
-\end{tcolorbox}
+      \tcbitem
 
-\tcbsubtitle{StatefulSet vs Deployment}
-\begin{tcolorbox}
-    [
-    skin=cheatboxtablesimple,
-    before skip=0pt,
-    after skip=0pt,
-    tabularray={
-    colspec={X[1.5,l]X[1.2,l]X[1.2,l]},
-    columns={valign=t, colsep=0.4em},
-    rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
-    hline{2}={solid, wd=0.3pt, fg=gray!40},
-    vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
-    row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
-    }
+        % === Imperative ===========================================================
+        \tcbsubtitle{Imperative}
+        \cmdhead{Exam shortcut: scaffold from Deployment}
+        \begin{cheatcodebash}
+        k create deploy db --image=mysql:8 --replicas=3 $do > sts.yaml
+        # Then edit sts.yaml:
+        #  1. kind: Deployment → StatefulSet
+        #  2. Add spec.serviceName: <headless-svc>
+        #  3. Add spec.volumeClaimTemplates (if needed)
+        #  4. Remove spec.strategy (uses updateStrategy instead)
+        \end{cheatcodebash}
+
+        \cmdhead{Create and scale}
+        \begin{cheatcodebash}
+        # No direct "k create statefulset" — use YAML
+        k get statefulsets      # or: k get sts
+        k scale sts <name> --replicas=5
+        k delete sts <name>                # keeps PVCs!
+        k delete sts <name> --cascade=orphan  # keeps Pods too
+        \end{cheatcodebash}
+
+      \tcbitem
+
+        % === Spec Essentials ======================================================
+        \tcbsubtitle{Spec Essentials}
+        \begin{cheatcodebashbold}
+        apiVersion: apps/v1
+        kind: StatefulSet
+        metadata: {name: db}
+        spec:
+          serviceName: db-headless   # required! headless Service
+          replicas: 3
+          selector: {matchLabels: {app: db}}
+          template:
+            metadata: {labels: {app: db}}
+            spec:
+              containers:
+              - name: mysql
+                image: mysql:8
+                ports: [{containerPort: 3306}]
+                volumeMounts:
+                - {name: data, mountPath: /var/lib/mysql}
+          volumeClaimTemplates:      # one PVC per Pod
+          - metadata: {name: data}
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests: {storage: 10Gi}
+        \end{cheatcodebashbold}
+
+
+    \end{tcbitemize}
+
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
     ]
-  Feature & Deployment & StatefulSet \\
-  Pod names & Random hash & Ordinal index \\
-  Storage & Shared PVC & PVC per Pod \\
-  Startup order & Parallel & Sequential \\
-  Stable DNS & No & Yes (via headless) \\
-  Use case & Stateless apps & DBs, queues, clusters \\
 
-\end{tcolorbox}
+      \tcbitem
 
-\tcbsubtitle{Help}
-\cmdhead{kubectl}
-\begin{cheatcodebash}
-k explain statefulset.spec --recursive
-k explain statefulset.spec.volumeClaimTemplates
-\end{cheatcodebash}
+        % === Stable Network Identity ==============================================
+        \tcbsubtitle{Stable Network Identity}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[1.2,l]X[2,l]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          Property & Pattern \\
+          Pod names & \texttt{db-0}, \texttt{db-1}, \texttt{db-2} (ordinal) \\
+          DNS per Pod & \texttt{db-0.db-headless.<ns>.svc.cluster.local} \\
+          PVC per Pod & \texttt{data-db-0}, \texttt{data-db-1}, \texttt{data-db-2} \\
 
-\cmdhead{\url{https://kubernetes.io/docs/}}
-\begin{cheatcodebash}
-search: "statefulsets"
-\end{cheatcodebash}
+        \end{tcolorbox}
 
-\warning{Deleting a StatefulSet does \textbf{not} delete its PVCs. Clean up manually: \texttt{k delete pvc data-db-\{0,1,2\}}}
+      \tcbitem
+
+        % === StatefulSet vs Deployment ============================================
+        \tcbsubtitle{StatefulSet vs Deployment}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[1.5,l]X[1.2,l]X[1.2,l]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          Feature & Deployment & StatefulSet \\
+          Pod names & Random hash & Ordinal index \\
+          Storage & Shared PVC & PVC per Pod \\
+          Startup order & Parallel & Sequential \\
+          Stable DNS & No & Yes (via headless) \\
+          Use case & Stateless apps & DBs, queues, clusters \\
+
+        \end{tcolorbox}
+
+
+      \tcbitem
+
+        % === Help =================================================================
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        k explain statefulset.spec --recursive
+        k explain statefulset.spec.volumeClaimTemplates
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "statefulsets"
+        \end{cheatcodebash}
+
+        \warning{Deleting a StatefulSet does \textbf{not} delete its PVCs. Clean up manually: \texttt{k delete pvc data-db-\{0,1,2\}}}
+
+     \tcbitem
+
+        % === Headless Service =====================================================
+        \tcbsubtitle{Headless Service (required)}
+        \begin{cheatcodebash}
+        # Imperative:
+        k create svc clusterip db-headless --clusterip="None" --tcp=3306:3306
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        apiVersion: v1
+        kind: Service
+        metadata: {name: db-headless}
+        spec:
+          clusterIP: None            # headless!
+          selector: {app: db}
+          ports:
+          - {port: 3306, targetPort: 3306}
+        \end{cheatcodebash}
+
+    \end{tcbitemize}
+
+\end{tcbitemize}

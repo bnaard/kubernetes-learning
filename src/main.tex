@@ -506,32 +506,24 @@ size=small,skin=bicolor,
     ]
 
 
-    % === JsonPath ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
-        {name=jsonpath, column=1, below=top, span=4}
-        \input{jsonpath.tex}
-    \end{posterboxenv}
-
-    % === Volumes in Pods ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Volume Types in Pods}]
-        {name=volumesinpods, column=1, between=jsonpath and bottom, span=4}
-        \input{volumes_in_pods.tex}
-    \end{posterboxenv}
-
-
     % === Storage ===============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Storage]
-        {name=storage, column=5, between=top and bottom, span=4}
+        {name=storage, column=1, between=top and bottom, span=6}
         \input{storage.tex}
     \end{posterboxenv}
 
-    % === StatfulSets ===============================================================
+    % === StatefulSets ===============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=StatefulSets]
-        {name=statefulsets, column=9, between=top and bottom, span=4}
+        {name=statefulsets, column=7, below=top, span=6}
         \input{statefulsets.tex}
     \end{posterboxenv}
 
 
+    % === Metrics Server & Probes ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
+        {name=probes, column=7, between=statefulsets and bottom, span=6}
+        \input{probes.tex}
+    \end{posterboxenv}
 
 
 
@@ -554,13 +546,6 @@ size=small,skin=bicolor,
         \input{certificates.tex}
     \end{posterboxenv}
 
-    % === RBAC =======================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC}]
-        {name=rbac, column=10, between=top and bottom, span=3}
-        \input{rbac.tex}
-    \end{posterboxenv}
-
-
 \end{tcbposter}
 
 
@@ -568,7 +553,7 @@ size=small,skin=bicolor,
 \pagebreak
 
 
-% === Page 6: .... =============
+% === Page 8: .... =============
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
@@ -581,12 +566,18 @@ size=small,skin=bicolor,
         \input{pdb.tex}
     \end{posterboxenv}
 
-    % === Metrics Server & Probes ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
-        {name=probes, column=4, below=top, span=3}
-        \input{probes.tex}
+
+    % === JsonPath ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
+        {name=jsonpath, column=4, between=top and bottom, span=3}
+        \input{jsonpath.tex}
     \end{posterboxenv}
 
+    % === RBAC =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC}]
+        {name=rbac, column=7, between=top and bottom, span=6}
+        \input{rbac.tex}
+    \end{posterboxenv}
 
 \end{tcbposter}
 
