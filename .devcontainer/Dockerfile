@@ -234,6 +234,10 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         python3-venv \
+        pulseaudio-utils \
+        libpulse0 \
+        libasound2-plugins \
+        sox \
     && ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
