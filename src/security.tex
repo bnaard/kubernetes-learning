@@ -102,7 +102,7 @@
             before skip=0pt,
             after skip=0pt,
             tabularray={
-            colspec={X[1,l]X[2,l]},
+            colspec={X[0.9,l]X[2,l]X[0.4,c]},
             columns={valign=t, colsep=0.4em},
             rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
             hline{2}={solid, wd=0.3pt, fg=gray!40},
@@ -110,19 +110,26 @@
             row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
             }
             ]
-          Capability & Purpose \\
-          \texttt{NET\_ADMIN} & Configure interfaces, routing, firewall rules \\
-          \texttt{NET\_RAW} & Use raw/packet sockets (ping, tcpdump) \\
-          \texttt{NET\_BIND\_SERVICE} & Bind to ports below 1024 \\
-          \texttt{SYS\_TIME} & Set system clock \\
-          \texttt{SYS\_PTRACE} & Trace/debug processes (strace, gdb) \\
-          \texttt{SYS\_ADMIN} & Broad: mount, namespaces, syslog — avoid! \\
-          \texttt{CHOWN} & Change file ownership \\
-          \texttt{DAC\_OVERRIDE} & Bypass file read/write/exec permission checks \\
-          \texttt{SETUID / SETGID} & Change process UID/GID \\
-          \texttt{KILL} & Send signals to other processes \\
-          \texttt{AUDIT\_WRITE} & Write to kernel audit log \\
-            
+          Capability & Purpose & Default \\
+          \texttt{CHOWN} & Change file ownership & $\checkmark$ \\
+          \texttt{DAC\_OVERRIDE} & Bypass file read/write/exec permission checks & $\checkmark$ \\
+          \texttt{FSETID} & Keep set-user/group-ID bits on modified files & $\checkmark$ \\
+          \texttt{FOWNER} & Bypass ownership checks on files & $\checkmark$ \\
+          \texttt{KILL} & Send signals to other processes & $\checkmark$ \\
+          \texttt{MKNOD} & Create special files (device nodes) & $\checkmark$ \\
+          \texttt{NET\_BIND\_SERVICE} & Bind to ports below 1024 & $\checkmark$ \\
+          \texttt{NET\_RAW} & Use raw/packet sockets (ping, tcpdump) & $\checkmark$ \\
+          \texttt{SETUID / SETGID} & Change process UID/GID & $\checkmark$ \\
+          \texttt{SETFCAP} & Set file capabilities & $\checkmark$ \\
+          \texttt{SETPCAP} & Transfer/drop capabilities & $\checkmark$ \\
+          \texttt{SYS\_CHROOT} & Use \texttt{chroot()} & $\checkmark$ \\
+          \texttt{AUDIT\_WRITE} & Write to kernel audit log & $\checkmark$ \\
+          \texttt{NET\_ADMIN} & Configure interfaces, routing, firewall rules & \\
+          \texttt{SYS\_TIME} & Set system clock & \\
+          \texttt{SYS\_PTRACE} & Trace/debug processes (strace, gdb) & \\
+          \texttt{SYS\_ADMIN} & Broad: mount, namespaces, syslog — avoid! & \\
+          \texttt{SYS\_MODULE} & Load/unload kernel modules & \\
+
         \end{tcolorbox}
         \note{Best practice: \texttt{drop: ["ALL"]} then add back only what's needed.}
 

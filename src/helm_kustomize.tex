@@ -1,6 +1,7 @@
 % === Helm =================================================================
 \tcbsubtitle{Helm}
-\begin{cheatcodebash}
+\cmdhead{CKA relevant}
+\begin{cheatcodebashbold}
 helm repo add <name> <url>       # register chart repo
 helm repo update                 # refresh index
 helm search repo <keyword>       # find charts
@@ -11,9 +12,13 @@ helm upgrade <release> <chart> -f vals.yaml
 helm rollback <release> [revision]
 helm uninstall <release> -n <ns> # delete release
 helm list [-A]                   # show releases
+helm history <release>           # list revisions
+\end{cheatcodebashbold}
+\cmdhead{Additional}
+\begin{cheatcodebash}
 helm status <release>            # health + notes
 helm get values <release>        # current overrides
-helm template <release> <chart>  # dry-run
+helm template <release> <chart>  # dry-run (local render)
 helm show values <chart>         # inspect defaults
 \end{cheatcodebash}
 
@@ -32,7 +37,7 @@ images:
   newTag: 1.25
 patches:
 - patch: |-
-    - op: replace
+    - op: replace              # add|remove|move|copy|test
       path: /spec/replicas
       value: 3
   target: {kind: Deployment, name: web}
@@ -40,7 +45,15 @@ patches:
 \begin{cheatcodebash}
 # Apply:
 kubectl apply -k <dir>
-kubectl kustomize <dir>        # preview only
+kubectl kustomize <dir>        # preview only (render YAML)
+kubectl kustomize <dir> | kubectl apply -f - # build+apply
+# kustomize build = kubectl kustomize (same engine)
+\end{cheatcodebash}
+
+\cmdhead{Help}
+\begin{cheatcodebash}
+# No "k explain" for Kustomize — it's client-side only
+# docs: "kustomize" or "kustomization"
 \end{cheatcodebash}
 
 % === CRDs & Operators =====================================================
@@ -52,7 +65,7 @@ k get <custom-resource-kind>    # list custom objects
 \end{cheatcodebash}
 \begin{cheatcodebash}
 # Operators extend K8s with custom controllers
-# Install via Helm or OLM:
+# Install via Helm or OLM (Operator Lifecycle Manager):
 k get operators                 # if OLM installed
 \end{cheatcodebash}
 
@@ -64,18 +77,27 @@ k explain customresourcedefinition.spec --recursive
 
 % === Extension Interfaces =================================================
 \tcbsubtitle{Extension Interfaces}
-{\small\sffamily
-\begin{tblr}{
-  colspec={lXX},
-  hline{2}={0.4pt},
-  rows={rowsep=0.5pt},
-  row{1}={font=\bfseries},
-}
+
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[0.4,l]X[1.3,l]X[1.9,l]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
 IF & Purpose & Examples \\
 CNI & Pod networking & Calico, Flannel, Cilium \\
 CSI & Storage provisioning & EBS, NFS, Rook \\
 CRI & Container runtime & containerd, CRI-O \\
-\end{tblr}}
+        \end{tcolorbox}
+
 \begin{cheatcodebash}
 # CNI config:  /etc/cni/net.d/
 # Check runtime (node level tool):

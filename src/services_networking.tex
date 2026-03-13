@@ -14,7 +14,7 @@
         after skip=0pt,
         tabularray={
         colspec={X[1,l]X[2,l]},
-        columns={valign=m, colsep=0.35em},
+        columns={valign=t, colsep=0.35em},
         rows={rowsep=0pt, font=\sffamily\footnotesize},   % \fontsize{5}{6}\selectfont
         hline{2}={solid, wd=0.3pt, fg=gray!40},
         vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
@@ -23,7 +23,7 @@
         ]
         \textbf{Type}    & \textbf{Description}         \\
         ClusterIP        & Internal only (default)      \\
-        Headless         & \texttt{clusterIP: None} — DNS returns Pod IPs directly, no proxy \\
+        Headless         & \texttt{clusterIP: None} — DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
         NodePort         & Via \texttt{NodeIP:Port} (30000--32767)      \\
         LoadBalancer     & Cloud LB, external IP      \\
         ExternalName     & DNS CNAME alias to external host      \\
@@ -34,7 +34,7 @@
     \cmdhead{Imperative}
     \begin{cheatcodebash}
     k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
-    k expose deploy <name> --port=80 --type=NodePort --node-port=30080
+    k expose deploy <name> --port=80 --target-port=8080 --type=NodePort --node-port=30080
     k expose deploy <name> --port=80 --type=LoadBalancer
     # Headless: ClusterIP service with clusterIP=None
     k create svc clusterip <name> --clusterip="None" --tcp=80:8080
@@ -128,15 +128,42 @@
 
     \vspace{-0.3ex}
 
-    \cmdhead{Help}
+    \cmdhead{Spec Essentials: Headless}
     \begin{cheatcodebash}
-    k explain service.spec --recursive
+    apiVersion: v1
+    kind: Service
+    metadata: {name: db-headless}
+    spec:
+      clusterIP: None            # headless!
+      selector: {app: db}
+      ports:
+      - {port: 3306, targetPort: 3306}
     \end{cheatcodebash}
+    \begin{center}
+    \begin{tikzpicture}[
+      >=Stealth,
+      box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+        font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+        minimum height=1.4em},
+      plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+      caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+      container/.style={draw=teal!40, dashed, rounded corners=2pt,
+        inner sep=3pt, fit=#1},
+      ]
+      \node[caller] (client) {Pod / DNS};
+      \node[box=gray, right=3em of client] (dns) {DNS};
+      \node[box=teal, above right=0.6em and 3.5em of dns] (pod1) {db-0:3306};
+      \node[box=teal, below right=0.6em and 3.5em of dns] (pod2) {db-1:3306};
+      \draw[->, gray, thick]
+        (client) -- (dns) node[plbl=gray, pos=0.5, above] {lookup};
+      \draw[->, teal!60, thick] (dns) -- (pod1);
+      \draw[->, teal!60, thick] (dns) -- (pod2);
+    \end{tikzpicture}
 
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "service"
-    \end{cheatcodebash}
+    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+    No ClusterIP. DNS returns Pod IPs directly. Client connects to individual Pods.\par}
+    \end{center}
+
 
   \tcbitem
 
@@ -218,6 +245,32 @@
         k run tmp --image=busybox --rm -it --restart=Never -- wget -qO- http://<svc>
         \end{cheatcodebash}
 
+        \cmdhead{Help}
+        \begin{cheatcodebash}
+        # No k explain — CoreDNS is configured via ConfigMap
+        k get cm coredns -n kube-system -o yaml
+        k logs -n kube-system -l k8s-app=kube-dns
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "dns debugging resolution"
+        search: "customizing dns"
+        \end{cheatcodebash}
+
+      \tcbitem
+          \tcbsubtitle{Service Types Help}
+          \cmdhead{Help}
+          \begin{cheatcodebash}
+          k explain service.spec --recursive
+          \end{cheatcodebash}
+
+          \cmdhead{\url{https://kubernetes.io/docs/}}
+          \begin{cheatcodebash}
+          search: "service"
+          \end{cheatcodebash}
+
+
       \end{tcbitemize}
 
     \tcbitem
@@ -274,7 +327,22 @@
       \tcbitem
         % === Gateway API ===========================================================
         \tcbsubtitle{Gateway API (successor to Ingress)}
-        \cmdhead{Spec Essentials}
+        \cmdhead{Gateway Object (Cilium example)}
+        \begin{cheatcodebash}
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: Gateway
+        metadata: {name: my-gateway}
+        spec:
+          gatewayClassName: cilium      # provided by Cilium
+          listeners:
+          - name: http
+            protocol: HTTP
+            port: 80
+            allowedRoutes:
+              namespaces: {from: Same}
+        \end{cheatcodebash}
+
+        \cmdhead{HTTPRoute Spec}
         \begin{cheatcodebash}
         apiVersion: gateway.networking.k8s.io/v1
         kind: HTTPRoute

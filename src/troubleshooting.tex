@@ -1,170 +1,218 @@
-\begin{minipage}[t]{0.48\linewidth}
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+      \tcbitem
 
-% === Pod Debugging ========================================================
-\tcbsubtitle{Pod Debugging}
-\begin{cheatcodebash}
-k get pods -A -o wide
-k describe pod <name> -n <ns>   # check Events!
-k logs <pod> [-c <container>]
-k logs <pod> --previous         # or -p crashed container
-k exec -it <pod> -- sh
-k exec -it <pod> -c <c> -- bash
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Ephemeral debug container (K8s 1.23+):
-k debug -it <pod> --image=busybox --target=<container>
-# Copy pod for debugging / test modified spec 
-k debug <pod> -it --copy-to=<pod>-debug --image=busybox
-\end{cheatcodebash}
+        % === Pod Debugging ========================================================
+        \tcbsubtitle{Pod Debugging}
+        \begin{cheatcodebash}
+        k get pods -A -o wide
+        k describe pod <name> -n <ns>   # check Events!
+        k logs <pod> [-c <container>]
+        k logs <pod> --previous         # or -p crashed container
+        k exec -it <pod> -- sh
+        k exec -it <pod> -c <c> -- bash
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        # Ephemeral debug container (K8s 1.23+):
+        # Shares process namespace with target container
+        k debug -it <pod> --image=busybox --target=<container>
+        # Copy pod for debugging (helps with CrashLoopBackOff:
+        # copied pod can override entrypoint to keep it running)
+        k debug <pod> -it --copy-to=<pod>-debug --image=busybox
+        \end{cheatcodebash}
+        \begin{cheatcodebashbold}
+        ### tunnel from port 8080 on localhost to port 80 of pod
+        ### CKA: verify pod's web UI/endpoint is working
+        k port-forward pod/<name> 8080:80
+        \end{cheatcodebashbold}
+        \begin{cheatcodebash}
+        ### Files / events / lifecycle
+        k cp <pod>:/path /local
+        k get events --sort-by='.lastTimestamp' -A
+        k delete pod <name> $now       # force delete
+        \end{cheatcodebash}
 
+      % === Pod Debug Scenarios ====================================================
+      \tcbitem
+        \cmdhead{Pod Debug Scenarios}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[1,l]X[0.2,c]X[0.2,c]X[0.2,c]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-4}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          Scenario & exec & run & debug \\
+          Shell in running pod & $\checkmark$ & & $\checkmark$ \\
+          Distroless / no shell & & & $\checkmark$ \\
+          CrashLoopBackOff & & & $\checkmark$\textsuperscript{1} \\
+          Node-level access & & & $\checkmark$\textsuperscript{2} \\
+          Ephemeral sidecar & & & $\checkmark$ \\
+          Network test pod & & $\checkmark$ & \\
 
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
-
-
-% === Common Pod States ====================================================
-\tcbsubtitle{Common Pod States}
-{\small\sffamily
-\begin{tblr}{
-  colspec={lX},
-  hline{2}={0.4pt},
-  rows={rowsep=0.5pt},
-  row{1}={font=\bfseries},
-}
-Status & Likely Cause \& Fix \\
-Pending & No node fits: check taints, resources, PVC \\
-CrashLoopBackOff & App crashes: \texttt{k logs -{}-previous} \\
-OOMKilled & Mem limit exceeded: raise \texttt{limits.memory} \\
-ImagePullBackOff & Bad image name or no pull secret \\
-Error & Non-zero exit: \texttt{k logs} \\
-Terminating & Stuck finalizer: \texttt{k delete -{}-force} \\
-ContainerCreating & Volume or image pull in progress \\
-\end{tblr}}
-
-\end{minipage}
-
-\vspace{1.5ex}
-
-\begin{minipage}[t]{0.48\linewidth}
-
-
-% === Node Debugging ========================================================
-\tcbsubtitle{Node Debugging}
-\begin{cheatcodebash}
-k get nodes -o wide
-k describe node <name>      # Conditions, Events
-k cordon <node>             # mark unschedulable
-k drain <node> --ignore-daemonsets --delete-emptydir-data
-k uncordon <node>
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# On the node (SSH):
-systemctl status kubelet
-systemctl restart kubelet
-journalctl -u kubelet -f
-journalctl -u kubelet | grep -i error
-systemctl status containerd
-systemctl cat kubelet       # see config path
-\end{cheatcodebash}
-
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
-
-
-% === Control Plane Debug ==================================================
-\tcbsubtitle{Control Plane Debug}
-\begin{cheatcodebash}
-# Static pods in kube-system:
-k get pods -n kube-system
-k logs kube-apiserver-<node> -n kube-system
-k logs etcd-<node> -n kube-system
-\end{cheatcodebash}
-
-\begin{cheatcodebash}
-# Edit control plane component:
-vi /etc/kubernetes/manifests/kube-apiserver.yaml
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Kubelet config path:
-systemctl cat kubelet | grep '\-\-config'
-# Usually: /var/lib/kubelet/config.yaml
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# If API server unreachable:
-crictl ps                   # list containers on node
-crictl logs <container-id>
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Kubeconfig:
-export KUBECONFIG=/etc/kubernetes/admin.conf
-\end{cheatcodebash}
-
-\end{minipage}
-
-\vspace{1.5ex}
-
-\begin{minipage}[t]{0.48\linewidth}
+        \end{tcolorbox}
+        {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+        \textsuperscript{1}\texttt{k debug --copy-to} \quad
+        \textsuperscript{2}\texttt{k debug node/<n> --image=busybox}\par}
 
 
-% === Service Debugging =====================================================
-\tcbsubtitle{Service \& Networking Debugging}
-\begin{cheatcodebash}
-# Check if svc routes to pods:
-k get endpoints <svc>       # empty = label mismatch
-k get pods --show-labels
-k describe svc <name>       # check Selector field
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# DNS test:
-k run tmp --image=busybox --rm -it --restart=Never -- nslookup <svc>.<ns>
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# HTTP test:
-k run tmp --image=busybox --rm -it --restart=Never -- wget -qO- http://<svc>.<ns>:80
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Check network policy interference:
-k get netpol -A
-\end{cheatcodebash}
+      % === Common Pod States ====================================================
+      \tcbitem
+        \cmdhead{Common Pod States}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[1,l]X[2,l]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          Status & Likely Cause \& Fix \\
+          Pending & No node fits: check taints, resources, PVC \\
+          CrashLoopBackOff & App crashes: \texttt{k logs -{}-previous} \\
+          OOMKilled & Mem limit exceeded: raise \texttt{limits.memory} \\
+          ImagePullBackOff & Bad image name or no pull secret \\
+          Error & Non-zero exit: \texttt{k logs} \\
+          Terminating & Stuck finalizer: \texttt{k delete -{}-force} \\
+          ContainerCreating & Volume or image pull in progress \\
 
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\linewidth}
+        \end{tcolorbox}
 
-  
-% === Persistent Volume Claim Debugging
-\tcbsubtitle{Persistent Volume Claim Debugging}
-\begin{cheatcodebash}
-k get pv    # check RECLAIM POLICY, STATUS
-# Pending reasons: capacity mismatch, accessMode mismatch, storageClass mismatch
-\end{cheatcodebash}
+      \tcbitem
+        % === Node Debugging ========================================================
+        \tcbsubtitle{Node Debugging}
+        \begin{cheatcodebash}
+        k get nodes -o wide
+        k describe node <name>      # Conditions, Events
+        k cordon <node>             # mark unschedulable
+        k drain <node> --ignore-daemonsets --delete-emptydir-data
+        k uncordon <node>
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        # On the node (SSH):
+        systemctl status kubelet
+        systemctl restart kubelet
+        journalctl -u kubelet -f
+        journalctl -u kubelet | grep -i error
+        systemctl status containerd
+        systemctl cat kubelet       # see config path
+        # Usually: /var/lib/kubelet/config.yaml
+        \end{cheatcodebash}
 
-\begin{cheatcodebash}
-### Exam helpers:
-k explain persistentvolumeclaim.spec --recursive
-k explain persistentvolume.spec.accessModes
-# docs: "persistent volumes"
-\end{cheatcodebash}
+    \end{tcbitemize}
 
-\begin{cheatcodebashbold}
-### Inspect / debug
-k describe pod <name>              # check Events!
-k logs <pod> [-c <container>] [-p] # check logs [previous] 
-\end{cheatcodebashbold}
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+      \tcbitem
+          % === Control Plane Debug ==================================================
+          \tcbsubtitle{Control Plane Debug}
+          \begin{cheatcodebash}
+          # Static pods in kube-system:
+          k get pods -n kube-system
+          k logs kube-apiserver-<node> -n kube-system
+          k logs etcd-<node> -n kube-system
+          \end{cheatcodebash}
 
+          \begin{cheatcodebash}
+          # Edit control plane component:
+          vi /etc/kubernetes/manifests/kube-apiserver.yaml
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # If API server unreachable:
+          crictl ps                   # list containers on node
+          crictl logs <container-id>
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # Kubeconfig:
+          export KUBECONFIG=/etc/kubernetes/admin.conf
+          \end{cheatcodebash}
 
-\begin{cheatcodebashbold}
-### tunnel from port 8080 on localhost to port 80 of pod
-### CKA: verify pod's web UI/endpoint is working
-k port-forward pod/<name> 8080:80
-\end{cheatcodebashbold}
+        \tcbitem
+          % === Service Debugging =====================================================
+          \tcbsubtitle{Service \& Networking Debugging}
+          \begin{cheatcodebash}
+          # Check if svc routes to pods:
+          k get endpoints <svc>       # empty = label mismatch
+          k get pods --show-labels
+          k describe svc <name>       # check Selector field
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # DNS test:
+          k run tmp --image=busybox --rm -it --restart=Never -- nslookup <svc>.<ns>
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # HTTP test:
+          k run tmp --image=busybox --rm -it --restart=Never -- wget -qO- http://<svc>.<ns>:80
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # Check network policy interference:
+          k get netpol -A
+          \end{cheatcodebash}
 
+        \tcbitem
+          % === Persistent Volume Claim Debugging
+          \tcbsubtitle{Persistent Volume Claim Debugging}
+          \begin{cheatcodebash}
+          k get pv    # check RECLAIM POLICY, STATUS
+          # Pending reasons: capacity mismatch, accessMode mismatch, storageClass mismatch
+          \end{cheatcodebash}
 
+          \begin{cheatcodebash}
+          ### Exam helpers:
+          k explain persistentvolumeclaim.spec --recursive
+          k explain persistentvolume.spec.accessModes
+          # docs: "persistent volumes"
+          \end{cheatcodebash}
 
-\begin{cheatcodebash}
-### Files / events / lifecycle
-k cp <pod>:/path /local
-k get events --sort-by='.lastTimestamp' -A
-k delete pod <name> $now       # force delete
-\end{cheatcodebash}
+        \tcbitem
+          % === Certificate Debugging ================================================
+          \tcbsubtitle{Certificate Debugging}
+          \begin{cheatcodebash}
+          # Check cert expiry:
+          kubeadm certs check-expiration
+          # Inspect a specific cert:
+          openssl x509 -in /etc/kubernetes/pki/apiserver.crt \
+            -noout -text -dates
+          # Verify cert matches key:
+          openssl x509 -in cert.crt -noout -modulus | md5sum
+          openssl rsa  -in cert.key -noout -modulus | md5sum
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # Renew all certs:
+          kubeadm certs renew all
+          # Then restart control plane (kubelet picks up new certs):
+          systemctl restart kubelet
+          \end{cheatcodebash}
+          \begin{cheatcodebash}
+          # Common symptoms:
+          # - "x509: certificate has expired" in kubelet/apiserver logs
+          # - "Unable to connect to the server" from kubectl
+          # docs: search "manage tls certificates"
+          \end{cheatcodebash}
 
-\end{minipage}
+    \end{tcbitemize}
+
+\end{tcbitemize}

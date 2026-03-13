@@ -41,12 +41,14 @@ spec:                    # <deployment>.spec
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1        # extra pods during upd
-      maxUnavailable: 0  # min avail. dur upd
+      maxSurge: 1        # extra pods during update
+      maxUnavailable: 0  # min avail. dur update
   template:
     metadata: {labels: {app: web}} # injected in every pod
     spec: ...            # same as pod spec
 \end{cheatcodebashbold}
+
+\warning{Any pod created outside of a deployment with same labels \texttt{app: web} also counts against the deployments replica count.}
 
 
     % metadata: {labels: !\tikz[remember picture,overlay]\coordinate(mk-ta);!{app: web}!\tikz[remember picture,overlay]\coordinate(mk-tb);!} # injected in every pod
@@ -79,5 +81,3 @@ k explain deployment.spec.strategy --recursive
 \begin{cheatcodebash}
 search: "deployments"
 \end{cheatcodebash}
-
-\warning{Any pod created outside of a deployment with same labels \texttt{app: web} also counts against the deployments replica count.}

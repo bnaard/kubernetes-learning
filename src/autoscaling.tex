@@ -56,7 +56,7 @@ service: "horizontal pod autoscaling"
 
 % === VPA ==================================================================
 \tcbsubtitle{VPA (Vertical Pod Autoscaler)}
-\footnotesize{\note{Requires VPA controller installed to adjust resource requests/limits}}
+\footnotesize{\note{Adjusts the \texttt{resources.requests} and \texttt{resources.limits} of pods — i.e.\ changes what pods ask for, not how many run. Requires VPA controller installed.}}
 
 \cmdhead{Imperative}
 \begin{cheatcodebash}

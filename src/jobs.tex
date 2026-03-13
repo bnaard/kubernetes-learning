@@ -7,6 +7,8 @@ k get jobs              # List jobs
 k logs job/<name>       # Get log of job <name>
 \end{cheatcodebash}
 
+\note{\texttt{">"} and \texttt{"|"} interpreted by shell, before kubectl sees it. If necessary inside container command use \texttt{' '} to wrap command and escape \texttt{'} with \texttt{\textbackslash\textquotesingle}.}
+
 \cmdhead{Spec Essentials}
 \begin{cheatcodebash}
 spec:                   # <job>.spec
@@ -38,7 +40,7 @@ search: "jobs"
 
 \cmdhead{Imperative}
 \begin{cheatcodebash}
-k create cj <name> --image=busybox --schedule="*/5 * * * *" -- echo hi
+k create cj <name> --image=busybox --schedule="*/5 * * * *" -- echo hi % say hi every 5 min
 k get cj
 k create job manual-run --from=cronjob/<name>
 \end{cheatcodebash}
