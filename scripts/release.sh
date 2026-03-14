@@ -150,9 +150,12 @@ fi
 
 # --- Create the release -----------------------------------------------------
 echo "==> Creating Codeberg release ${TAG}..."
+TARGET_COMMIT=$(git rev-parse HEAD)
+echo "    Target commit: ${TARGET_COMMIT}"
 RELEASE_BODY=$(cat <<BODY
 {
   "tag_name": "${TAG}",
+  "target_commitish": "${TARGET_COMMIT}",
   "name": "${TAG}",
   "body": "Kubernetes Summary Sheet ${TAG}",
   "draft": false,
