@@ -174,10 +174,43 @@ if ! git_push "${BRANCH}"; then
   die "Failed to push branch ${BRANCH} to origin."
 fi
 
+# --- Diagnose API state before creating release ------------------------------
+echo "==> Diagnosing API state..."
+
+echo "    Listing branches via API..."
+BRANCHES_HTTP=$(curl -s -o /tmp/branches.json -w "%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}/branches")
+echo "    GET ${API}/branches => HTTP ${BRANCHES_HTTP}"
+if [[ "$BRANCHES_HTTP" == "200" ]]; then
+  echo "    Branches:" $(jq -r '.[].name' /tmp/branches.json | tr '\n' ' ')
+fi
+
+echo "    Listing tags via API..."
+TAGS_HTTP=$(curl -s -o /tmp/tags.json -w "%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}/tags")
+echo "    GET ${API}/tags => HTTP ${TAGS_HTTP}"
+if [[ "$TAGS_HTTP" == "200" ]]; then
+  echo "    Tags:" $(jq -r '.[].name' /tmp/tags.json | tr '\n' ' ')
+fi
+
+echo "    Listing existing releases via API..."
+RELEASES_HTTP=$(curl -s -o /tmp/releases.json -w "%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}/releases")
+echo "    GET ${API}/releases => HTTP ${RELEASES_HTTP}"
+if [[ "$RELEASES_HTTP" == "200" ]]; then
+  EXISTING=$(jq -r '.[].tag_name // empty' /tmp/releases.json | tr '\n' ' ')
+  echo "    Existing releases: ${EXISTING:-"(none)"}"
+fi
+
+echo "    Checking Forgejo version..."
+FORGEJO_VER=$(curl -s -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "https://codeberg.org/api/v1/version" | jq -r '.version // empty')
+echo "    Forgejo version: ${FORGEJO_VER:-"unknown"}"
+
 # --- Create the release (which also creates the tag on the remote) ----------
-# Note: Codeberg/Forgejo requires target_commitish to be a branch name, not a
-# SHA. The API also creates the tag itself — pushing the tag beforehand can
-# cause a 404 "target couldn't be found" error (known Gitea issue #21681).
 echo "==> Creating Codeberg release ${TAG}..."
 echo "    Target branch: ${DEFAULT_BRANCH} (from API)"
 RELEASE_BODY=$(cat <<BODY
