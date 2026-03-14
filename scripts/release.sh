@@ -96,15 +96,43 @@ echo "    API base:   ${API}"
 echo "    Tag:        ${TAG}"
 echo "    PDF name:   ${PDF_NAME}"
 
-# --- Verify API access -------------------------------------------------------
+# --- Verify API access and token permissions ---------------------------------
 echo "==> Verifying API access..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+
+# Check authenticated user
+echo "    Checking token authentication..."
+USER_RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "https://codeberg.org/api/v1/user")
+USER_HTTP=$(echo "$USER_RESPONSE" | tail -1)
+USER_JSON=$(echo "$USER_RESPONSE" | sed '$d')
+if [[ "$USER_HTTP" != "200" ]]; then
+  die "Token authentication failed (HTTP ${USER_HTTP}). Is CODEBERG_TOKEN valid?"
+fi
+TOKEN_USER=$(echo "$USER_JSON" | jq -r '.login')
+echo "    Authenticated as: ${TOKEN_USER}"
+
+# Check repo access and default branch
+REPO_RESPONSE=$(curl -s -w "\n%{http_code}" \
   -H "Authorization: token ${CODEBERG_TOKEN}" \
   "${API}")
-if [[ "$HTTP_CODE" != "200" ]]; then
-  die "API check failed (HTTP ${HTTP_CODE}). Verify CODEBERG_TOKEN has write:repository scope and owner/repo are correct."
+REPO_HTTP=$(echo "$REPO_RESPONSE" | tail -1)
+REPO_JSON=$(echo "$REPO_RESPONSE" | sed '$d')
+if [[ "$REPO_HTTP" != "200" ]]; then
+  die "Cannot access repo (HTTP ${REPO_HTTP}). Check CODEBERG_OWNER/CODEBERG_REPO."
 fi
-echo "    API access OK (HTTP ${HTTP_CODE})"
+DEFAULT_BRANCH=$(echo "$REPO_JSON" | jq -r '.default_branch')
+REPO_PERMS=$(echo "$REPO_JSON" | jq -c '.permissions // empty')
+echo "    Default branch: ${DEFAULT_BRANCH}"
+echo "    Permissions:    ${REPO_PERMS:-"(not returned — token may lack scope)"}"
+
+# Check write permission
+HAS_PUSH=$(echo "$REPO_JSON" | jq -r '.permissions.push // false')
+if [[ "$HAS_PUSH" != "true" ]]; then
+  echo "    WARNING: Token does not appear to have push/write permission on this repo!" >&2
+  echo "    The token needs 'write:repository' scope (or 'repository' with write access)." >&2
+  echo "    Generate a new token at: https://codeberg.org/user/settings/applications" >&2
+fi
 
 # --- Build PDF ---------------------------------------------------------------
 echo "==> Building PDF with LuaLaTeX..."
@@ -140,11 +168,11 @@ fi
 # SHA. The API also creates the tag itself — pushing the tag beforehand can
 # cause a 404 "target couldn't be found" error (known Gitea issue #21681).
 echo "==> Creating Codeberg release ${TAG}..."
-echo "    Target branch: ${BRANCH}"
+echo "    Target branch: ${DEFAULT_BRANCH} (from API)"
 RELEASE_BODY=$(cat <<BODY
 {
   "tag_name": "${TAG}",
-  "target_commitish": "${BRANCH}",
+  "target_commitish": "${DEFAULT_BRANCH}",
   "name": "${TAG}",
   "body": "Kubernetes Summary Sheet ${TAG}",
   "draft": false,
