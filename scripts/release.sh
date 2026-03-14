@@ -156,10 +156,21 @@ if [[ "$PDF_SIZE" -lt 1000 ]]; then
   die "PDF is suspiciously small (${PDF_SIZE} bytes). Something may be wrong with the build."
 fi
 
+# --- Configure git to use the API token for pushing --------------------------
+# git push over HTTPS doesn't use CODEBERG_TOKEN, so we inject credentials via
+# a temporary credential helper to avoid expired/missing git credentials.
+PUSH_URL="https://${TOKEN_USER}:${CODEBERG_TOKEN}@codeberg.org/${CODEBERG_OWNER}/${CODEBERG_REPO}.git"
+
+git_push() {
+  # Push using the token-authenticated URL; filter output to avoid leaking the token
+  git push "${PUSH_URL}" "$@" 2>&1 | sed "s|${CODEBERG_TOKEN}|***|g"
+  return "${PIPESTATUS[0]}"
+}
+
 # --- Push current branch to origin -------------------------------------------
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "==> Pushing branch '${BRANCH}' to origin..."
-if ! git push origin "${BRANCH}" 2>&1; then
+if ! git_push "${BRANCH}"; then
   die "Failed to push branch ${BRANCH} to origin."
 fi
 
