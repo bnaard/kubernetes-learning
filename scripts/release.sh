@@ -135,27 +135,16 @@ if ! git push origin "${BRANCH}" 2>&1; then
   die "Failed to push branch ${BRANCH} to origin."
 fi
 
-# --- Create git tag (if not already present) --------------------------------
-echo "==> Tagging ${TAG}..."
-if git rev-parse "$TAG" >/dev/null 2>&1; then
-  echo "    Tag ${TAG} already exists locally, skipping creation."
-else
-  git tag -a "$TAG" -m "Release ${TAG}"
-  echo "    Created local tag ${TAG}"
-fi
-echo "    Pushing tag to origin..."
-if ! git push origin "$TAG" 2>&1; then
-  die "Failed to push tag ${TAG} to origin."
-fi
-
-# --- Create the release -----------------------------------------------------
+# --- Create the release (which also creates the tag on the remote) ----------
+# Note: Codeberg/Forgejo requires target_commitish to be a branch name, not a
+# SHA. The API also creates the tag itself — pushing the tag beforehand can
+# cause a 404 "target couldn't be found" error (known Gitea issue #21681).
 echo "==> Creating Codeberg release ${TAG}..."
-TARGET_COMMIT=$(git rev-parse HEAD)
-echo "    Target commit: ${TARGET_COMMIT}"
+echo "    Target branch: ${BRANCH}"
 RELEASE_BODY=$(cat <<BODY
 {
   "tag_name": "${TAG}",
-  "target_commitish": "${TARGET_COMMIT}",
+  "target_commitish": "${BRANCH}",
   "name": "${TAG}",
   "body": "Kubernetes Summary Sheet ${TAG}",
   "draft": false,
@@ -223,6 +212,11 @@ echo "$ASSETS_JSON" | jq -r '.[] | "    - \(.name) (\(.size) bytes)"'
 
 if [[ "$ASSET_COUNT" -eq 0 ]]; then
   die "Release has no assets — upload may have failed silently."
+fi
+
+# --- Sync local tag with remote ----------------------------------------------
+if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+  git fetch origin "refs/tags/${TAG}:refs/tags/${TAG}" 2>/dev/null || true
 fi
 
 echo ""
