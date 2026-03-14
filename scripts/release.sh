@@ -18,9 +18,19 @@ Environment variables:
                    Generate at: https://codeberg.org/user/settings/applications
   CODEBERG_OWNER   Repository owner (default: auto-detected from git remote)
   CODEBERG_REPO    Repository name  (default: auto-detected from git remote)
+  ENV_FILE         Path to .env file (default: .env)
+
+The script automatically loads a .env file (if present) before reading
+environment variables. Create a .env file with KEY=VALUE lines, e.g.:
+
+  CODEBERG_TOKEN=your_token_here
 
 Examples:
-  # Basic usage
+  # Using .env file (recommended)
+  echo 'CODEBERG_TOKEN=your_token' > .env
+  $SCRIPT_NAME v1.0.0
+
+  # Basic usage with inline variable
   CODEBERG_TOKEN=your_token $SCRIPT_NAME v1.0.0
 
   # With explicit owner/repo
@@ -39,6 +49,16 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 TAG="${1:?Error: missing <tag> argument. Run '$SCRIPT_NAME --help' for usage.}"
+
+# --- Load .env file if present ------------------------------------------------
+ENV_FILE="${ENV_FILE:-.env}"
+if [[ -f "$ENV_FILE" ]]; then
+  echo "==> Loading environment from ${ENV_FILE}"
+  set -a
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+  set +a
+fi
 
 : "${CODEBERG_TOKEN:?Error: CODEBERG_TOKEN is not set. Run '$SCRIPT_NAME --help' for usage.}"
 
