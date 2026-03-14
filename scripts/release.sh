@@ -128,6 +128,13 @@ if [[ "$PDF_SIZE" -lt 1000 ]]; then
   die "PDF is suspiciously small (${PDF_SIZE} bytes). Something may be wrong with the build."
 fi
 
+# --- Push current branch to origin -------------------------------------------
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "==> Pushing branch '${BRANCH}' to origin..."
+if ! git push origin "${BRANCH}" 2>&1; then
+  die "Failed to push branch ${BRANCH} to origin."
+fi
+
 # --- Create git tag (if not already present) --------------------------------
 echo "==> Tagging ${TAG}..."
 if git rev-parse "$TAG" >/dev/null 2>&1; then
