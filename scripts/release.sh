@@ -113,7 +113,7 @@ RELEASE_RESPONSE=$(curl -sf -X POST \
   -d "{
     \"tag_name\": \"${TAG}\",
     \"name\": \"${TAG}\",
-    \"body\": \"Kubernetes CKA Summary Sheet ${TAG}\",
+    \"body\": \"Kubernetes Summary Sheet ${TAG}\",
     \"draft\": false,
     \"prerelease\": false
   }")

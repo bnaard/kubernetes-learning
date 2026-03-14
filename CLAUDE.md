@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a LaTeX project for creating a CKA (Certified Kubernetes Administrator) exam summary sheet. The document is typeset with LuaLaTeX and compiled via `latexmk`. The devcontainer provides a full TeX Live installation, `poppler-utils`, and code assistants (Claude Code, Gemini CLI, Jules).
+This is a LaTeX project for creating a Kubernetes summary sheet. The document is typeset with LuaLaTeX and compiled via `latexmk`. The devcontainer provides a full TeX Live installation, `poppler-utils`, and code assistants (Claude Code, Gemini CLI, Jules).
 
 ## Building
 
@@ -35,7 +35,7 @@ Read the generated PNG files with the Read tool to visually verify the output. I
 ## Project Structure
 
 ```
-src/main.tex          # Main document (CKA summary sheet)
+src/main.tex          # Main document (Kubernetes summary sheet)
 src/out/              # Build output (PDF, aux files) — gitignored
 .vscode/settings.json # LaTeX Workshop tool/recipe config (authoritative build flags)
 .devcontainer/        # Devcontainer definition (Dockerfile + docker-compose.yml)
