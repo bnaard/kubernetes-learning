@@ -43,6 +43,8 @@ EOF
   exit "${1:-0}"
 }
 
+die() { echo "Error: $*" >&2; exit 1; }
+
 # --- Parse arguments --------------------------------------------------------
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage 0
@@ -62,6 +64,11 @@ fi
 
 : "${CODEBERG_TOKEN:?Error: CODEBERG_TOKEN is not set. Run '$SCRIPT_NAME --help' for usage.}"
 
+# --- Check prerequisites -----------------------------------------------------
+for cmd in latexmk curl jq git; do
+  command -v "$cmd" >/dev/null 2>&1 || die "'$cmd' is not installed or not in PATH."
+done
+
 # --- Detect owner/repo from git remote -------------------------------------
 detect_remote() {
   local url
@@ -78,62 +85,137 @@ if [[ -z "${CODEBERG_OWNER:-}" || -z "${CODEBERG_REPO:-}" ]]; then
 fi
 
 if [[ -z "$CODEBERG_OWNER" || -z "$CODEBERG_REPO" ]]; then
-  echo "Error: could not detect owner/repo from git remote. Set CODEBERG_OWNER and CODEBERG_REPO." >&2
-  exit 1
+  die "Could not detect owner/repo from git remote. Set CODEBERG_OWNER and CODEBERG_REPO."
 fi
 
 API="https://codeberg.org/api/v1/repos/${CODEBERG_OWNER}/${CODEBERG_REPO}"
 PDF_NAME="k8s_summary_sheet_${TAG}.pdf"
 
+echo "==> Repository: ${CODEBERG_OWNER}/${CODEBERG_REPO}"
+echo "    API base:   ${API}"
+echo "    Tag:        ${TAG}"
+echo "    PDF name:   ${PDF_NAME}"
+
+# --- Verify API access -------------------------------------------------------
+echo "==> Verifying API access..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}")
+if [[ "$HTTP_CODE" != "200" ]]; then
+  die "API check failed (HTTP ${HTTP_CODE}). Verify CODEBERG_TOKEN has write:repository scope and owner/repo are correct."
+fi
+echo "    API access OK (HTTP ${HTTP_CODE})"
+
+# --- Build PDF ---------------------------------------------------------------
 echo "==> Building PDF with LuaLaTeX..."
 mkdir -p out
-latexmk --shell-escape -synctex=1 -interaction=nonstopmode -file-line-error \
+if ! latexmk --shell-escape -synctex=1 -interaction=nonstopmode -file-line-error \
   -pdflatex=lualatex -pdf \
   -aux-directory=./out -output-directory=./out \
-  src/main.tex
+  src/main.tex; then
+  die "latexmk failed. Check the log at out/main.log"
+fi
+
+if [[ ! -f out/main.pdf ]]; then
+  die "Build succeeded but out/main.pdf not found."
+fi
 
 cp out/main.pdf "${PDF_NAME}"
-echo "    Built ${PDF_NAME}"
+PDF_SIZE=$(stat -c%s "${PDF_NAME}" 2>/dev/null || stat -f%z "${PDF_NAME}" 2>/dev/null)
+echo "    Built ${PDF_NAME} (${PDF_SIZE} bytes)"
+
+if [[ "$PDF_SIZE" -lt 1000 ]]; then
+  die "PDF is suspiciously small (${PDF_SIZE} bytes). Something may be wrong with the build."
+fi
 
 # --- Create git tag (if not already present) --------------------------------
 echo "==> Tagging ${TAG}..."
 if git rev-parse "$TAG" >/dev/null 2>&1; then
-  echo "    Tag ${TAG} already exists, skipping."
+  echo "    Tag ${TAG} already exists locally, skipping creation."
 else
   git tag -a "$TAG" -m "Release ${TAG}"
+  echo "    Created local tag ${TAG}"
 fi
-git push origin "$TAG"
+echo "    Pushing tag to origin..."
+if ! git push origin "$TAG" 2>&1; then
+  die "Failed to push tag ${TAG} to origin."
+fi
 
 # --- Create the release -----------------------------------------------------
 echo "==> Creating Codeberg release ${TAG}..."
-RELEASE_RESPONSE=$(curl -sf -X POST \
+RELEASE_BODY=$(cat <<BODY
+{
+  "tag_name": "${TAG}",
+  "name": "${TAG}",
+  "body": "Kubernetes Summary Sheet ${TAG}",
+  "draft": false,
+  "prerelease": false
+}
+BODY
+)
+echo "    Request body: ${RELEASE_BODY}"
+
+RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
   -H "Authorization: token ${CODEBERG_TOKEN}" \
   -H "Content-Type: application/json" \
   "${API}/releases" \
-  -d "{
-    \"tag_name\": \"${TAG}\",
-    \"name\": \"${TAG}\",
-    \"body\": \"Kubernetes Summary Sheet ${TAG}\",
-    \"draft\": false,
-    \"prerelease\": false
-  }")
+  -d "$RELEASE_BODY")
 
-RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id')
+RELEASE_HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -1)
+RELEASE_JSON=$(echo "$RELEASE_RESPONSE" | sed '$d')
+
+echo "    Response HTTP ${RELEASE_HTTP_CODE}"
+
+if [[ "$RELEASE_HTTP_CODE" -lt 200 || "$RELEASE_HTTP_CODE" -ge 300 ]]; then
+  echo "    Response body: ${RELEASE_JSON}" >&2
+  die "Failed to create release (HTTP ${RELEASE_HTTP_CODE})."
+fi
+
+RELEASE_ID=$(echo "$RELEASE_JSON" | jq -r '.id')
 
 if [[ -z "$RELEASE_ID" || "$RELEASE_ID" == "null" ]]; then
-  echo "Error: failed to create release. Response:" >&2
-  echo "$RELEASE_RESPONSE" >&2
-  exit 1
+  echo "    Response body: ${RELEASE_JSON}" >&2
+  die "Release created but could not extract release ID from response."
 fi
 echo "    Created release ID: ${RELEASE_ID}"
 
 # --- Upload the PDF as a release asset --------------------------------------
-echo "==> Uploading ${PDF_NAME}..."
-curl -sf -X POST \
-  -H "Authorization: token ${CODEBERG_TOKEN}" \
-  "${API}/releases/${RELEASE_ID}/assets?name=${PDF_NAME}" \
-  -F "attachment=@${PDF_NAME};type=application/pdf" > /dev/null
+echo "==> Uploading ${PDF_NAME} to release ${RELEASE_ID}..."
+UPLOAD_URL="${API}/releases/${RELEASE_ID}/assets?name=${PDF_NAME}"
+echo "    Upload URL: ${UPLOAD_URL}"
 
+UPLOAD_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${UPLOAD_URL}" \
+  -F "attachment=@${PDF_NAME};type=application/pdf")
+
+UPLOAD_HTTP_CODE=$(echo "$UPLOAD_RESPONSE" | tail -1)
+UPLOAD_JSON=$(echo "$UPLOAD_RESPONSE" | sed '$d')
+
+echo "    Response HTTP ${UPLOAD_HTTP_CODE}"
+
+if [[ "$UPLOAD_HTTP_CODE" -lt 200 || "$UPLOAD_HTTP_CODE" -ge 300 ]]; then
+  echo "    Response body: ${UPLOAD_JSON}" >&2
+  die "Failed to upload PDF (HTTP ${UPLOAD_HTTP_CODE})."
+fi
+
+ASSET_URL=$(echo "$UPLOAD_JSON" | jq -r '.browser_download_url // empty')
+echo "    Upload OK. Asset URL: ${ASSET_URL:-"(not returned)"}"
+
+# --- Verify the release has the asset ----------------------------------------
+echo "==> Verifying release assets..."
+ASSETS_JSON=$(curl -s \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}/releases/${RELEASE_ID}/assets")
+ASSET_COUNT=$(echo "$ASSETS_JSON" | jq 'length')
+echo "    Release has ${ASSET_COUNT} asset(s):"
+echo "$ASSETS_JSON" | jq -r '.[] | "    - \(.name) (\(.size) bytes)"'
+
+if [[ "$ASSET_COUNT" -eq 0 ]]; then
+  die "Release has no assets — upload may have failed silently."
+fi
+
+echo ""
 echo "==> Done! Release ${TAG} published with ${PDF_NAME}"
 echo "    https://codeberg.org/${CODEBERG_OWNER}/${CODEBERG_REPO}/releases/tag/${TAG}"
 
