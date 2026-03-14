@@ -38,6 +38,7 @@
           {\fontsize{6.5}{7.5}\selectfont\sffamily
           Control plane:
           \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item Edit \texttt{/etc/apt/sources.list.d/kubernetes.list} — change version to target minor (e.g.\ \texttt{v1.31})
             \item \texttt{apt-mark unhold kubeadm} — allow apt to upgrade it
             \item \texttt{apt update \&\& apt install -y kubeadm=1.X.Y-1.1}
             \item \texttt{kubeadm upgrade plan}
@@ -51,14 +52,32 @@
             \item SSH to node, then: \texttt{kubeadm upgrade node}
             \item \texttt{apt install -y kubelet=1.X.Y-1.1 kubectl=1.X.Y-1.1}
             \item \texttt{systemctl daemon-reload \&\& systemctl restart kubelet}
+            \item Exit SSH back to control plane node
             \item \texttt{k uncordon <node>}
           \end{enumerate}}
+
+      \tcbitem
+          \tcbsubtitle{Fix admin.conf / Kubeconfig}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item Symptom: \texttt{kubectl} cannot reach API server
+            \item Check \texttt{/etc/kubernetes/admin.conf} (or \texttt{\$KUBECONFIG})
+            \item Verify \texttt{server:} URL — must be \texttt{https://<control-plane-ip>:6443}
+            \item Common issues: wrong port (e.g.\ \texttt{8443} instead of \texttt{6443}), wrong IP, \texttt{http} instead of \texttt{https}
+            \item Fix and verify: \texttt{k get nodes}
+          \end{enumerate}}
+
 
       \tcbitem
           \tcbsubtitle{etcd Backup \& Restore}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
           \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item Get certs from \texttt{k describe pod etcd-* -n kube-system}
+            \item Get certs from \texttt{k describe pod etcd-* -n kube-system}\\
+              Map etcd pod flags to \texttt{etcdctl} flags:\\
+              \texttt{--advertise-client-urls} → \texttt{--endpoints}\\
+              \texttt{--cert-file} → \texttt{--cert}\\
+              \texttt{--key-file} → \texttt{--key}\\
+              \texttt{--trusted-ca-file} → \texttt{--cacert}
             \item Backup:
           \end{enumerate}}
           \begin{cheatcodebash}
@@ -86,6 +105,7 @@
           # docs: search "backing up etcd cluster"
           \end{cheatcodebash}
 
+
     \end{tcbitemize}
 
   \tcbitem
@@ -110,7 +130,7 @@
           \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
             \item Identify pods via labels: \texttt{k get pods --show-labels}
             \item Write policy with \texttt{podSelector}, \texttt{ingress}/\texttt{egress} rules
-            \item \warning{An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.}
+            \item \emoji{warning}  An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.
             \item Test: \texttt{k exec <pod> -- wget -qO- -T2 <target>}
           \end{enumerate}}
           \begin{cheatcodebash}
@@ -124,9 +144,64 @@
             \item \texttt{k create sa deploy-admin -n <ns>}
             \item \texttt{k create clusterrole cr --verb=get --resource=pods}
             \item \texttt{k create clusterrolebinding crb --clusterrole=cr --serviceaccount=<ns>:deploy-admin}
-            \item Verify: \texttt{k auth can-i get pods --as system:serviceaccount:<ns>:deploy-admin}
+            \item \texttt{k auth can-i get pods --as system:serviceaccount:<ns>:deploy-admin  \# Verify}
           \end{enumerate}}
 
+      \tcbitem
+          \tcbsubtitle{Custom Columns \& Sorting}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          List all deployments with name, replicas, and image, sorted by name:}
+          \begin{cheatcodebash}
+          k get deploy -A -o custom-columns=\
+              'NAME:.metadata.name,NS:.metadata.namespace,\
+              REPLICAS:.spec.replicas,\
+              IMAGE:.spec.template.spec.containers[0].image' \
+            --sort-by=.metadata.name
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          Sort pods by restart count:}
+          \begin{cheatcodebash}
+          k get pods -A -o custom-columns='NAME:.metadata.name,\
+             RESTARTS:.status.containerStatuses[0].restartCount' \
+             --sort-by='.status.containerStatuses[0].restartCount'
+          \end{cheatcodebash}
+
+      \tcbitem
+          \tcbsubtitle{Create Deployment, Upgrade \& Annotate}
+          \begin{cheatcodebash}
+          k create deploy nginx --image=nginx:1.24 --replicas=3
+          k set image deploy/nginx nginx=nginx:1.25
+          k annotate deploy nginx kubernetes.io/change-cause="upgrade to 1.25"
+          \end{cheatcodebash}
+
+      \tcbitem
+          \tcbsubtitle{Create Pod with Secret Mounted}
+          \begin{cheatcodebash}
+          k create secret generic db-creds \
+            --from-literal=user=admin \
+            --from-literal=pass=s3cret $do > secret.yaml
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          Then generate pod YAML and add the secret volume:}
+          \begin{cheatcodebash}
+          k run secret-pod --image=nginx $do > pod.yaml
+          # Edit pod.yaml: add volumes + volumeMounts
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          \begin{cheatcodeyaml}
+          # Add to pod spec:
+          volumes:
+          - name: secret-vol
+            secret:
+              secretName: db-creds
+          # Add to container:
+          volumeMounts:
+          - name: secret-vol
+            mountPath: /etc/db-creds
+            readOnly: true
+          \end{cheatcodeyaml}
 
     \end{tcbitemize}
 

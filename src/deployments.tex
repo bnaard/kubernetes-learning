@@ -50,6 +50,8 @@ spec:                    # <deployment>.spec
 
 \warning{Any pod created outside of a deployment with same labels \texttt{app: web} also counts against the deployments replica count.}
 
+\note{\texttt{maxSurge}/\texttt{maxUnavailable} here govern the Deployment controller's \textbf{own rollouts} (direct pod deletion). A \textbf{PodDisruptionBudget} governs \textbf{external} voluntary disruptions (\texttt{kubectl drain}, autoscaler) via the Eviction API. They don't overlap --- PDBs are \textbf{not} consulted during a rolling update.}
+
 
     % metadata: {labels: !\tikz[remember picture,overlay]\coordinate(mk-ta);!{app: web}!\tikz[remember picture,overlay]\coordinate(mk-tb);!} # injected in every pod
 

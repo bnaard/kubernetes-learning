@@ -1,5 +1,5 @@
 % ----------------------------------------------------------------------------------------------------------------------
-% Kubernetes CKA Learning Sheet
+% Kubernetes CKA Summary Sheet
 % ----------------------------------------------------------------------------------------------------------------------
 
 % User guides
@@ -25,10 +25,8 @@
 
 % --- Fonts --------------------------------------------------------------------
 
-% Ensure proper font encoding
-\usepackage[T1]{fontenc}
-
 % Load system fonts via fontspec (requires XeLaTeX or LuaLaTeX)
+% Note: fontenc is not needed with fontspec + LuaLaTeX
 \usepackage{fontspec}
 \setmainfont{FreeSans}[Scale=0.95]
 \setsansfont{FreeSans}[Scale=0.95]
@@ -67,9 +65,9 @@
 
 
 % --- TColorbox ---------------------------------------------------------------
-% highlightmode=immediate: minted v3 defaults to 'fastfirst' which shows a
-% <MINTED> placeholder on the first pass; immediate highlights every run.
-\PassOptionsToPackage{highlightmode=immediate}{minted}
+% minted v3: 'fastfirst' uses cache when available, highlights on first pass.
+% Avoids re-running Pygments on unchanged code blocks.
+\PassOptionsToPackage{highlightmode=fastfirst}{minted}
 \usepackage{tcolorbox}
 \tcbuselibrary{skins,raster,listings,breakable,minted,poster}
 
@@ -130,6 +128,8 @@
 % --- Default options ---------------------------------------------------------
 \pagestyle{fancy}
 
+% --- Version (must match git release tag) ------------------------------------
+\newcommand{\cheatsheetversion}{v0.2.0}
 
 \definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
 \newcommand{\primarycolor}{k8sblue}
@@ -301,9 +301,9 @@ size=small,skin=bicolor,
 % ----------------------------------------------------------------------------------------------------------------------
 
 \fancyhead[L]{
-    \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} CheatSheet}
+    \huge\raisebox{-0.1\height}{\raisebox{-0.1cm}{\includegraphics[height=0.55cm]{Kubernetes_logo_without_workmark.svg.png}}~\headerfont{\textcolor{\primarycolor}{Kubernetes}} Summary Sheet}
 }
-\fancyhead[C]{}
+\fancyhead[C]{\small\sffamily\cheatsheetversion\enspace\textbar\enspace K8s v1.25--v1.35}
 \fancyhead[R]{\thepage}
 \fancyfoot[L]{}
 \fancyfoot[C]{}
@@ -468,32 +468,6 @@ size=small,skin=bicolor,
 \end{tcbposter}
 
 
-\pagebreak
-
-% === Page X: xxx =============
-\begin{tcbposter}[
-        poster = {spacing=0.6em, columns=12, height=\textheight},
-        boxes = {},
-        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
-    ]
-
-
-    % === Troubleshooting =======================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Troubleshooting]
-        {name=troubleshooting, column=1, between=top and bottom, span=6}
-        \input{troubleshooting.tex}
-    \end{posterboxenv}
-
-
-    % === Typical CKA Tasks =====================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical CKA Tasks}]
-        {name=ckatasks, column=7, between=top and bottom, span=6}
-        \input{cka_tasks.tex}
-    \end{posterboxenv}
-
-
-\end{tcbposter}
-
 
 \pagebreak
 
@@ -519,13 +493,6 @@ size=small,skin=bicolor,
     \end{posterboxenv}
 
 
-    % === Metrics Server & Probes ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
-        {name=probes, column=7, between=statefulsets and bottom, span=6}
-        \input{probes.tex}
-    \end{posterboxenv}
-
-
 
 \end{tcbposter}
 
@@ -542,9 +509,19 @@ size=small,skin=bicolor,
 
     % === Certificates =======================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Certificates}]
-        {name=certificates, column=1, below=top, span=9}
+        {name=certificates, column=1, between=top and bottom, span=9}
         \input{certificates.tex}
     \end{posterboxenv}
+
+
+
+    % === Metrics Server & Probes ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Metrics Server \& Probes}]
+        {name=probes, column=10, between=top and bottom, span=3}
+        \input{probes.tex}
+    \end{posterboxenv}
+
+
 
 \end{tcbposter}
 
@@ -581,6 +558,32 @@ size=small,skin=bicolor,
 
 \end{tcbposter}
 
+
+\pagebreak
+
+% === Page X: xxx =============
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+
+    % === Troubleshooting =======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Troubleshooting]
+        {name=troubleshooting, column=1, between=top and bottom, span=6}
+        \input{troubleshooting.tex}
+    \end{posterboxenv}
+
+
+    % === Typical CKA Tasks =====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical CKA Tasks}]
+        {name=ckatasks, column=7, between=top and bottom, span=6}
+        \input{cka_tasks.tex}
+    \end{posterboxenv}
+
+
+\end{tcbposter}
 
 
 \end{document}

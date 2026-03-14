@@ -12,9 +12,9 @@ k logs job/<name>       # Get log of job <name>
 \cmdhead{Spec Essentials}
 \begin{cheatcodebash}
 spec:                   # <job>.spec
-  completions: 3        # total successful completions
+  completions: 3        # total successful pod completions
   parallelism: 2        # concurrent pods
-  backoffLimit: 4       # retries before fail
+  backoffLimit: 4       # retries across all pods before fail
   ttlSecondsAfterFinished: 60 # time to live job obj.
   template:
     spec:

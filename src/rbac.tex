@@ -26,7 +26,14 @@
         \cmdhead{Bind to ServiceAccount}
         \begin{cheatcodebash}
         k create rolebinding <name> --role=<role> --serviceaccount=<ns>:<sa> -n <ns>
+        k create clusterrolebinding <name> --clusterrole=<cr> --serviceaccount=<ns>:<sa>
+        \end{cheatcodebash}
+
+        \cmdhead{Bind to User or Group}
+        \begin{cheatcodebash}
+        k create rolebinding <name> --role=<role> --user=<user> -n <ns>
         k create clusterrolebinding <name> --clusterrole=<cr> --user=<user>
+        k create clusterrolebinding <name> --clusterrole=<cr> --group=<group>
         \end{cheatcodebash}
 
         \cmdhead{Verify}
@@ -116,6 +123,11 @@
         \cmdhead{Check which group a resource belongs to}
         \begin{cheatcodebash}
         k api-resources    # GROUP column shows the apiGroup
+        k api-resources --api-group=apps  # filter by group
+        \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "api groups"
         \end{cheatcodebash}
 
       \tcbitem
@@ -148,6 +160,11 @@
           \texttt{*} & All verbs (wildcard) \\
 
         \end{tcolorbox}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "authorization overview"
+        \end{cheatcodebash}
 
       \tcbitem
 

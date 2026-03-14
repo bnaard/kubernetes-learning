@@ -94,27 +94,28 @@
       | base64 -d > jane.crt
     \end{cheatcodebash}
 
-    \cmdhead{5. Add user credentials to kubeconfig}
+    \cmdhead{5. Add user credentials to default kubeconfig (\textasciitilde/.kube/config)}
     \begin{cheatcodebash}
     kubectl config set-credentials jane \
-      --client-certificate=jane.crt --client-key=jane.key
+      --client-certificate=jane.crt --client-key=jane.key \
+      --embed-certs=true
     kubectl config set-context jane-ctx \
       --cluster=kubernetes --user=jane
     kubectl config use-context jane-ctx
     \end{cheatcodebash}
-    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group — use RBAC (Role + RoleBinding) to grant permissions.}
+    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group. The API server extracts these from the cert on every request — no database lookup. Then RBAC matches RoleBindings for \texttt{user:} or \texttt{group:} subjects to grant/deny access.}
 
 
   \tcbitem
     \tcbsubtitle{Setup Separate Kubeconfig}
     {\fontsize{6.5}{7.5}\selectfont\sffamily
-    After signing (steps 1--5), create a standalone kubeconfig file to hand off to the user.\par}
+    Step 5 adds credentials to your admin \texttt{\textasciitilde/.kube/config}. To create a \textbf{standalone} kubeconfig file (portable, to hand off to the user), copy the admin config as a template, strip existing users/contexts, then add the new user's credentials.\par}
 
     \cmdhead{6a. Create kubeconfig from template}
     \begin{cheatcodebash}
-    # Copy existing config as template, then clean it
-    cp ~/.kube/config batman.config
-    KC="KUBECONFIG=batman.config"
+    # Copy admin config as base (keeps cluster + CA info)
+    cp ~/.kube/config jane.config
+    KC="KUBECONFIG=jane.config"
     eval $KC k config unset users.default
     eval $KC k config delete-context default
     eval $KC k config unset current-context
@@ -122,23 +123,23 @@
 
     \cmdhead{6b. Set user credentials (embed certs)}
     \begin{cheatcodebash}
-    eval $KC k config set-credentials batman \
-      --client-certificate=batman.crt \
-      --client-key=batman.key \
+    eval $KC k config set-credentials jane \
+      --client-certificate=jane.crt \
+      --client-key=jane.key \
       --embed-certs=true
     \end{cheatcodebash}
 
     \cmdhead{6c. Set context and activate}
     \begin{cheatcodebash}
     eval $KC k config set-context default \
-      --cluster=default --user=batman
+      --cluster=default --user=jane
     eval $KC k config use-context default
     \end{cheatcodebash}
 
     \cmdhead{Shortcut: use variables for CSR YAML}
     \begin{cheatcodebash}
-    CSR_DATA=$(base64 batman.csr | tr -d '\n')
-    CSR_USER=batman
+    CSR_DATA=$(base64 jane.csr | tr -d '\n')
+    CSR_USER=jane
     # Then use $CSR_DATA and $CSR_USER in the YAML
     \end{cheatcodebash}
 
@@ -152,14 +153,15 @@
 \tcbsubtitle{How Certificates, Users, Groups \& RBAC Connect}
 
 \begin{tcbitemize}[
-  raster columns=2, raster equal height=rows,
+  raster columns=3, raster equal height=rows,
   blanker, cheat subtitle
 ]
 
+  % === Col 1: Intro + CN/O table + full chain =================================
   \tcbitem
 
     {\fontsize{6.5}{7.5}\selectfont\sffamily
-    Kubernetes has \textbf{no User object}. It does not store or manage users — identity comes from \textbf{outside} (certificates, OIDC tokens, etc.). The API server only \emph{extracts} identity from the presented credential and matches it against RBAC rules.\par}
+    Kubernetes has \textbf{no User object}. Identity comes from \textbf{outside} (certificates, OIDC tokens, etc.). The API server \emph{extracts} identity from the credential and matches it against RBAC rules.\par}
 
     \vspace{0.5ex}
 
@@ -184,76 +186,11 @@
 
     \end{tcolorbox}
 
-    \cmdhead{The full chain: Certificate → Identity → RBAC → Access}
-    {\fontsize{6.5}{7.5}\selectfont\sffamily
-    \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-      \item \textbf{Certificate is created} with \texttt{-subj "/CN=jane/O=dev-team"} and signed by the cluster CA.
-      \item \textbf{User authenticates} — presents the client certificate (via kubeconfig) to the API server.
-      \item \textbf{API server extracts} \texttt{CN} → username \texttt{jane}, \texttt{O} → group \texttt{dev-team}. No lookup, no database — identity is \emph{in} the certificate.
-      \item \textbf{RBAC matches} — the API server checks RoleBindings/ClusterRoleBindings for \texttt{subjects} that reference \texttt{user: jane} or \texttt{group: dev-team}.
-      \item \textbf{Access granted or denied} based on the bound Role's \texttt{rules} (verbs, resources, apiGroups).
-    \end{enumerate}}
-
-    \vspace{0.5ex}
-
-    \cmdhead{Certificate Trust \& TLS Authentication Flow}
-    \begin{center}
-    \begin{tikzpicture}[
-      >=Stealth,
-      every node/.style={font=\sffamily\fontsize{5.5}{6.5}\selectfont},
-      actor/.style={draw=#1!60, fill=#1!10, rounded corners=2pt,
-        font=\sffamily\fontsize{5.5}{6.5}\selectfont\bfseries,
-        inner sep=3pt, minimum height=1.6em, minimum width=4.5em},
-      steplbl/.style={font=\sffamily\fontsize{5}{6}\selectfont, text width=5.8cm, align=left},
-      steplbll/.style={font=\sffamily\fontsize{5}{6}\selectfont, text width=5.2cm, align=right},
-      arr/.style={->, thick, #1!60},
-      phase/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont\itshape, gray},
-    ]
-      % Actors
-      \node[actor=teal] (user) {User (jane)};
-      \node[actor=k8sblue, right=9.5em of user] (api) {API Server};
-      \node[actor=orange, right=7em of api] (ca) {Cluster CA};
-
-      % Phase 1: Signing
-      \node[phase, above=0.2em of api] {One-time signing};
-
-      \draw[arr=teal] ([yshift=2pt]user.east) -- ([yshift=2pt]api.west)
-        node[midway, above, steplbl] {1. \texttt{openssl genrsa} → private key (secret!)};
-      \draw[arr=teal] ([yshift=-4pt]user.east) -- ([yshift=-4pt]api.west)
-        node[midway, below, steplbl] {2. CSR (public key + \texttt{CN=jane/O=dev}) → K8s};
-
-      \draw[arr=k8sblue] ([yshift=2pt]api.east) -- ([yshift=2pt]ca.west)
-        node[midway, above, steplbl] {3. Admin approves CSR};
-      \draw[arr=orange] ([yshift=-4pt]ca.west) -- ([yshift=-4pt]api.east)
-        node[midway, below, steplbl] {4. CA signs: public key + identity → certificate};
-
-      \draw[arr=k8sblue, dashed] (api.south) -- ++(0,-0.9)
-        node[below, steplbl, text width=7cm, align=center] {5. Signed cert returned to user (\texttt{jane.crt})};
-
-      % Phase 2: Every API call
-      \node[actor=teal, below=3.5em of user] (user2) {User (jane)};
-      \node[actor=k8sblue, below=3.5em of api] (api2) {API Server};
-
-      \node[phase, above=0.2em of api2] {Every \texttt{kubectl} call (mTLS handshake)};
-
-      \draw[arr=teal] ([yshift=4pt]user2.east) -- ([yshift=4pt]api2.west)
-        node[midway, above, steplbl] {6a. Sends \texttt{jane.crt} (signed cert with public key)};
-      \draw[arr=teal] ([yshift=-2pt]user2.east) -- ([yshift=-2pt]api2.west)
-        node[midway, below, steplbl] {6b. TLS handshake: API server sends a random challenge,
-        user encrypts it with \textbf{private key}, API server decrypts
-        with the \textbf{public key} from the cert → proves ownership};
-
-      \draw[arr=k8sblue] (api2.south) -- ++(0,-0.7)
-        node[below, steplbl, text width=9cm, align=center] {7. Cert signature valid (signed by CA)? → extract \texttt{CN}=jane, \texttt{O}=dev → RBAC check → allow/deny};
-
-    \end{tikzpicture}
-    \end{center}
-
-
+  % === Col 2: mTLS explanation + RBAC binding =================================
   \tcbitem
 
     {\fontsize{6}{7}\selectfont\sffamily
-    \textbf{Why the private key never leaves the user:} The TLS handshake (step 6b) is a cryptographic proof of possession. The API server sends a challenge that only the holder of the private key can correctly sign. The private key itself is never transmitted — only the mathematical proof that the user has it. This is called \textbf{mutual TLS (mTLS)}: both sides authenticate (server cert + client cert).\par}
+    \textbf{Why the private key never leaves the user:} The mTLS handshake is a cryptographic proof of possession. The API server challenges the user; only the holder of the private key can sign correctly. The key itself is never transmitted. This is \textbf{mutual TLS}: both sides authenticate (server cert + client cert).\par}
 
     \vspace{0.5ex}
 
@@ -270,14 +207,151 @@
 
     \cmdhead{Verify identity extracted from cert}
     \begin{cheatcodebash}
-    # "Who am I?" — shows username and groups from the certificate
+    # "Who am I?" — shows username and groups from cert
     k auth whoami
     # Test permissions as that user/group
     k auth can-i list pods --as=jane
     k auth can-i list pods --as-group=dev-team
     \end{cheatcodebash}
 
-    \important{Changing a user's name or group requires issuing a \textbf{new certificate} — you cannot revoke or modify a cert field. Plan \texttt{CN}/\texttt{O} values carefully.}
+    \important{Changing a user's name or group requires a \textbf{new certificate} — you cannot revoke or modify a cert field.}
+
+  % === Col 3: mTLS Handshake sequence diagram ==================================
+  \tcbitem
+
+    \cmdhead{mTLS Handshake (every kubectl call)}
+    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray!70!black}
+    Standard TLS = encrypted channel (browser ↔ web server).\\
+    \textbf{mTLS} = encrypted channel \textbf{+ client identity} via certificate.\par}
+    \vspace{0.3ex}
+    \begin{center}
+    \begin{tikzpicture}[
+      >=Stealth,
+      every node/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont},
+      snote/.style={draw=gray!30, fill=yellow!8, rounded corners=1pt, inner sep=1.5pt,
+        font=\sffamily\fontsize{3.5}{4.5}\selectfont\itshape, align=center},
+      cnote/.style={draw=teal!30, fill=teal!5, rounded corners=1pt, inner sep=1.5pt,
+        font=\sffamily\fontsize{3.5}{4.5}\selectfont, align=center},
+      phlbl/.style={font=\sffamily\fontsize{4}{5}\selectfont\bfseries,
+        fill=k8sblue!8, draw=k8sblue!30, rounded corners=1pt, inner sep=1pt},
+    ]
+      % --- Participants ---
+      \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
+        draw=teal!60, fill=teal!10, rounded corners=2pt, inner sep=2pt] (client) {kubectl};
+      \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
+        draw=k8sblue!60, fill=k8sblue!10, rounded corners=2pt, inner sep=2pt,
+        right=3cm of client] (server) {API Server};
+
+      % --- What each side holds ---
+      \node[snote, text width=1.5cm, below=0.08cm of client]
+        (chas) {\textbf{Has:}\\ jane.key \textit{(private)}\\ jane.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
+      \node[snote, text width=1.6cm, below=0.08cm of server]
+        (shas) {\textbf{Has:}\\ server.key \textit{(private)}\\ server.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
+
+      \def\ystart{-0.25}
+      \def\ystep{0.42}
+
+      % === Standard TLS part === (label placed further left to avoid overlap)
+      \pgfmathsetmacro{\yph}{\ystart - 0.8*\ystep}
+      \node[phlbl, anchor=east] at ([yshift=\yph cm, xshift=-0.25cm]chas.south) {\rotatebox{90}{\tiny standard TLS}};
+
+      % 1. Client Hello
+      \draw[->, semithick, teal!60]
+        ([yshift=\ystart cm]chas.south) -- ([yshift=\ystart cm]shas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {1. ClientHello (ciphers, random)};
+
+      % 2. Server Hello + Cert
+      \pgfmathsetmacro{\ypos}{\ystart - \ystep}
+      \draw[->, semithick, k8sblue!60]
+        ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {2. ServerHello + server.crt};
+
+      % Client verifies server cert
+      \pgfmathsetmacro{\ypos}{\ystart - 1.6*\ystep}
+      \node[snote, text width=1.7cm]
+        at ([yshift=\ypos cm]chas.south)
+        {verify server.crt signed by \textbf{ca.crt}};
+
+      % 3. Key exchange
+      \pgfmathsetmacro{\ypos}{\ystart - 2.3*\ystep}
+      \draw[->, semithick, teal!60]
+        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {3. Key exchange → shared session key};
+
+      % Session key note
+      \pgfmathsetmacro{\ypos}{\ystart - 2.85*\ystep}
+      \node[cnote, text width=3.2cm, draw=green!30, fill=green!5]
+        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+        {Both sides now share a \textbf{symmetric session key}. All traffic encrypted. (Same as browser ↔ web server.)};
+
+      % === mTLS addition ===
+      \pgfmathsetmacro{\ypos}{\ystart - 3.8*\ystep}
+      \node[phlbl, anchor=east] at ([yshift=\ypos cm, xshift=-0.15cm]chas.south) {\rotatebox{90}{\tiny mTLS addition}};
+
+      % 4. CertificateRequest
+      \draw[->, semithick, k8sblue!60]
+        ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {4. CertificateRequest};
+
+      % 5. Client Certificate
+      \pgfmathsetmacro{\ypos}{\ystart - 4.6*\ystep}
+      \draw[->, semithick, teal!60]
+        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {5. jane.crt (public key + CN/O)};
+
+      % 5 note
+      \pgfmathsetmacro{\ypos}{\ystart - 5.05*\ystep}
+      \node[snote, text width=3.2cm]
+        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+        {Server has client's \textbf{public key} + claimed identity — but doesn't yet know if client truly owns it.};
+
+      % 6. CertificateVerify
+      \pgfmathsetmacro{\ypos}{\ystart - 6*\ystep}
+      \draw[->, semithick, teal!70, very thick]
+        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont\bfseries]
+        {6. CertificateVerify};
+
+      % CertificateVerify explanation
+      \pgfmathsetmacro{\ypos}{\ystart - 6.8*\ystep}
+      \node[cnote, text width=3.2cm]
+        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+        {\textbf{Sent:} hash of handshake, signed with \textbf{jane.key}.\\[1pt]
+        \textbf{Server:} decrypts with public key from jane.crt. Match → client owns the key.};
+
+      % Server verifies cert trust + extracts identity
+      \pgfmathsetmacro{\ypos}{\ystart - 8*\ystep}
+      \node[snote, text width=1.6cm]
+        at ([yshift=\ypos cm]shas.south)
+        {1) jane.crt signed by \textbf{ca.crt}?\\
+        2) CertVerify valid?\\
+        3) extract CN→user, O→group};
+
+      % 7. Finished
+      \pgfmathsetmacro{\ypos}{\ystart - 9.2*\ystep}
+      \draw[<->, semithick, green!50!black]
+        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+        {7. Encrypted + authenticated};
+
+      % Bottom note
+      \pgfmathsetmacro{\ypos}{\ystart - 9.8*\ystep}
+      \node[draw=k8sblue!30, fill=k8sblue!5, rounded corners=1pt, inner sep=1.5pt,
+        font=\sffamily\fontsize{3.5}{4.5}\selectfont, text width=3.2cm, align=center]
+        (bottomnote) at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+        {Server knows: \textbf{who} (CN=jane), \textbf{group} (O=dev-team). RBAC applied.};
+
+      % --- Lifelines (drawn last, ending at bottom note) ---
+      \draw[gray!40, dashed] (chas.south) -- (chas.south |- bottomnote.south);
+      \draw[gray!40, dashed] (shas.south) -- (shas.south |- bottomnote.south);
+
+    \end{tikzpicture}
+    \end{center}
 
   \end{tcbitemize}
 

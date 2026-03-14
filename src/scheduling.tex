@@ -223,7 +223,7 @@
         \cmdhead{In pod spec (hard requirement)}
         \begin{cheatcodebash}
         nodeSelector:          # <pod>.spec.nodeSelector
-          disktype: ssd
+          disktype: ssd        # shorthand for nodeAffinity
         \end{cheatcodebash}
 
         \cmdhead{Bypass scheduler entirely in .spec.nodeName}

@@ -119,6 +119,21 @@
         # Usually: /var/lib/kubelet/config.yaml
         \end{cheatcodebash}
 
+      % === Persistent Volume Claim Debugging (moved from right column)
+      \tcbitem
+        \tcbsubtitle{Persistent Volume Claim Debugging}
+        \begin{cheatcodebash}
+        k get pv    # check RECLAIM POLICY, STATUS
+        # Pending reasons: capacity mismatch, accessMode mismatch, storageClass mismatch
+        \end{cheatcodebash}
+
+        \begin{cheatcodebash}
+        ### Exam helpers:
+        k explain persistentvolumeclaim.spec --recursive
+        k explain persistentvolume.spec.accessModes
+        # docs: "persistent volumes"
+        \end{cheatcodebash}
+
     \end{tcbitemize}
 
   \tcbitem
@@ -173,19 +188,32 @@
           \end{cheatcodebash}
 
         \tcbitem
-          % === Persistent Volume Claim Debugging
-          \tcbsubtitle{Persistent Volume Claim Debugging}
-          \begin{cheatcodebash}
-          k get pv    # check RECLAIM POLICY, STATUS
-          # Pending reasons: capacity mismatch, accessMode mismatch, storageClass mismatch
-          \end{cheatcodebash}
+          % === Standard Ports ========================================================
+          \tcbsubtitle{Standard Ports}
+          \begin{tcolorbox}
+              [
+              skin=cheatboxtablesimple,
+              before skip=0pt,
+              after skip=0pt,
+              tabularray={
+              colspec={X[2,l]X[1,l]},
+              columns={valign=t, colsep=0.4em},
+              rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+              hline{2}={solid, wd=0.3pt, fg=gray!40},
+              vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+              row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+              }
+              ]
+            Component & Port (TCP) \\
+            kube-apiserver & 6443 \\
+            etcd client & 2379 \\
+            etcd peer & 2380 \\
+            kube-scheduler & 10259 \\
+            kube-controller-manager & 10257 \\
+            kubelet API & 10250 \\
+            NodePort range & 30000--32767 \\
 
-          \begin{cheatcodebash}
-          ### Exam helpers:
-          k explain persistentvolumeclaim.spec --recursive
-          k explain persistentvolume.spec.accessModes
-          # docs: "persistent volumes"
-          \end{cheatcodebash}
+          \end{tcolorbox}
 
         \tcbitem
           % === Certificate Debugging ================================================
