@@ -1,0 +1,48 @@
+% === Downward API ============================================================
+Inject Pod/Node runtime metadata into containers via env vars or volume files.
+
+\cmdhead{Env Vars via \texttt{fieldRef}}
+\begin{cheatcodebash}
+env:
+- name: NODE_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: spec.nodeName
+\end{cheatcodebash}
+
+\cmdhead{Available \texttt{fieldRef} Fields}
+\begin{cheatcodetex}
+  \ttfamily\fontsize{6.5}{7.5}\selectfont
+  \begin{tabular}{@{}ll@{}}
+    \texttt{metadata.name}              & Pod name \\
+    \texttt{metadata.namespace}         & Namespace \\
+    \texttt{metadata.uid}               & Pod UID \\
+    \texttt{metadata.labels['k']}       & Label value \\
+    \texttt{metadata.annotations['k']}  & Annotation value \\
+    \texttt{spec.nodeName}              & Node scheduled on \\
+    \texttt{spec.serviceAccountName}    & ServiceAccount \\
+    \texttt{status.podIP}               & Pod IP \\
+    \texttt{status.hostIP}              & Node IP \\
+  \end{tabular}
+\end{cheatcodetex}
+
+\cmdhead{Resource Limits via \texttt{resourceFieldRef}}
+\begin{cheatcodebash}
+env:
+- name: MEM_LIMIT
+  valueFrom:
+    resourceFieldRef:
+      containerName: app
+      resource: limits.memory
+\end{cheatcodebash}
+
+\cmdhead{Help}
+\begin{cheatcodebash}
+k explain pod.spec.containers.env.valueFrom
+\end{cheatcodebash}
+
+\cmdhead{\url{https://kubernetes.io/docs/}}
+\begin{cheatcodebash}
+search: "downward api"
+search: "expose pod information to containers"
+\end{cheatcodebash}

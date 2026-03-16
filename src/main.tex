@@ -546,8 +546,14 @@ size=small,skin=bicolor,
 
     % === JsonPath ==========================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={JSONPath \& Output}]
-        {name=jsonpath, column=4, between=top and bottom, span=3}
+        {name=jsonpath, column=4, below=top, span=3}
         \input{jsonpath.tex}
+    \end{posterboxenv}
+
+    % === Downward API ======================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Downward API}]
+        {name=downwardapi, column=4, between=jsonpath and bottom, span=3}
+        \input{downward_api.tex}
     \end{posterboxenv}
 
     % === RBAC =======================================================
