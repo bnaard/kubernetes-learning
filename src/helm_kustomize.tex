@@ -20,6 +20,8 @@ helm status <release>            # health + notes
 helm get values <release>        # current overrides
 helm template <release> <chart>  # dry-run (local render)
 helm show values <chart>         # inspect defaults
+# Find resources deployed by a release (Helm labels them):
+k get deploy -n <ns> -l app.kubernetes.io/instance=<release>
 \end{cheatcodebash}
 
 % === Kustomize ============================================================
@@ -52,7 +54,6 @@ kubectl kustomize <dir> | kubectl apply -f - # build+apply
 
 \cmdhead{Helpers}
 \begin{cheatcodebash}
-# No "k explain" for Kustomize — it's client-side only
 # docs: "kustomize" or "kustomization"
 \end{cheatcodebash}
 
