@@ -188,34 +188,6 @@
           \end{cheatcodebash}
 
         \tcbitem
-          % === Standard Ports ========================================================
-          \tcbsubtitle{Standard Ports}
-          \begin{tcolorbox}
-              [
-              skin=cheatboxtablesimple,
-              before skip=0pt,
-              after skip=0pt,
-              tabularray={
-              colspec={X[2,l]X[1,l]},
-              columns={valign=t, colsep=0.4em},
-              rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
-              hline{2}={solid, wd=0.3pt, fg=gray!40},
-              vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
-              row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
-              }
-              ]
-            Component & Port (TCP) \\
-            kube-apiserver & 6443 \\
-            etcd client & 2379 \\
-            etcd peer & 2380 \\
-            kube-scheduler & 10259 \\
-            kube-controller-manager & 10257 \\
-            kubelet API & 10250 \\
-            NodePort range & 30000--32767 \\
-
-          \end{tcolorbox}
-
-        \tcbitem
           % === Certificate Debugging ================================================
           \tcbsubtitle{Certificate Debugging}
           \begin{cheatcodebash}

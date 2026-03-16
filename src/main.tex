@@ -367,10 +367,16 @@ size=small,skin=bicolor,
         \input{shell_helper.tex}
     \end{posterboxenv}
 
-    % === Tools ====================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Tools}]
-        {name=tools, column=11, between=shellhelper and bottom, span=2}
-        \input{tools.tex}
+    % === Cron Scheduling ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Cron Scheduling}]
+        {name=cronscheduling, column=11, below=shellhelper, span=2}
+        \input{cron_scheduling.tex}
+    \end{posterboxenv}
+
+    % === Standard Ports ====================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Standard Ports}]
+        {name=standardports, column=11, between=cronscheduling and bottom, span=2}
+        \input{standard_ports.tex}
     \end{posterboxenv}
 
 

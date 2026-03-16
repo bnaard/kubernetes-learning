@@ -203,6 +203,58 @@
             readOnly: true
           \end{cheatcodeyaml}
 
+      \tcbitem
+          \tcbsubtitle{Install Container Runtime}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item \texttt{ssh <worker-node>}
+            \item \texttt{sudo -i}
+            \item \texttt{dpkg -i /path/to/containerd.io\_<ver>\_amd64.deb}
+            \item Configure containerd for systemd cgroup:
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          mkdir -p /etc/containerd
+          containerd config default > /etc/containerd/config.toml
+          # Set SystemdCgroup = true in config.toml:
+          sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' \
+            /etc/containerd/config.toml
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt, start=5]
+            \item Enable and start the service:
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          systemctl daemon-reload
+          systemctl enable --now containerd
+          systemctl status containerd   # verify Active: active
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          \begin{cheatcodebash}
+          # docs: search "container runtimes"
+          \end{cheatcodebash}
+
+      \tcbitem
+          \tcbsubtitle{Update a Helm Chart}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          Naming: \textbf{release} = installed instance, \textbf{repo} = chart source, \textbf{chart} = package name.}
+          \begin{cheatcodebash}
+          # 1. Find release name, namespace, chart
+          helm ls -A   # → NAME  NAMESPACE  CHART  ...
+          # 2. List configured repos
+          helm repo ls
+          # 3. Refresh repo index (global, not namespaced)
+          helm repo update <repo>
+          # 4. List all available versions of a chart
+          helm search repo <repo>/<chart> -l
+          # 5. Upgrade release to specific version
+          helm upgrade <release> <repo>/<chart> -n <ns> --version=x.y.z
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          \begin{cheatcodebash}
+          # docs: search "helm" (helm.sh/docs)
+          \end{cheatcodebash}
+
     \end{tcbitemize}
 
 \end{tcbitemize}
