@@ -22,11 +22,11 @@
         }
         ]
         \textbf{Type}    & \textbf{Description}         \\
-        ClusterIP        & Internal only (default)      \\
-        Headless         & \texttt{clusterIP: None} — DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
-        NodePort         & Via \texttt{NodeIP:Port} (30000--32767)      \\
-        LoadBalancer     & Cloud LB, external IP      \\
-        ExternalName     & DNS CNAME alias to external host      \\
+        ClusterIP        & Internal only (default). Gets a virtual cluster IP reachable only from within the cluster.      \\
+        Headless         & \texttt{clusterIP: None} — no virtual IP. DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
+        NodePort         & Everything ClusterIP does \textbf{+} opens a static port (30000--32767) on every node's real IP for external access.      \\
+        LoadBalancer     & Everything NodePort does \textbf{+} provisions a cloud LB with an external IP.      \\
+        ExternalName     & DNS CNAME alias to external host (no ClusterIP, no proxying).      \\
 
     \end{tcolorbox}
     \vspace{0.5ex}
@@ -34,7 +34,8 @@
     \cmdhead{Imperative}
     \begin{cheatcodebash}
     k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
-    k expose deploy <name> --port=80 --target-port=8080 --type=NodePort --node-port=30080
+    k expose deploy <name> --port=80 --target-port=8080 --type=NodePort
+k create svc nodeport <name> --tcp=80:8080 --node-port=30080
     k expose deploy <name> --port=80 --type=LoadBalancer
     # Headless: ClusterIP service with clusterIP=None
     k create svc clusterip <name> --clusterip="None" --tcp=80:8080
@@ -68,7 +69,9 @@
       \node[box=k8sblue, right=3em of client] (svc) {Service};
       \node[box=teal, right=4em of svc] (app) {app:8080};
       \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
-        teal!70!black]below:Pod}] (pod) {};
+        teal!70!black]below:Pod (Pod IP)}] (pod) {};
+      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
+        below=0.2em of svc] {ClusterIP (virtual)};
       \draw[->, gray, thick]
         (client) -- (svc) node[plbl=gray, pos=0.5, above] {:80};
       \draw[->, k8sblue!60, thick]
@@ -78,8 +81,8 @@
     \end{tikzpicture}
 
     {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-    \texttt{curl http://<svc-name>:80} \textrm{(from another Pod)}\\[-1pt]
-    Routes via ClusterIP to one of the selected Pods on targetPort 8080.\par}
+    \texttt{curl http://<cluster-ip>:80} \textrm{(internal only)}\\[-1pt]
+    Virtual IP reachable only within the cluster. Routes to Pod on targetPort 8080.\par}
     \end{center}
 
     \vspace{-0.8ex}
@@ -112,7 +115,11 @@
       \node[box=k8sblue, right=3.5em of nd]  (svc) {Service};
       \node[box=teal, right=4em of svc] (app) {app:8080};
       \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
-        teal!70!black]below:Pod}] (pod) {};
+        teal!70!black]below:Pod (Pod IP)}] (pod) {};
+      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{orange!70!black},
+        below=0.2em of nd] {Node IP (real)};
+      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
+        below=0.2em of svc] {ClusterIP (virtual)};
       \draw[->, gray, thick]
         (ext) -- (nd) node[plbl=orange, pos=0.5, above] {:30080};
       \draw[->, orange!60, thick]
@@ -124,10 +131,9 @@
         node[plbl=teal,    pos=0.85, above] {:8080};
     \end{tikzpicture}
 
-    % \vspace{1pt}
     {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-    \texttt{curl http://<node-ip>:30080}\\[-1pt]
-    kube-proxy catches :30080 on the node and forwards to Service ClusterIP:80, which routes to Pod:8080.\par}
+    \texttt{curl http://<node-ip>:30080} \textrm{(external access)}\\[-1pt]
+    kube-proxy catches :30080 on every node's real IP and forwards to Service ClusterIP:80 → Pod:8080.\par}
     \end{center}
 
     \vspace{-0.3ex}
