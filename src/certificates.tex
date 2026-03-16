@@ -111,7 +111,12 @@
       --cluster=kubernetes --user=jane
     kubectl config use-context jane-ctx
     \end{cheatcodebash}
-    \cmdhead{6. Grant permissions via RBAC}
+    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group. RBAC matches RoleBindings for \texttt{user:} or \texttt{group:} subjects.}
+
+
+  \tcbitem
+    \tcbsubtitle{Grant Permissions via RBAC}
+    \cmdhead{6. Create Role + RoleBinding for the user}
     \begin{cheatcodebash}
     # Role (namespace-scoped) or ClusterRole:
     k create role jane-role --verb=get,list,watch \
@@ -125,15 +130,12 @@
     # Verify:
     k auth can-i list pods -n dev --as=jane
     \end{cheatcodebash}
-    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group. RBAC matches RoleBindings for \texttt{user:} or \texttt{group:} subjects.}
 
-
-  \tcbitem
     \tcbsubtitle{Setup Separate Kubeconfig}
     {\fontsize{6.5}{7.5}\selectfont\sffamily
-    Step 5 adds credentials to your admin \texttt{\textasciitilde/.kube/config}. To create a \textbf{standalone} kubeconfig file (portable, to hand off to the user), copy the admin config as a template, strip existing users/contexts, then add the new user's credentials.\par}
+    Step 5 adds credentials to your admin \texttt{\textasciitilde/.kube/config}. To create a \textbf{standalone} kubeconfig file (portable, to hand off), copy the admin config as a template, strip existing users/contexts, then add credentials.\par}
 
-    \cmdhead{6a. Create kubeconfig from template}
+    \cmdhead{7a. Create kubeconfig from template}
     \begin{cheatcodebash}
     # Copy admin config as base (keeps cluster + CA info)
     cp ~/.kube/config jane.config
@@ -143,7 +145,7 @@
     eval $KC k config unset current-context
     \end{cheatcodebash}
 
-    \cmdhead{6b. Set user credentials (embed certs)}
+    \cmdhead{7b. Set user credentials (embed certs)}
     \begin{cheatcodebash}
     eval $KC k config set-credentials jane \
       --client-certificate=jane.crt \
@@ -151,7 +153,7 @@
       --embed-certs=true
     \end{cheatcodebash}
 
-    \cmdhead{6c. Set context and activate}
+    \cmdhead{7c. Set context and activate}
     \begin{cheatcodebash}
     eval $KC k config set-context default \
       --cluster=default --user=jane
