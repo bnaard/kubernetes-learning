@@ -4,139 +4,109 @@
 ]
 
   \tcbitem
-    % === Service Types =========================================================
-    \tcbsubtitle{Service Types}
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
 
-    \begin{tcolorbox}
-        [
-        skin=cheatboxtablesimple,
-        before skip=0pt,
-        after skip=0pt,
-        tabularray={
-        colspec={X[1,l]X[2,l]},
-        columns={valign=t, colsep=0.35em},
-        rows={rowsep=0pt, font=\sffamily\footnotesize},   % \fontsize{5}{6}\selectfont
-        hline{2}={solid, wd=0.3pt, fg=gray!40},
-        vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
-        row{1}={font=\sffamily\bfseries\footnotesize},  % \fontsize{5}{6}\selectfont
-        }
-        ]
-        \textbf{Type}    & \textbf{Description}         \\
-        ClusterIP        & Internal only (default). Gets a virtual cluster IP reachable only from within the cluster.      \\
-        Headless         & \texttt{clusterIP: None} — no virtual IP. DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
-        NodePort         & Everything ClusterIP does \textbf{+} opens a static port (30000--32767) on every node's real IP for external access.      \\
-        LoadBalancer     & Everything NodePort does \textbf{+} provisions a cloud LB with an external IP.      \\
-        ExternalName     & DNS CNAME alias to external host (no ClusterIP, no proxying).      \\
+    \tcbitem
+      % === Service Types =========================================================
+        \tcbsubtitle{Service Types}
 
-    \end{tcolorbox}
-    \vspace{0.5ex}
+          \begin{tcolorbox}
+              [
+              skin=cheatboxtablesimple,
+              before skip=0pt,
+              after skip=0pt,
+              tabularray={
+              colspec={X[1,l]X[2,l]},
+              columns={valign=t, colsep=0.35em},
+              rows={rowsep=0pt, font=\sffamily\footnotesize},   % \fontsize{5}{6}\selectfont
+              hline{2}={solid, wd=0.3pt, fg=gray!40},
+              vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+              row{1}={font=\sffamily\bfseries\footnotesize},  % \fontsize{5}{6}\selectfont
+              }
+              ]
+              \textbf{Type}    & \textbf{Description}         \\
+              ClusterIP        & Internal only (default). Gets a virtual cluster IP reachable only from within the cluster.      \\
+              Headless         & \texttt{clusterIP: None} — no virtual IP. DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
+              NodePort         & Everything ClusterIP does \textbf{+} opens a static port (30000--32767) on every node's real IP for external access.      \\
+              LoadBalancer     & Everything NodePort does \textbf{+} provisions a cloud LB with an external IP.      \\
+              ExternalName     & DNS CNAME alias to external host (no ClusterIP, no proxying).      \\
 
-    \cmdhead{Imperative}
-    \begin{cheatcodebash}
-    k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
-    k expose deploy <name> --port=80 --target-port=8080 --type=NodePort
-k create svc nodeport <name> --tcp=80:8080 --node-port=30080
-    k expose deploy <name> --port=80 --type=LoadBalancer
-    # Headless: ClusterIP service with clusterIP=None
-    k create svc clusterip <name> --clusterip="None" --tcp=80:8080
-    k get svc
-    k get endpoints <svc>    # empty = label mismatch!
-    \end{cheatcodebash}
+          \end{tcolorbox}
+          \vspace{0.5ex}
 
-    \cmdhead{Spec Essentials: ClusterIP}
-    \begin{cheatcodebash}
-    apiVersion: v1
-    kind: Service
-    spec:
-      type: ClusterIP              # default if omitted
-      selector: {app: web}
-      ports:
-      - port: 80                   # Service (virtual) port
-        targetPort: 8080           # Pod containerPort
-    \end{cheatcodebash}
-    \begin{center}
-    \begin{tikzpicture}[
-      >=Stealth,
-      box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
-        font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
-        minimum height=1.4em},
-      plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
-      caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
-      container/.style={draw=teal!40, dashed, rounded corners=2pt,
-        inner sep=3pt, fit=#1},
-      ]
-      \node[caller] (client) {other Pod};
-      \node[box=k8sblue, right=3em of client] (svc) {Service};
-      \node[box=teal, right=4em of svc] (app) {app:8080};
-      \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
-        teal!70!black]below:Pod (Pod IP)}] (pod) {};
-      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
-        below=0.2em of svc] {ClusterIP (virtual)};
-      \draw[->, gray, thick]
-        (client) -- (svc) node[plbl=gray, pos=0.5, above] {:80};
-      \draw[->, k8sblue!60, thick]
-        (svc) -- (app)
-        node[plbl=k8sblue, pos=0.15, above] {:80}
-        node[plbl=teal,    pos=0.85, above] {:8080};
-    \end{tikzpicture}
+          \cmdhead{Imperative}
+          \begin{cheatcodebash}
+          k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
+          k expose deploy <name> --port=80 --target-port=8080 --type=NodePort
+      k create svc nodeport <name> --tcp=80:8080 --node-port=30080
+          k expose deploy <name> --port=80 --type=LoadBalancer
+          # Headless: ClusterIP service with clusterIP=None
+          k create svc clusterip <name> --clusterip="None" --tcp=80:8080
+          k get svc
+          k get endpoints <svc>    # empty = label mismatch!
+          \end{cheatcodebash}
 
-    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-    \texttt{curl http://<cluster-ip>:80} \textrm{(internal only)}\\[-1pt]
-    Virtual IP reachable only within the cluster. Routes to Pod on targetPort 8080.\par}
-    \end{center}
+      % \tcbitem
+          % \tcbsubtitle{Service Types Helpers}
+          \cmdhead{Helpers}
+          \begin{cheatcodebash}
+          k explain service.spec --recursive
+          \end{cheatcodebash}
 
-    \vspace{-0.8ex}
+          \cmdhead{\url{https://kubernetes.io/docs/}}
+          \begin{cheatcodebash}
+          search: "service"
+          \end{cheatcodebash}
 
-    \cmdhead{Spec Essentials: NodePort}
-    \begin{cheatcodebash}
-    apiVersion: v1
-    kind: Service
-    spec:
-      type: NodePort
-      selector: {app: web}
-      ports:
-      - port: 80                   # Service (ClusterIP) port
-        targetPort: 8080           # Pod containerPort
-        nodePort: 30080            # Node external port
-    \end{cheatcodebash}
-    \begin{center}
-    \begin{tikzpicture}[
-      >=Stealth,
-      box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
-        font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
-        minimum height=1.4em},
-      plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
-      caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
-      container/.style={draw=teal!40, dashed, rounded corners=2pt,
-        inner sep=3pt, fit=#1},
-      ]
-      \node[caller] (ext) {external};
-      \node[box=orange, right=2.5em of ext] (nd) {Node};
-      \node[box=k8sblue, right=3.5em of nd]  (svc) {Service};
-      \node[box=teal, right=4em of svc] (app) {app:8080};
-      \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
-        teal!70!black]below:Pod (Pod IP)}] (pod) {};
-      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{orange!70!black},
-        below=0.2em of nd] {Node IP (real)};
-      \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
-        below=0.2em of svc] {ClusterIP (virtual)};
-      \draw[->, gray, thick]
-        (ext) -- (nd) node[plbl=orange, pos=0.5, above] {:30080};
-      \draw[->, orange!60, thick]
-        (nd) -- (svc)
-        node[plbl=k8sblue, pos=0.85, above] {:80};
-      \draw[->, k8sblue!60, thick]
-        (svc) -- (app)
-        node[plbl=k8sblue, pos=0.15, above] {:80}
-        node[plbl=teal,    pos=0.85, above] {:8080};
-    \end{tikzpicture}
+    \tcbitem
+        % === Ingress ==============================================================
+        \tcbsubtitle{Ingress}
+        \cmdhead{Imperative}
+        \begin{cheatcodebash}
+        k get ingressclass
+        \end{cheatcodebash}
 
-    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-    \texttt{curl http://<node-ip>:30080} \textrm{(external access)}\\[-1pt]
-    kube-proxy catches :30080 on every node's real IP and forwards to Service ClusterIP:80 → Pod:8080.\par}
-    \end{center}
+        \cmdhead{Spec Essentials}
+        \begin{cheatcodebash}
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: my-ingress
+          annotations:
+            # client → myapp.example.com/api →  api-svc receives /
+            nginx.ingress.kubernetes.io/rewrite-target: /
+        spec:
+          ingressClassName: nginx
+          rules:
+          - host: myapp.example.com
+            http:
+              paths:
+              - path: /api  # rewritten to /
+                pathType: Prefix # Prefix|Exact|ImplementationSpecific
+                backend:
+                  service:
+                    name: api-svc
+                    port: {number: 80}
+          tls:
+          - hosts: [myapp.example.com]
+            secretName: tls-secret
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain ingress.spec --recursive
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "ingress"
+        \end{cheatcodebash}
 
 
+    \end{tcbitemize}
 
   \tcbitem
 
@@ -146,6 +116,150 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
     ]
 
       \tcbitem
+          \tcbsubtitle{Spec Essentials}
+
+          \cmdhead{ClusterIP}
+          \begin{cheatcodebash}
+          apiVersion: v1
+          kind: Service
+          spec:
+            type: ClusterIP              # default if omitted
+            selector: {app: web}
+            ports:
+            - port: 80                   # Service (virtual) port
+              targetPort: 8080           # Pod containerPort
+          \end{cheatcodebash}
+          \begin{center}
+          \begin{tikzpicture}[
+            >=Stealth,
+            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+            caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+            container/.style={draw=teal!40, dashed, rounded corners=2pt,
+              inner sep=3pt, fit=#1},
+            ]
+            \node[caller] (client) {other Pod};
+            \node[box=k8sblue, right=3em of client] (svc) {Service};
+            \node[box=teal, right=4em of svc] (app) {app:8080};
+            \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
+              teal!70!black]below:Pod (Pod IP)}] (pod) {};
+            \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
+              below=0.2em of svc] {ClusterIP (virtual)};
+            \draw[->, gray, thick]
+              (client) -- (svc) node[plbl=gray, pos=0.5, above] {:80};
+            \draw[->, k8sblue!60, thick]
+              (svc) -- (app)
+              node[plbl=k8sblue, pos=0.15, above] {:80}
+              node[plbl=teal,    pos=0.85, above] {:8080};
+          \end{tikzpicture}
+
+          {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+          \texttt{curl http://<cluster-ip>:80} \textrm{(internal only)}\\[-1pt]
+          Virtual IP reachable only within the cluster. Routes to Pod on targetPort 8080.\par}
+          \end{center}
+
+          \vspace{-0.8ex}
+
+          \cmdhead{NodePort}
+          \begin{cheatcodebash}
+          apiVersion: v1
+          kind: Service
+          spec:
+            type: NodePort
+            selector: {app: web}
+            ports:
+            - port: 80                   # Service (ClusterIP) port
+              targetPort: 8080           # Pod containerPort
+              nodePort: 30080            # Node external port
+          \end{cheatcodebash}
+          \begin{center}
+          \begin{tikzpicture}[
+            >=Stealth,
+            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+            caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+            container/.style={draw=teal!40, dashed, rounded corners=2pt,
+              inner sep=3pt, fit=#1},
+            ]
+            \node[caller] (ext) {external};
+            \node[box=orange, right=2.5em of ext] (nd) {Node};
+            \node[box=k8sblue, right=3.5em of nd]  (svc) {Service};
+            \node[box=teal, right=4em of svc] (app) {app:8080};
+            \node[container=(app), label={[font=\sffamily\fontsize{4.5}{5.5}\selectfont,
+              teal!70!black]below:Pod (Pod IP)}] (pod) {};
+            \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{orange!70!black},
+              below=0.2em of nd] {Node IP (real)};
+            \node[font=\ttfamily\fontsize{4.5}{5.5}\selectfont\color{k8sblue!70!black},
+              below=0.2em of svc] {ClusterIP (virtual)};
+            \draw[->, gray, thick]
+              (ext) -- (nd) node[plbl=orange, pos=0.5, above] {:30080};
+            \draw[->, orange!60, thick]
+              (nd) -- (svc)
+              node[plbl=k8sblue, pos=0.85, above] {:80};
+            \draw[->, k8sblue!60, thick]
+              (svc) -- (app)
+              node[plbl=k8sblue, pos=0.15, above] {:80}
+              node[plbl=teal,    pos=0.85, above] {:8080};
+          \end{tikzpicture}
+
+          {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+          \texttt{curl http://<node-ip>:30080} \textrm{(external access)}\\[-1pt]
+          kube-proxy catches :30080 on every node's real IP and forwards to Service ClusterIP:80 → Pod:8080.\par}
+          \end{center}
+
+
+          \cmdhead{Headless}
+          \begin{cheatcodebash}
+          apiVersion: v1
+          kind: Service
+          metadata: {name: db-headless}
+          spec:
+            clusterIP: None            # headless!
+            selector: {app: db}
+            ports:
+            - {port: 3306, targetPort: 3306}
+          \end{cheatcodebash}
+          \begin{center}
+          \begin{tikzpicture}[
+            >=Stealth,
+            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+            caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+            ]
+            \node[caller] (client) {Pod / DNS};
+            \node[box=gray, right=3em of client] (dns) {DNS};
+            \node[box=teal, above right=0.3em and 3.5em of dns] (pod1) {db-0:3306};
+            \node[box=teal, below right=0.3em and 3.5em of dns] (pod2) {db-1:3306};
+            \draw[->, gray, thick]
+              (client) -- (dns) node[plbl=gray, pos=0.5, above] {lookup};
+            \draw[->, teal!60, thick] (dns) -- (pod1);
+            \draw[->, teal!60, thick] (dns) -- (pod2);
+          \end{tikzpicture}
+          \end{center}
+          \vspace{-1ex}
+          {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+          No ClusterIP. DNS returns Pod IPs directly.\par}
+
+
+
+
+
+      \end{tcbitemize}
+
+    \tcbitem
+      \begin{tcbitemize}[
+        raster columns=1, raster equal height=rows,
+        blanker, cheat subtitle
+      ]
+
+      \tcbitem
+
         % === Network Policies =====================================================
         \tcbsubtitle{Network Policies}
     
@@ -198,6 +312,7 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
         search: "network policies"
         \end{cheatcodebash}
 
+
       \tcbitem
         % === DNS ==================================================================
         \tcbsubtitle{CoreDNS}
@@ -232,104 +347,6 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
         search: "customizing dns"
         \end{cheatcodebash}
 
-      \tcbitem
-          \tcbsubtitle{Service Types Helpers}
-          \cmdhead{Helpers}
-          \begin{cheatcodebash}
-          k explain service.spec --recursive
-          \end{cheatcodebash}
-
-          \cmdhead{\url{https://kubernetes.io/docs/}}
-          \begin{cheatcodebash}
-          search: "service"
-          \end{cheatcodebash}
-
-      \tcbitem
-          \tcbsubtitle{Spec Essentials: Headless}
-          \begin{cheatcodebash}
-          apiVersion: v1
-          kind: Service
-          metadata: {name: db-headless}
-          spec:
-            clusterIP: None            # headless!
-            selector: {app: db}
-            ports:
-            - {port: 3306, targetPort: 3306}
-          \end{cheatcodebash}
-          \begin{center}
-          \begin{tikzpicture}[
-            >=Stealth,
-            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
-              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
-              minimum height=1.4em},
-            plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
-            caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
-            ]
-            \node[caller] (client) {Pod / DNS};
-            \node[box=gray, right=3em of client] (dns) {DNS};
-            \node[box=teal, above right=0.3em and 3.5em of dns] (pod1) {db-0:3306};
-            \node[box=teal, below right=0.3em and 3.5em of dns] (pod2) {db-1:3306};
-            \draw[->, gray, thick]
-              (client) -- (dns) node[plbl=gray, pos=0.5, above] {lookup};
-            \draw[->, teal!60, thick] (dns) -- (pod1);
-            \draw[->, teal!60, thick] (dns) -- (pod2);
-          \end{tikzpicture}
-          \end{center}
-          \vspace{-1ex}
-          {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-          No ClusterIP. DNS returns Pod IPs directly.\par}
-
-      \end{tcbitemize}
-
-    \tcbitem
-      \begin{tcbitemize}[
-        raster columns=1, raster equal height=rows,
-        blanker, cheat subtitle
-      ]
-
-      \tcbitem
-        % === Ingress ==============================================================
-        \tcbsubtitle{Ingress}
-        \cmdhead{Imperative}
-        \begin{cheatcodebash}
-        k get ingressclass
-        \end{cheatcodebash}
-
-        \cmdhead{Spec Essentials}
-        \begin{cheatcodebash}
-        apiVersion: networking.k8s.io/v1
-        kind: Ingress
-        metadata:
-          name: my-ingress
-          annotations:
-            # client → myapp.example.com/api →  api-svc receives /
-            nginx.ingress.kubernetes.io/rewrite-target: /
-        spec:
-          ingressClassName: nginx
-          rules:
-          - host: myapp.example.com
-            http:
-              paths:
-              - path: /api  # rewritten to /
-                pathType: Prefix # Prefix|Exact|ImplementationSpecific
-                backend:
-                  service:
-                    name: api-svc
-                    port: {number: 80}
-          tls:
-          - hosts: [myapp.example.com]
-            secretName: tls-secret
-        \end{cheatcodebash}
-
-        \cmdhead{Helpers}
-        \begin{cheatcodebash}
-        k explain ingress.spec --recursive
-        \end{cheatcodebash}
-
-        \cmdhead{\url{https://kubernetes.io/docs/}}
-        \begin{cheatcodebash}
-        search: "ingress"
-        \end{cheatcodebash}
 
 
     \end{tcbitemize}
