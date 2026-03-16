@@ -56,6 +56,14 @@
 
     \warning{After renewing certs, restart control-plane Pods (or move manifests out of \texttt{/etc/kubernetes/manifests/} and back).}
 
+    \begin{cheatcodebash}
+    # Verify cert matches key (modulus must match):
+    openssl x509 -in cert.crt -noout -modulus | md5sum
+    openssl rsa  -in cert.key -noout -modulus | md5sum
+    # Symptoms: "x509: certificate has expired" or
+    # "Unable to connect to the server"
+    # docs: search "manage tls certificates"
+    \end{cheatcodebash}
 
   \tcbitem
     \tcbsubtitle{User Certificate Signing Flow}

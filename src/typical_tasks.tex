@@ -67,7 +67,6 @@
             \item Fix and verify: \texttt{k get nodes}
           \end{enumerate}}
 
-
       \tcbitem
           \tcbsubtitle{etcd Backup \& Restore}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
@@ -105,7 +104,6 @@
           # docs: search "backing up etcd cluster"
           \end{cheatcodebash}
 
-
     \end{tcbitemize}
 
   \tcbitem
@@ -113,29 +111,6 @@
       raster columns=1, raster equal height=rows,
       blanker, cheat subtitle
     ]
-      \tcbitem
-          \tcbsubtitle{Troubleshoot a Service}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item \texttt{k get endpoints <svc>} — empty = selector mismatch
-            \item Compare \texttt{svc} selector vs pod labels
-            \item Check \texttt{targetPort} matches container port
-            \item \texttt{k run tmp --rm -it --image=busybox -- wget -qO- <svc>:<port>}
-            \item Check NetworkPolicy: \texttt{k get netpol -A}
-          \end{enumerate}}
-
-      \tcbitem
-          \tcbsubtitle{Create NetworkPolicy}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item Identify pods via labels: \texttt{k get pods --show-labels}
-            \item Write policy with \texttt{podSelector}, \texttt{ingress}/\texttt{egress} rules
-            \item \emoji{warning}  An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.
-            \item Test: \texttt{k exec <pod> -- wget -qO- -T2 <target>}
-          \end{enumerate}}
-          \begin{cheatcodebash}
-          # docs: search "network policies"
-          \end{cheatcodebash}
 
       \tcbitem
           \tcbsubtitle{Create ServiceAccount + Bind Role}
@@ -146,26 +121,6 @@
             \item \texttt{k create clusterrolebinding crb --clusterrole=cr --serviceaccount=<ns>:deploy-admin}
             \item \texttt{k auth can-i get pods --as system:serviceaccount:<ns>:deploy-admin  \# Verify}
           \end{enumerate}}
-
-      \tcbitem
-          \tcbsubtitle{Custom Columns \& Sorting}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          List all deployments with name, replicas, and image, sorted by name:}
-          \begin{cheatcodebash}
-          k get deploy -A -o custom-columns=\
-              'NAME:.metadata.name,NS:.metadata.namespace,\
-              REPLICAS:.spec.replicas,\
-              IMAGE:.spec.template.spec.containers[0].image' \
-            --sort-by=.metadata.name
-          \end{cheatcodebash}
-          \vspace{-0.5ex}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          Sort pods by restart count:}
-          \begin{cheatcodebash}
-          k get pods -A -o custom-columns='NAME:.metadata.name,\
-             RESTARTS:.status.containerStatuses[0].restartCount' \
-             --sort-by='.status.containerStatuses[0].restartCount'
-          \end{cheatcodebash}
 
       \tcbitem
           \tcbsubtitle{Create Deployment, Upgrade \& Annotate}

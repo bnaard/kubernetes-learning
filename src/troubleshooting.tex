@@ -1,5 +1,5 @@
 \begin{tcbitemize}[
-  raster columns=2, raster equal height=rows,
+  raster columns=3, raster equal height=rows,
   blanker, cheat subtitle
 ]
   \tcbitem
@@ -7,8 +7,8 @@
       raster columns=1, raster equal height=rows,
       blanker, cheat subtitle
     ]
-      \tcbitem
 
+      \tcbitem
         % === Pod Debugging ========================================================
         \tcbsubtitle{Pod Debugging}
         \begin{cheatcodebash}
@@ -98,6 +98,14 @@
 
         \end{tcolorbox}
 
+    \end{tcbitemize}
+
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+
       \tcbitem
         % === Node Debugging ========================================================
         \tcbsubtitle{Node Debugging}
@@ -119,16 +127,38 @@
         # Usually: /var/lib/kubelet/config.yaml
         \end{cheatcodebash}
 
-      % === Persistent Volume Claim Debugging (moved from right column)
+      \tcbitem
+        % === Control Plane Debug ==================================================
+        \tcbsubtitle{Control Plane Debug}
+        \begin{cheatcodebash}
+        # Static pods in kube-system:
+        k get pods -n kube-system
+        k logs kube-apiserver-<node> -n kube-system
+        k logs etcd-<node> -n kube-system
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        # Edit control plane component:
+        vi /etc/kubernetes/manifests/kube-apiserver.yaml
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        # If API server unreachable:
+        crictl ps                   # list containers on node
+        crictl logs <container-id>
+        \end{cheatcodebash}
+        \begin{cheatcodebash}
+        # Kubeconfig:
+        export KUBECONFIG=/etc/kubernetes/admin.conf
+        \end{cheatcodebash}
+
+      % === Persistent Volume Claim Debugging
       \tcbitem
         \tcbsubtitle{Persistent Volume Claim Debugging}
         \begin{cheatcodebash}
         k get pv    # check RECLAIM POLICY, STATUS
         # Pending reasons: capacity mismatch, accessMode mismatch, storageClass mismatch
         \end{cheatcodebash}
-
         \begin{cheatcodebash}
-        ### Exam helpers:
+        ### Helpers:
         k explain persistentvolumeclaim.spec --recursive
         k explain persistentvolume.spec.accessModes
         # docs: "persistent volumes"
@@ -141,76 +171,49 @@
       raster columns=1, raster equal height=rows,
       blanker, cheat subtitle
     ]
+
       \tcbitem
-          % === Control Plane Debug ==================================================
-          \tcbsubtitle{Control Plane Debug}
+          \tcbsubtitle{Troubleshoot a Service}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item \texttt{k get endpoints <svc>} — empty = selector mismatch
+            \item Compare \texttt{svc} selector vs pod labels
+            \item Check \texttt{targetPort} matches container port
+            \item \texttt{k run tmp --rm -it --image=busybox -- wget -qO- <svc>:<port>}
+            \item Check NetworkPolicy: \texttt{k get netpol -A}
+          \end{enumerate}}
+
+      \tcbitem
+          \tcbsubtitle{Create NetworkPolicy}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item Identify pods via labels: \texttt{k get pods --show-labels}
+            \item Write policy with \texttt{podSelector}, \texttt{ingress}/\texttt{egress} rules
+            \item \emoji{warning}  An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.
+            \item Test: \texttt{k exec <pod> -- wget -qO- -T2 <target>}
+          \end{enumerate}}
           \begin{cheatcodebash}
-          # Static pods in kube-system:
-          k get pods -n kube-system
-          k logs kube-apiserver-<node> -n kube-system
-          k logs etcd-<node> -n kube-system
+          # docs: search "network policies"
           \end{cheatcodebash}
 
+      \tcbitem
+          \tcbsubtitle{Custom Columns \& Sorting}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          List all deployments with name, replicas, and image, sorted by name:}
           \begin{cheatcodebash}
-          # Edit control plane component:
-          vi /etc/kubernetes/manifests/kube-apiserver.yaml
+          k get deploy -A -o custom-columns=\
+              'NAME:.metadata.name,NS:.metadata.namespace,\
+              REPLICAS:.spec.replicas,\
+              IMAGE:.spec.template.spec.containers[0].image' \
+            --sort-by=.metadata.name
           \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          Sort pods by restart count:}
           \begin{cheatcodebash}
-          # If API server unreachable:
-          crictl ps                   # list containers on node
-          crictl logs <container-id>
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # Kubeconfig:
-          export KUBECONFIG=/etc/kubernetes/admin.conf
-          \end{cheatcodebash}
-
-        \tcbitem
-          % === Service Debugging =====================================================
-          \tcbsubtitle{Service \& Networking Debugging}
-          \begin{cheatcodebash}
-          # Check if svc routes to pods:
-          k get endpoints <svc>       # empty = label mismatch
-          k get pods --show-labels
-          k describe svc <name>       # check Selector field
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # DNS test:
-          k run tmp --image=busybox --rm -it --restart=Never -- nslookup <svc>.<ns>
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # HTTP test:
-          k run tmp --image=busybox --rm -it --restart=Never -- wget -qO- http://<svc>.<ns>:80
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # Check network policy interference:
-          k get netpol -A
-          \end{cheatcodebash}
-
-        \tcbitem
-          % === Certificate Debugging ================================================
-          \tcbsubtitle{Certificate Debugging}
-          \begin{cheatcodebash}
-          # Check cert expiry:
-          kubeadm certs check-expiration
-          # Inspect a specific cert:
-          openssl x509 -in /etc/kubernetes/pki/apiserver.crt \
-            -noout -text -dates
-          # Verify cert matches key:
-          openssl x509 -in cert.crt -noout -modulus | md5sum
-          openssl rsa  -in cert.key -noout -modulus | md5sum
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # Renew all certs:
-          kubeadm certs renew all
-          # Then restart control plane (kubelet picks up new certs):
-          systemctl restart kubelet
-          \end{cheatcodebash}
-          \begin{cheatcodebash}
-          # Common symptoms:
-          # - "x509: certificate has expired" in kubelet/apiserver logs
-          # - "Unable to connect to the server" from kubectl
-          # docs: search "manage tls certificates"
+          k get pods -A -o custom-columns='NAME:.metadata.name,\
+             RESTARTS:.status.containerStatuses[0].restartCount' \
+             --sort-by='.status.containerStatuses[0].restartCount'
           \end{cheatcodebash}
 
     \end{tcbitemize}

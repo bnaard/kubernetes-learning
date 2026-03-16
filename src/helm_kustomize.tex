@@ -50,7 +50,7 @@ kubectl kustomize <dir> | kubectl apply -f - # build+apply
 # kustomize build = kubectl kustomize (same engine)
 \end{cheatcodebash}
 
-\cmdhead{Help}
+\cmdhead{Helpers}
 \begin{cheatcodebash}
 # No "k explain" for Kustomize — it's client-side only
 # docs: "kustomize" or "kustomization"
@@ -70,7 +70,7 @@ k get operators                 # if OLM installed
 \end{cheatcodebash}
 
 \begin{cheatcodebash}
-### Exam helpers:
+### Helpers:
 k explain customresourcedefinition.spec --recursive
 # docs: "custom resources"
 \end{cheatcodebash}
@@ -100,9 +100,6 @@ CRI & Container runtime & containerd, CRI-O \\
 
 \begin{cheatcodebash}
 # CNI config:  /etc/cni/net.d/
-# Check runtime (node level tool):
-k get node -o wide          # CONTAINER-RUNTIME col
-crictl ps                   # list containers (node)
-crictl logs <id>
-crictl inspect <id>
+# Check runtime: k get node -o wide (CONTAINER-RUNTIME col)
+crictl ps | logs | inspect <id>   # node-level tool
 \end{cheatcodebash}

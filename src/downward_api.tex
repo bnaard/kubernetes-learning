@@ -26,23 +26,9 @@ env:
   \end{tabular}
 \end{cheatcodetex}
 
-\cmdhead{Resource Limits via \texttt{resourceFieldRef}}
+\cmdhead{\texttt{resourceFieldRef} (limits/requests)}
 \begin{cheatcodebash}
-env:
-- name: MEM_LIMIT
-  valueFrom:
-    resourceFieldRef:
-      containerName: app
-      resource: limits.memory
-\end{cheatcodebash}
-
-\cmdhead{Help}
-\begin{cheatcodebash}
-k explain pod.spec.containers.env.valueFrom
-\end{cheatcodebash}
-
-\cmdhead{\url{https://kubernetes.io/docs/}}
-\begin{cheatcodebash}
-search: "downward api"
-search: "expose pod information to containers"
+valueFrom:
+  resourceFieldRef: {resource: limits.memory}
+# k explain pod.spec.containers.env.valueFrom
 \end{cheatcodebash}

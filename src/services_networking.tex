@@ -136,7 +136,7 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
     kube-proxy catches :30080 on every node's real IP and forwards to Service ClusterIP:80 → Pod:8080.\par}
     \end{center}
 
-    \vspace{-0.3ex}
+    \vspace{-1ex}
 
     \cmdhead{Spec Essentials: Headless}
     \begin{cheatcodebash}
@@ -149,30 +149,8 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
       ports:
       - {port: 3306, targetPort: 3306}
     \end{cheatcodebash}
-    \begin{center}
-    \begin{tikzpicture}[
-      >=Stealth,
-      box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
-        font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
-        minimum height=1.4em},
-      plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
-      caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
-      container/.style={draw=teal!40, dashed, rounded corners=2pt,
-        inner sep=3pt, fit=#1},
-      ]
-      \node[caller] (client) {Pod / DNS};
-      \node[box=gray, right=3em of client] (dns) {DNS};
-      \node[box=teal, above right=0.6em and 3.5em of dns] (pod1) {db-0:3306};
-      \node[box=teal, below right=0.6em and 3.5em of dns] (pod2) {db-1:3306};
-      \draw[->, gray, thick]
-        (client) -- (dns) node[plbl=gray, pos=0.5, above] {lookup};
-      \draw[->, teal!60, thick] (dns) -- (pod1);
-      \draw[->, teal!60, thick] (dns) -- (pod2);
-    \end{tikzpicture}
-
     {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
     No ClusterIP. DNS returns Pod IPs directly. Client connects to individual Pods.\par}
-    \end{center}
 
 
   \tcbitem
@@ -225,14 +203,14 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
             - {port: 53, protocol: TCP}
         \end{cheatcodebash}
 
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         k explain networkpolicy.spec --recursive
         \end{cheatcodebash}
 
         \cmdhead{\url{https://kubernetes.io/docs/}}
         \begin{cheatcodebash}
-        service: "network policies"
+        search: "network policies"
         \end{cheatcodebash}
 
       \tcbitem
@@ -256,7 +234,7 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
           -- wget -qO- http://<svc>  # -q=quiet -O-=stdout
         \end{cheatcodebash}
 
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         # No k explain — CoreDNS is configured via ConfigMap
         k get cm coredns -n kube-system -o yaml
@@ -270,8 +248,8 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
         \end{cheatcodebash}
 
       \tcbitem
-          \tcbsubtitle{Service Types Help}
-          \cmdhead{Help}
+          \tcbsubtitle{Service Types Helpers}
+          \cmdhead{Helpers}
           \begin{cheatcodebash}
           k explain service.spec --recursive
           \end{cheatcodebash}
@@ -324,14 +302,14 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
             secretName: tls-secret
         \end{cheatcodebash}
 
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         k explain ingress.spec --recursive
         \end{cheatcodebash}
 
         \cmdhead{\url{https://kubernetes.io/docs/}}
         \begin{cheatcodebash}
-        service: "ingress"
+        search: "ingress"
         \end{cheatcodebash}
 
 

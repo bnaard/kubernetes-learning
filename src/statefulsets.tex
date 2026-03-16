@@ -19,7 +19,7 @@
 
         % === Imperative ===========================================================
         \tcbsubtitle{Imperative}
-        \cmdhead{Exam shortcut: scaffold from Deployment}
+        \cmdhead{Shortcut: scaffold from Deployment}
         \begin{cheatcodebash}
         k create deploy db --image=mysql:8 --replicas=3 $do > sts.yaml
         # Then edit sts.yaml:
@@ -132,7 +132,7 @@
       \tcbitem
 
         % === Help =================================================================
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         k explain statefulset.spec --recursive
         k explain statefulset.spec.volumeClaimTemplates

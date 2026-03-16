@@ -29,7 +29,7 @@
         effect: "NoSchedule"
     \end{cheatcodebash}
 
-    \cmdhead{Help}
+    \cmdhead{Helpers}
     \begin{cheatcodebash}
     k explain node.spec.taints --recursive
     k explain pod.spec.tolerations --recursive
@@ -62,7 +62,7 @@
             - {key: zone, operator: In, values: [us-east]}
     \end{cheatcodebash}
 
-    \cmdhead{Help}
+    \cmdhead{Helpers}
     \begin{cheatcodebash}
     k explain pod.spec.affinity.nodeAffinity --recursive
     \end{cheatcodebash}
@@ -103,7 +103,7 @@
               matchLabels: {app: web}
     \end{cheatcodebash}
 
-    \cmdhead{Help}
+    \cmdhead{Helpers}
     \begin{cheatcodebash}
     k explain pod.spec.affinity.podAffinity --recursive
     k explain pod.spec.affinity.podAntiAffinity --recursive
@@ -150,7 +150,7 @@
         persistentvolumeclaims: "5"
     \end{cheatcodebash}
 
-    \cmdhead{Help}
+    \cmdhead{Helpers}
     \begin{cheatcodebash}
     k explain limitrange.spec --recursive
     k explain resourcequota.spec --recursive
@@ -194,7 +194,7 @@
             image: fluentd
     \end{cheatcodebash}
 
-    \cmdhead{Help}
+    \cmdhead{Helpers}
     \begin{cheatcodebash}
     k explain daemonset.spec --recursive
     k explain daemonset.spec.updateStrategy --recursive
@@ -231,7 +231,7 @@
         nodeName: <node-name>  # <pod>.spec.nodeName
         \end{cheatcodebashbold}
 
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         k explain pod.spec.nodeSelector
         k explain pod.spec.nodeName
@@ -261,7 +261,7 @@
         k get pods -n kube-system
         \end{cheatcodebashbold}
 
-        \cmdhead{Help}
+        \cmdhead{Helpers}
         \begin{cheatcodebash}
         # staticPodPath is in kubelet config:
         # /var/lib/kubelet/config.yaml
