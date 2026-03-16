@@ -1,5 +1,5 @@
 \begin{tcbitemize}[
-  raster columns=3, raster equal height=rows,
+  raster columns=4, raster equal height=rows,
   blanker, cheat subtitle
 ]
 
@@ -136,21 +136,6 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
     kube-proxy catches :30080 on every node's real IP and forwards to Service ClusterIP:80 → Pod:8080.\par}
     \end{center}
 
-    \vspace{-1ex}
-
-    \cmdhead{Spec Essentials: Headless}
-    \begin{cheatcodebash}
-    apiVersion: v1
-    kind: Service
-    metadata: {name: db-headless}
-    spec:
-      clusterIP: None            # headless!
-      selector: {app: db}
-      ports:
-      - {port: 3306, targetPort: 3306}
-    \end{cheatcodebash}
-    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
-    No ClusterIP. DNS returns Pod IPs directly. Client connects to individual Pods.\par}
 
 
   \tcbitem
@@ -259,6 +244,40 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
           search: "service"
           \end{cheatcodebash}
 
+      \tcbitem
+          \tcbsubtitle{Spec Essentials: Headless}
+          \begin{cheatcodebash}
+          apiVersion: v1
+          kind: Service
+          metadata: {name: db-headless}
+          spec:
+            clusterIP: None            # headless!
+            selector: {app: db}
+            ports:
+            - {port: 3306, targetPort: 3306}
+          \end{cheatcodebash}
+          \begin{center}
+          \begin{tikzpicture}[
+            >=Stealth,
+            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            plbl/.style={font=\ttfamily\fontsize{5.5}{6.5}\selectfont, #1!80!black},
+            caller/.style={font=\sffamily\fontsize{5}{6}\selectfont\itshape, gray},
+            ]
+            \node[caller] (client) {Pod / DNS};
+            \node[box=gray, right=3em of client] (dns) {DNS};
+            \node[box=teal, above right=0.3em and 3.5em of dns] (pod1) {db-0:3306};
+            \node[box=teal, below right=0.3em and 3.5em of dns] (pod2) {db-1:3306};
+            \draw[->, gray, thick]
+              (client) -- (dns) node[plbl=gray, pos=0.5, above] {lookup};
+            \draw[->, teal!60, thick] (dns) -- (pod1);
+            \draw[->, teal!60, thick] (dns) -- (pod2);
+          \end{tikzpicture}
+          \end{center}
+          \vspace{-1ex}
+          {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+          No ClusterIP. DNS returns Pod IPs directly.\par}
 
       \end{tcbitemize}
 
@@ -313,6 +332,14 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
         \end{cheatcodebash}
 
 
+    \end{tcbitemize}
+
+    \tcbitem
+      \begin{tcbitemize}[
+        raster columns=1, raster equal height=rows,
+        blanker, cheat subtitle
+      ]
+
       \tcbitem
         % === Gateway API ===========================================================
         \tcbsubtitle{Gateway API (successor to Ingress)}
@@ -330,6 +357,28 @@ k create svc nodeport <name> --tcp=80:8080 --node-port=30080
             allowedRoutes:
               namespaces: {from: Same}
         \end{cheatcodebash}
+
+        \cmdhead{Gateway with HTTPS / TLS termination}
+        \begin{cheatcodebash}
+        apiVersion: gateway.networking.k8s.io/v1
+        kind: Gateway
+        metadata: {name: my-tls-gateway}
+        spec:
+          gatewayClassName: cilium
+          listeners:
+          - name: https
+            protocol: HTTPS
+            port: 443
+            tls:
+              mode: Terminate            # terminate TLS at gateway
+              certificateRefs:
+              - name: my-tls-secret      # existing Secret (type: tls)
+            allowedRoutes:
+              namespaces: {from: Same}
+        \end{cheatcodebash}
+        {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
+        Secret must be \texttt{type: kubernetes.io/tls} with \texttt{tls.crt} and \texttt{tls.key} keys.
+        Create with: \texttt{k create secret tls my-tls-secret --cert=tls.crt --key=tls.key}\par}
 
         \cmdhead{HTTPRoute Spec}
         \begin{cheatcodebash}

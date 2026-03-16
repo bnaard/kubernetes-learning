@@ -413,7 +413,7 @@ size=small,skin=bicolor,
 
 \pagebreak
 
-% === Page 3: Services & Networking + Autoscaling =============================
+% === Page 3: Services & Networking (full width) ==============================
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
@@ -422,14 +422,8 @@ size=small,skin=bicolor,
 
     % === Services & Networking =================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Services \& Networking}]
-        {name=networking, column=1, between=top and bottom, span=9}
+        {name=networking, column=1, between=top and bottom, span=12}
         \input{services_networking.tex}
-    \end{posterboxenv}
-
-    % === Autoscaling ===========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling}]
-        {name=autoscaling, column=10, between=top and bottom, span=3}
-        \input{autoscaling.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
@@ -559,7 +553,7 @@ size=small,skin=bicolor,
 
 \pagebreak
 
-% === Page 8: Troubleshooting =================================================
+% === Page 8: Troubleshooting + Autoscaling ===================================
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
@@ -568,8 +562,14 @@ size=small,skin=bicolor,
 
     % === Troubleshooting =======================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Troubleshooting}]
-        {name=troubleshooting, column=1, between=top and bottom, span=12}
+        {name=troubleshooting, column=1, between=top and bottom, span=9}
         \input{troubleshooting.tex}
+    \end{posterboxenv}
+
+    % === Autoscaling ===========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Autoscaling}]
+        {name=autoscaling, column=10, between=top and bottom, span=3}
+        \input{autoscaling.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
