@@ -111,7 +111,21 @@
       --cluster=kubernetes --user=jane
     kubectl config use-context jane-ctx
     \end{cheatcodebash}
-    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group. The API server extracts these from the cert on every request — no database lookup. Then RBAC matches RoleBindings for \texttt{user:} or \texttt{group:} subjects to grant/deny access.}
+    \cmdhead{6. Grant permissions via RBAC}
+    \begin{cheatcodebash}
+    # Role (namespace-scoped) or ClusterRole:
+    k create role jane-role --verb=get,list,watch \
+      --resource=pods,deployments -n dev
+    # Bind role to user (CN from cert):
+    k create rolebinding jane-bind --role=jane-role \
+      --user=jane -n dev
+    # Or bind to group (O from cert):
+    k create clusterrolebinding dev-view \
+      --clusterrole=view --group=dev-team
+    # Verify:
+    k auth can-i list pods -n dev --as=jane
+    \end{cheatcodebash}
+    \note{\texttt{CN} becomes the username, \texttt{O} becomes the group. RBAC matches RoleBindings for \texttt{user:} or \texttt{group:} subjects.}
 
 
   \tcbitem
