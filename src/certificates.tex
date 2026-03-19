@@ -166,7 +166,6 @@
     CSR_USER=jane
     # Then use $CSR_DATA and $CSR_USER in the YAML
     \end{cheatcodebash}
-
     \note{\texttt{--embed-certs=true} inlines cert data into the kubeconfig — the file is self-contained and portable.}
 
 
@@ -174,14 +173,22 @@
 
 \vspace{1ex}
 
-\tcbsubtitle{How Certificates, Users, Groups \& RBAC Connect}
 
 \begin{tcbitemize}[
   raster columns=3, raster equal height=rows,
   blanker, cheat subtitle
 ]
 
-  % === Col 1: Intro + CN/O table + full chain =================================
+  % === Col 1: Intro + CN/O table =============================================
+  \tcbitem[raster multicolumn=2]
+
+    \tcbsubtitle{How Certificates, Users, Groups \& RBAC Connect}
+
+  \begin{tcbitemize}[
+    raster columns=2, raster equal height=rows,
+    blanker, cheat subtitle
+  ]
+
   \tcbitem
 
     {\fontsize{6.5}{7.5}\selectfont\sffamily
@@ -210,13 +217,19 @@
 
     \end{tcolorbox}
 
-  % === Col 2: mTLS explanation + RBAC binding =================================
-  \tcbitem
-
+    \vspace{0.5ex}
     {\fontsize{6}{7}\selectfont\sffamily
     \textbf{Why the private key never leaves the user:} The mTLS handshake is a cryptographic proof of possession. The API server challenges the user; only the holder of the private key can sign correctly. The key itself is never transmitted. This is \textbf{mutual TLS}: both sides authenticate (server cert + client cert).\par}
 
-    \vspace{0.5ex}
+    \important{Changing a user's name or group requires a \textbf{new certificate} — you cannot revoke or modify a cert field.}
+
+    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray!70!black}
+Standard TLS = encrypted channel (browser ↔ web server).
+\textbf{mTLS} = encrypted channel \textbf{+ client identity} via certificate. Every \texttt{kubectl} call performs this handshake.\par}
+
+
+  % === Col 2: RBAC binding + verify ==========================================
+  \tcbitem
 
     \cmdhead{RBAC binding examples}
     \begin{cheatcodebash}
@@ -238,144 +251,138 @@
     k auth can-i list pods --as-group=dev-team
     \end{cheatcodebash}
 
-    \important{Changing a user's name or group requires a \textbf{new certificate} — you cannot revoke or modify a cert field.}
+\end{tcbitemize}
 
-  % === Col 3: mTLS Handshake sequence diagram ==================================
-  \tcbitem
+\tcbitem
 
-    \cmdhead{mTLS Handshake (every kubectl call)}
-    {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray!70!black}
-    Standard TLS = encrypted channel (browser ↔ web server).\\
-    \textbf{mTLS} = encrypted channel \textbf{+ client identity} via certificate.\par}
-    \vspace{0.3ex}
-    \begin{center}
-    \begin{tikzpicture}[
-      >=Stealth,
-      every node/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont},
-      snote/.style={draw=gray!30, fill=yellow!8, rounded corners=1pt, inner sep=1.5pt,
-        font=\sffamily\fontsize{3.5}{4.5}\selectfont\itshape, align=center},
-      cnote/.style={draw=teal!30, fill=teal!5, rounded corners=1pt, inner sep=1.5pt,
-        font=\sffamily\fontsize{3.5}{4.5}\selectfont, align=center},
-      phlbl/.style={font=\sffamily\fontsize{4}{5}\selectfont\bfseries,
-        fill=k8sblue!8, draw=k8sblue!30, rounded corners=1pt, inner sep=1pt},
-    ]
-      % --- Participants ---
-      \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
-        draw=teal!60, fill=teal!10, rounded corners=2pt, inner sep=2pt] (client) {kubectl};
-      \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
-        draw=k8sblue!60, fill=k8sblue!10, rounded corners=2pt, inner sep=2pt,
-        right=3cm of client] (server) {API Server};
+\tcbsubtitle{mTLS Handshake}
 
-      % --- What each side holds ---
-      \node[snote, text width=1.5cm, below=0.08cm of client]
-        (chas) {\textbf{Has:}\\ jane.key \textit{(private)}\\ jane.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
-      \node[snote, text width=1.6cm, below=0.08cm of server]
-        (shas) {\textbf{Has:}\\ server.key \textit{(private)}\\ server.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
+\begin{center}
+\begin{tikzpicture}[
+  >=Stealth,
+  every node/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont},
+  snote/.style={draw=gray!30, fill=yellow!8, rounded corners=1pt, inner sep=1.5pt,
+    font=\sffamily\fontsize{3.5}{4.5}\selectfont\itshape, align=center},
+  cnote/.style={draw=teal!30, fill=teal!5, rounded corners=1pt, inner sep=1.5pt,
+    font=\sffamily\fontsize{3.5}{4.5}\selectfont, align=center},
+  phlbl/.style={font=\sffamily\fontsize{4}{5}\selectfont\bfseries,
+    fill=k8sblue!8, draw=k8sblue!30, rounded corners=1pt, inner sep=1pt},
+]
+  % --- Participants ---
+  \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
+    draw=teal!60, fill=teal!10, rounded corners=2pt, inner sep=2pt] (client) {kubectl};
+  \node[font=\sffamily\fontsize{5}{6}\selectfont\bfseries,
+    draw=k8sblue!60, fill=k8sblue!10, rounded corners=2pt, inner sep=2pt,
+    right=3cm of client] (server) {API Server};
 
-      \def\ystart{-0.25}
-      \def\ystep{0.42}
+  % --- What each side holds ---
+  \node[snote, text width=1.5cm, below=0.08cm of client]
+    (chas) {\textbf{Has:}\\ jane.key \textit{(private)}\\ jane.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
+  \node[snote, text width=1.6cm, below=0.08cm of server]
+    (shas) {\textbf{Has:}\\ server.key \textit{(private)}\\ server.crt \textit{(cert)}\\ ca.crt \textit{(CA trust)}};
 
-      % === Standard TLS part === (label placed further left to avoid overlap)
-      \pgfmathsetmacro{\yph}{\ystart - 0.8*\ystep}
-      \node[phlbl, anchor=east] at ([yshift=\yph cm, xshift=-0.25cm]chas.south) {\rotatebox{90}{\tiny standard TLS}};
+  \def\ystart{-0.25}
+  \def\ystep{0.42}
 
-      % 1. Client Hello
-      \draw[->, semithick, teal!60]
-        ([yshift=\ystart cm]chas.south) -- ([yshift=\ystart cm]shas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {1. ClientHello (ciphers, random)};
+  % === Standard TLS part ===
+  \pgfmathsetmacro{\yph}{\ystart - 0.8*\ystep}
+  \node[phlbl, anchor=east] at ([yshift=\yph cm, xshift=-0.25cm]chas.south) {\rotatebox{90}{\tiny standard TLS}};
 
-      % 2. Server Hello + Cert
-      \pgfmathsetmacro{\ypos}{\ystart - \ystep}
-      \draw[->, semithick, k8sblue!60]
-        ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {2. ServerHello + server.crt};
+  % 1. Client Hello
+  \draw[->, semithick, teal!60]
+    ([yshift=\ystart cm]chas.south) -- ([yshift=\ystart cm]shas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {1. ClientHello (ciphers, random)};
 
-      % Client verifies server cert
-      \pgfmathsetmacro{\ypos}{\ystart - 1.6*\ystep}
-      \node[snote, text width=1.7cm]
-        at ([yshift=\ypos cm]chas.south)
-        {verify server.crt signed by \textbf{ca.crt}};
+  % 2. Server Hello + Cert
+  \pgfmathsetmacro{\ypos}{\ystart - \ystep}
+  \draw[->, semithick, k8sblue!60]
+    ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {2. ServerHello + server.crt};
 
-      % 3. Key exchange
-      \pgfmathsetmacro{\ypos}{\ystart - 2.3*\ystep}
-      \draw[->, semithick, teal!60]
-        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {3. Key exchange → shared session key};
+  % Client verifies server cert
+  \pgfmathsetmacro{\ypos}{\ystart - 1.6*\ystep}
+  \node[snote, text width=1.7cm]
+    at ([yshift=\ypos cm]chas.south)
+    {verify server.crt signed by \textbf{ca.crt}};
 
-      % Session key note
-      \pgfmathsetmacro{\ypos}{\ystart - 2.85*\ystep}
-      \node[cnote, text width=3.2cm, draw=green!30, fill=green!5]
-        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
-        {Both sides now share a \textbf{symmetric session key}. All traffic encrypted. (Same as browser ↔ web server.)};
+  % 3. Key exchange
+  \pgfmathsetmacro{\ypos}{\ystart - 2.3*\ystep}
+  \draw[->, semithick, teal!60]
+    ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {3. Key exchange → shared session key};
 
-      % === mTLS addition ===
-      \pgfmathsetmacro{\ypos}{\ystart - 3.8*\ystep}
-      \node[phlbl, anchor=east] at ([yshift=\ypos cm, xshift=-0.15cm]chas.south) {\rotatebox{90}{\tiny mTLS addition}};
+  % Session key note
+  \pgfmathsetmacro{\ypos}{\ystart - 2.85*\ystep}
+  \node[cnote, text width=3.2cm, draw=green!30, fill=green!5]
+    at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+    {Both sides now share a \textbf{symmetric session key}. All traffic encrypted.};
 
-      % 4. CertificateRequest
-      \draw[->, semithick, k8sblue!60]
-        ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {4. CertificateRequest};
+  % === mTLS addition ===
+  \pgfmathsetmacro{\ypos}{\ystart - 3.8*\ystep}
+  \node[phlbl, anchor=east] at ([yshift=\ypos cm, xshift=-0.15cm]chas.south) {\rotatebox{90}{\tiny mTLS addition}};
 
-      % 5. Client Certificate
-      \pgfmathsetmacro{\ypos}{\ystart - 4.6*\ystep}
-      \draw[->, semithick, teal!60]
-        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {5. jane.crt (public key + CN/O)};
+  % 4. CertificateRequest
+  \draw[->, semithick, k8sblue!60]
+    ([yshift=\ypos cm]shas.south) -- ([yshift=\ypos cm]chas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {4. CertificateRequest};
 
-      % 5 note
-      \pgfmathsetmacro{\ypos}{\ystart - 5.05*\ystep}
-      \node[snote, text width=3.2cm]
-        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
-        {Server has client's \textbf{public key} + claimed identity — but doesn't yet know if client truly owns it.};
+  % 5. Client Certificate
+  \pgfmathsetmacro{\ypos}{\ystart - 4.6*\ystep}
+  \draw[->, semithick, teal!60]
+    ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {5. jane.crt (public key + CN/O)};
 
-      % 6. CertificateVerify
-      \pgfmathsetmacro{\ypos}{\ystart - 6*\ystep}
-      \draw[->, semithick, teal!70, very thick]
-        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont\bfseries]
-        {6. CertificateVerify};
+  % 5 note
+  \pgfmathsetmacro{\ypos}{\ystart - 5.05*\ystep}
+  \node[snote, text width=3.2cm]
+    at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+    {Server has client's \textbf{public key} + claimed identity — but doesn't yet know if client truly owns it.};
 
-      % CertificateVerify explanation
-      \pgfmathsetmacro{\ypos}{\ystart - 6.8*\ystep}
-      \node[cnote, text width=3.2cm]
-        at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
-        {\textbf{Sent:} hash of handshake, signed with \textbf{jane.key}.\\[1pt]
-        \textbf{Server:} decrypts with public key from jane.crt. Match → client owns the key.};
+  % 6. CertificateVerify
+  \pgfmathsetmacro{\ypos}{\ystart - 6*\ystep}
+  \draw[->, semithick, teal!70, very thick]
+    ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont\bfseries]
+    {6. CertificateVerify};
 
-      % Server verifies cert trust + extracts identity
-      \pgfmathsetmacro{\ypos}{\ystart - 8*\ystep}
-      \node[snote, text width=1.6cm]
-        at ([yshift=\ypos cm]shas.south)
-        {1) jane.crt signed by \textbf{ca.crt}?\\
-        2) CertVerify valid?\\
-        3) extract CN→user, O→group};
+  % CertificateVerify explanation
+  \pgfmathsetmacro{\ypos}{\ystart - 6.8*\ystep}
+  \node[cnote, text width=3.2cm]
+    at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+    {\textbf{Sent:} hash of handshake, signed with \textbf{jane.key}.\\[1pt]
+    \textbf{Server:} decrypts with public key from jane.crt. Match → client owns the key.};
 
-      % 7. Finished
-      \pgfmathsetmacro{\ypos}{\ystart - 9.2*\ystep}
-      \draw[<->, semithick, green!50!black]
-        ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
-        node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
-        {7. Encrypted + authenticated};
+  % Server verifies cert trust + extracts identity
+  \pgfmathsetmacro{\ypos}{\ystart - 8*\ystep}
+  \node[snote, text width=1.6cm]
+    at ([yshift=\ypos cm]shas.south)
+    {1) jane.crt signed by \textbf{ca.crt}?\\
+    2) CertVerify valid?\\
+    3) extract CN→user, O→group};
 
-      % Bottom note
-      \pgfmathsetmacro{\ypos}{\ystart - 9.8*\ystep}
-      \node[draw=k8sblue!30, fill=k8sblue!5, rounded corners=1pt, inner sep=1.5pt,
-        font=\sffamily\fontsize{3.5}{4.5}\selectfont, text width=3.2cm, align=center]
-        (bottomnote) at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
-        {Server knows: \textbf{who} (CN=jane), \textbf{group} (O=dev-team). RBAC applied.};
+  % 7. Finished
+  \pgfmathsetmacro{\ypos}{\ystart - 9.2*\ystep}
+  \draw[<->, semithick, green!50!black]
+    ([yshift=\ypos cm]chas.south) -- ([yshift=\ypos cm]shas.south)
+    node[midway, above, font=\sffamily\fontsize{3.5}{4.5}\selectfont]
+    {7. Encrypted + authenticated};
 
-      % --- Lifelines (drawn last, ending at bottom note) ---
-      \draw[gray!40, dashed] (chas.south) -- (chas.south |- bottomnote.south);
-      \draw[gray!40, dashed] (shas.south) -- (shas.south |- bottomnote.south);
+  % Bottom note
+  \pgfmathsetmacro{\ypos}{\ystart - 9.8*\ystep}
+  \node[draw=k8sblue!30, fill=k8sblue!5, rounded corners=1pt, inner sep=1.5pt,
+    font=\sffamily\fontsize{3.5}{4.5}\selectfont, text width=3.2cm, align=center]
+    (bottomnote) at ([yshift=\ypos cm]$ (chas.south)!0.5!(shas.south) $)
+    {Server knows: \textbf{who} (CN=jane), \textbf{group} (O=dev-team). RBAC applied.};
 
-    \end{tikzpicture}
-    \end{center}
+  % --- Lifelines ---
+  \draw[gray!40, dashed] (chas.south) -- (chas.south |- bottomnote.south);
+  \draw[gray!40, dashed] (shas.south) -- (shas.south |- bottomnote.south);
 
-  \end{tcbitemize}
-
+\end{tikzpicture}
+\end{center}
+\end{tcbitemize}

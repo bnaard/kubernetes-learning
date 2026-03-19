@@ -146,6 +146,8 @@
         crictl logs <container-id>
         crictl inspect <container-id> # full state: config,
         # image, mounts, pid, exit code, OOM kill, etc.
+        crictl rm --force <container-id>  # force-delete container
+        # For docker runtime: same args, replace crictl -> docker
         \end{cheatcodebash}
         \begin{cheatcodebash}
         # Kubeconfig:
@@ -186,37 +188,42 @@
           \end{enumerate}}
 
       \tcbitem
-          \tcbsubtitle{Create NetworkPolicy}
+          \tcbsubtitle{Fix a Broken Node}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
           \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item Identify pods via labels: \texttt{k get pods --show-labels}
-            \item Write policy with \texttt{podSelector}, \texttt{ingress}/\texttt{egress} rules
-            \item \emoji{warning}  An empty \texttt{podSelector: \{\}} selects \textbf{all} pods in the namespace.
-            \item Test: \texttt{k exec <pod> -- wget -qO- -T2 <target>}
+            \item \texttt{k get nodes} — identify \texttt{NotReady} node
+            \item \texttt{ssh <node>}
+            \item \texttt{systemctl status kubelet} — check if running
+            \item \texttt{journalctl -u kubelet | tail -50} — find error
+            \item Fix config: wrong \texttt{--config} path, bad cert path, wrong \texttt{staticPodPath}, wrong kubelet binary in \texttt{/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf}
+            \item After editing a unit file: \texttt{systemctl daemon-reload}
+            \item \texttt{systemctl restart kubelet}
+            \item \texttt{systemctl enable kubelet} — ensure it survives reboot
+            \item Verify: \texttt{k get nodes} — node becomes \texttt{Ready}
           \end{enumerate}}
-          \begin{cheatcodebash}
-          # docs: search "network policies"
-          \end{cheatcodebash}
 
       \tcbitem
-          \tcbsubtitle{Custom Columns \& Sorting}
+          \tcbsubtitle{Fix a Broken Control Plane}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
-          List all deployments with name, replicas, and image, sorted by name:}
-          \begin{cheatcodebash}
-          k get deploy -A -o custom-columns=\
-              'NAME:.metadata.name,NS:.metadata.namespace,\
-              REPLICAS:.spec.replicas,\
-              IMAGE:.spec.template.spec.containers[0].image' \
-            --sort-by=.metadata.name
-          \end{cheatcodebash}
-          \vspace{-0.5ex}
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item \texttt{k get pods -n kube-system} — or \texttt{crictl ps} if API is down
+            \item Check static pod manifests in \texttt{/etc/kubernetes/manifests/}
+            \item \texttt{crictl logs <id>} — find the error
+            \item Common fixes: wrong image tag, bad volume mount path, typo in \texttt{--etcd-servers}, wrong cert path
+            \item Save manifest — kubelet auto-restarts the pod
+            \item Verify: \texttt{k get pods -n kube-system}
+          \end{enumerate}}
+
+      \tcbitem
+          \tcbsubtitle{Fix admin.conf / Kubeconfig}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
-          Sort pods by restart count:}
-          \begin{cheatcodebash}
-          k get pods -A -o custom-columns='NAME:.metadata.name,\
-             RESTARTS:.status.containerStatuses[0].restartCount' \
-             --sort-by='.status.containerStatuses[0].restartCount'
-          \end{cheatcodebash}
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item Symptom: \texttt{kubectl} cannot reach API server
+            \item Check \texttt{/etc/kubernetes/admin.conf} (or \texttt{\$KUBECONFIG})
+            \item Verify \texttt{server:} URL — must be \texttt{https://<control-plane-ip>:6443}
+            \item Common issues: wrong port (e.g.\ \texttt{8443} instead of \texttt{6443}), wrong IP, \texttt{http} instead of \texttt{https}
+            \item Fix and verify: \texttt{k get nodes}
+          \end{enumerate}}
 
     \end{tcbitemize}
 

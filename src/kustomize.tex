@@ -1,0 +1,171 @@
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
+
+  \tcbitem
+    % === Basics ===============================================================
+    \tcbsubtitle{kustomization.yaml Basics}
+    \begin{cheatcodebash}
+    apiVersion: kustomize.config.k8s.io/v1beta1
+    kind: Kustomization
+    resources:              # base manifests to include
+    - deployment.yaml
+    - service.yaml
+    - ../base               # or reference another directory
+    namespace: my-ns        # override namespace for all resources
+    namePrefix: dev-        # prepend to all resource names
+    nameSuffix: -v2         # append to all resource names
+    commonLabels:           # add labels to all resources + selectors
+      app: myapp
+    commonAnnotations:      # add annotations to all resources
+      team: platform
+    \end{cheatcodebash}
+    \begin{cheatcodebashbold}
+    # Apply:
+    kubectl apply -k <dir>
+    kubectl kustomize <dir>        # preview (render YAML)
+    kubectl kustomize <dir> | kubectl apply -f -
+    # kustomize build = kubectl kustomize (same engine)
+    \end{cheatcodebashbold}
+
+    \cmdhead{JSON 6902 Patch vs Strategic Merge Patch}
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[0.6,l]X[1,l]X[1,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+      & JSON 6902 & Strategic Merge \\
+    Format & List of ops (add/remove/replace) & Partial YAML merged into target \\
+    Precision & Exact path-based, fine-grained & Merges entire subtrees \\
+    Lists & Index-based (\texttt{/spec/containers/0}) & Merge by key (e.g.\ \texttt{name}) \\
+    Use when & Removing fields, reordering, non-K8s & Simple value overrides \\
+    \end{tcolorbox}
+
+    % === Common Directory Structure ============================================
+    \tcbsubtitle{Common Directory Structure}
+    \begin{cheatcodebash}
+    my-app/
+    +-- base/                    # shared manifests
+    |   +-- kustomization.yaml
+    |   +-- deployment.yaml
+    |   +-- service.yaml
+    +-- overlays/
+    |   +-- dev/
+    |   |   +-- kustomization.yaml  # resources: [../../base]
+    |   |   +-- replica-patch.yaml
+    |   +-- prod/
+    |       +-- kustomization.yaml
+    |       +-- hpa.yaml
+    +-- components/              # optional reusable mixins
+        +-- monitoring/
+            +-- kustomization.yaml
+    \end{cheatcodebash}
+
+    % === Overlays =============================================================
+    \tcbsubtitle{Overlays}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    An overlay references a base and applies env-specific changes.}
+    \begin{cheatcodebash}
+    # overlays/prod/kustomization.yaml:
+    resources: [../../base]   # inherit all base manifests
+    namespace: production
+    namePrefix: prod-
+    patches:
+    - path: increase-replicas.yaml
+    images:
+    - {name: myapp, newTag: v2.1.0}
+    \end{cheatcodebash}
+
+  \tcbitem
+    % === Transformers =========================================================
+    \tcbsubtitle{Transformers}
+    \begin{cheatcodebash}
+    # Common field transformers (in kustomization.yaml):
+    namespace: prod
+    namePrefix: prod-
+    nameSuffix: -v2
+    commonLabels:
+      env: prod              # added to metadata + selectors
+    commonAnnotations:
+      owner: team-a
+    replicas:                # set replica count directly
+    - name: my-deploy
+      count: 5
+    \end{cheatcodebash}
+    \cmdhead{Image Transformer}
+    \begin{cheatcodebash}
+    images:
+    - name: nginx            # match by original image name
+      newName: my-registry.io/nginx  # override registry/name
+      newTag: "2.0"          # override tag
+    - name: myapp
+      newTag: abc123          # just change tag
+    - name: redis
+      digest: sha256:abcdef...  # pin to digest
+    \end{cheatcodebash}
+
+    % === Patches ==============================================================
+    \tcbsubtitle{Patches}
+    \cmdhead{JSON 6902 Patch (precise ops)}
+    \begin{cheatcodebash}
+    patches:
+    - target:
+        kind: Deployment
+        name: web
+      patch: |-
+        - op: replace         # add|remove|replace|move|copy|test
+          path: /spec/replicas
+          value: 5
+        - op: add
+          path: /metadata/annotations/patched
+          value: "true"
+        - op: remove
+          path: /spec/template/spec/containers/0/resources
+    \end{cheatcodebash}
+    \cmdhead{Strategic Merge Patch (partial YAML)}
+    \begin{cheatcodebash}
+    patches:
+    - target: {kind: Deployment, name: web}
+      patch: |-
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata: {name: web}
+        spec:
+          replicas: 5         # override single field
+          template:
+            spec:
+              containers:
+              - name: app     # matched by name (strategic key)
+                resources: {limits: {memory: 512Mi}}
+    \end{cheatcodebash}
+
+    % === Components ===========================================================
+    \tcbsubtitle{Components}
+    {\fontsize{6.5}{7.5}\selectfont\sffamily
+    Reusable units overlays can include. Unlike bases, components can add patches and transformers.}
+    \begin{cheatcodebash}
+    # components/monitoring/kustomization.yaml:
+    apiVersion: kustomize.config.k8s.io/v1alpha1
+    kind: Component
+    resources: [servicemonitor.yaml]
+    patches:
+    - target: {kind: Deployment}
+      patch: |-
+        - op: add
+          path: /metadata/annotations/prometheus.io~1scrape
+          value: "true"
+    ---
+    # Use in overlay: components: [../../components/monitoring]
+    \end{cheatcodebash}
+
+\end{tcbitemize}

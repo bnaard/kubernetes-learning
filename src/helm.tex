@@ -1,0 +1,37 @@
+\cmdhead{Key commands}
+\begin{cheatcodebashbold}
+helm repo add <name> <url>       # register chart repo
+helm repo update                 # refresh index
+helm search repo <keyword>       # find charts
+helm install <release> <chart> \
+  -n <ns> --create-namespace \
+  -f values.yaml --set key=val   # deploy
+helm upgrade <release> <chart> -f vals.yaml
+helm rollback <release> [revision]
+helm uninstall <release> -n <ns> # delete release
+helm list [-A]                   # show releases
+helm history <release>           # list revisions
+\end{cheatcodebashbold}
+\cmdhead{Local chart (downloaded / unpacked)}
+\begin{cheatcodebash}
+helm lint ./my-chart/            # validate chart structure
+helm install <release> ./my-chart/ \
+  -n <ns> -f values.yaml         # install from local dir
+\end{cheatcodebash}
+\cmdhead{Additional}
+\begin{cheatcodebash}
+helm status <release>            # health + notes
+helm get values <release>        # current overrides
+helm template <release> <chart>  # dry-run (local render)
+helm show values <chart>         # inspect defaults
+# Show actual K8s manifests deployed by a release:
+helm get manifest <release>      # rendered YAML in cluster
+# Find resources deployed by a release (Helm labels them):
+k get deploy -n <ns> -l app.kubernetes.io/instance=<release>
+\end{cheatcodebash}
+
+\cmdhead{Helpers}
+\begin{cheatcodebash}
+k explain # N/A — Helm is not a K8s API resource
+# docs: helm.sh/docs
+\end{cheatcodebash}

@@ -129,7 +129,7 @@
 \pagestyle{fancy}
 
 % --- Version (must match git release tag) ------------------------------------
-\newcommand{\cheatsheetversion}{v0.4.0}
+\newcommand{\cheatsheetversion}{v0.5.0}
 
 \definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
 \newcommand{\primarycolor}{k8sblue}
@@ -547,17 +547,29 @@ size=small,skin=bicolor,
 
 \pagebreak
 
-% === Page 7a: Helm, Kustomize & Extensions ==================================
+% === Page 7a: Helm, Kustomize, Extensions ===================================
 \begin{tcbposter}[
         poster = {spacing=0.6em, columns=12, height=\textheight},
         boxes = {},
         coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
     ]
 
-    % === Helm, Kustomize & Extensions ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
-        {name=helm, column=1, between=top and bottom, span=6}
-        \input{helm_kustomize.tex}
+    % === Helm ==================================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm}]
+        {name=helm, column=1, between=top and bottom, span=3}
+        \input{helm.tex}
+    \end{posterboxenv}
+
+    % === Kustomize =============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Kustomize}]
+        {name=kustomize, column=4, between=top and bottom, span=6}
+        \input{kustomize.tex}
+    \end{posterboxenv}
+
+    % === Extensions ============================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Extensions}]
+        {name=extensions, column=10, between=top and bottom, span=3}
+        \input{extensions.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
