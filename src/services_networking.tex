@@ -323,10 +323,14 @@
       \tcbitem
         % === DNS ==================================================================
         \tcbsubtitle{CoreDNS}
-        \cmdhead{Service Access}
+        \cmdhead{DNS Record Patterns}
         \begin{cheatcodebash}
         <svc>.<ns>.svc.cluster.local        # Service DNS
-        <ip-dashes>.<ns>.pod.cluster.local  # Pod DNS
+        <ip-dashes>.<ns>.pod.cluster.local  # Pod by IP
+        # Pod with hostname + subdomain fields set:
+        <hostname>.<subdomain>.<ns>.svc.cluster.local
+        # Requires pod spec: hostname: myhost, subdomain: mysvc
+        # + a matching headless Service named "mysvc"
         \end{cheatcodebash}
 
         \cmdhead{Edit CoreDNS config \& apply}

@@ -3,214 +3,138 @@
   blanker, cheat subtitle
 ]
 
-  % === Taints & Tolerations =================================================
-  \tcbitem
-    \tcbsubtitle{Taints \& Tolerations}
-    \cmdhead{Taint Node}
-    \begin{cheatcodebash}
-    # Taint effects:
-    # NoSchedule        - no new pods w/o toleration
-    # PreferNoSchedule  - soft NoSchedule
-    # NoExecute         - evict existing pods too
-    k taint node <node> key=val:NoSchedule
-    k taint node <node> key=val:NoExecute
-    k taint node <node> key-       # remove
-    \end{cheatcodebash}
-
-    \cmdhead{Tolerations}
-    \begin{cheatcodebash}
-      # Node has this taint:
-      k taint node <node> dedicated=gpu:NoSchedule
-      # Pod must have this toleration to be scheduled there:
-      tolerations:           # <pod>.spec.tolerations[]
-      - key: "dedicated"
-        operator: "Equal"    # Exists
-        value: "gpu"
-        effect: "NoSchedule"
-    \end{cheatcodebash}
-
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k explain node.spec.taints --recursive
-    k explain pod.spec.tolerations --recursive
-    \end{cheatcodebash}
-
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "taints tolerations"
-    \end{cheatcodebash}
-
-  % === Node Affinity =========================================================
-  \tcbitem
-    \tcbsubtitle{Node Affinity}
-    \cmdhead{Spec}
-    \begin{cheatcodebash}
-    affinity:              # <pod>.spec.affinity
-      nodeAffinity:
-        # Hard rule (must match):
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: disktype
-              operator: In     # In|NotIn|Exists|DoesNotExist
-              values: [ssd]
-        # Soft rule (prefer):
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-            - {key: zone, operator: In, values: [us-east]}
-    \end{cheatcodebash}
-
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k explain pod.spec.affinity.nodeAffinity --recursive
-    \end{cheatcodebash}
-
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "node affinity"
-    \end{cheatcodebash}
-
-    \note{\footnotesize
-      \begin{itemize}[leftmargin=*,nosep]
-        \item With \textbf{affinity} one selects nodes by their labels
-        \item With \textbf{taints/tolerations} the node repels pods, and the pod explicitly opts in by declaring a matching toleration.
-      \end{itemize}
-    }
-
-
-  % === Pod Affinity / Anti-Affinity =========================================
-  \tcbitem
-    \tcbsubtitle{Pod Affinity / Anti-Affinity}
-
-    \note{For each node, scheduler checks every preferred rule. If node satisfies, rule's weight (1-100) adds to node's score. Node with highest total score wins. Required rules have no weight — they're binary.}
-
-    \cmdhead{Spec}
-    \begin{cheatcodebash}
-    affinity:              # <pod>.spec.affinity
-      podAffinity:          # co-locate with matching pods
-        requiredDuringSchedulingIgnoredDuringExecution:
-        - topologyKey: kubernetes.io/hostname
-          labelSelector:
-            matchLabels: {app: cache}
-      podAntiAffinity:      # spread away from matching pods
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            topologyKey: kubernetes.io/hostname
-            labelSelector:
-              matchLabels: {app: web}
-    \end{cheatcodebash}
-
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k explain pod.spec.affinity.podAffinity --recursive
-    k explain pod.spec.affinity.podAntiAffinity --recursive
-    \end{cheatcodebash}
-
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "inter-pod affinity"
-    \end{cheatcodebash}
-
-
-
-  % === Resource Requests & Limits ===========================================
-  \tcbitem
-    \tcbsubtitle{LimitRange \& ResourceQuota}
-    \cmdhead{LimitRange sets namespace defaults}
-    \begin{cheatcodebash}
-    # CPU units: 1 = 1000m (millicores)
-    apiVersion: v1
-    kind: LimitRange
-    metadata: {name: lr, namespace: <ns>}
-    spec:
-      limits:
-      - type: Container
-        # limit applied none specified (resources.limits)
-        default:        {cpu: 500m, memory: 256Mi}
-        # request applied none requested (resources.requests)
-        defaultRequest: {cpu: 100m, memory: 128Mi}
-        # maximum allowed limit a container may set
-        max:            {cpu: "2",  memory: 1Gi}
-    \end{cheatcodebash}
-
-    \cmdhead{ResourceQuota caps total namespace usage}
-    \begin{cheatcodebash}
-    apiVersion: v1
-    kind: ResourceQuota
-    metadata: {name: rq, namespace: <ns>}
-    spec:
-      hard:
-        pods: "10"
-        requests.cpu: "4"
-        requests.memory: 8Gi
-        limits.cpu: "8"
-        persistentvolumeclaims: "5"
-    \end{cheatcodebash}
-
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k explain limitrange.spec --recursive
-    k explain resourcequota.spec --recursive
-    \end{cheatcodebash}
-
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "limit ranges"
-    search: "resource quotas"
-    \end{cheatcodebash}
-
-    % === DaemonSets ===========================================================
-  \tcbitem
-    \tcbsubtitle{DaemonSets}
-
-    \cmdhead{Imperative}
-    \begin{cheatcodebash}
-    # Runs exactly 1 pod per (eligible) node
-    # Use: log collectors, monitoring, CNI
-    k get ds -A
-    # Rolling restart: replace all pods one by one
-    k rollout restart ds/<name>
-    \end{cheatcodebash}
-
-    \cmdhead{Spec Essentials}
-    \begin{cheatcodebash}
-    apiVersion: apps/v1
-    kind: DaemonSet
-    metadata: {name: fluentd, namespace: kube-system}
-    spec:
-      selector: {matchLabels: {app: fluentd}}
-      updateStrategy:
-        type: RollingUpdate    # or OnDelete
-      template:
-        metadata: {labels: {app: fluentd}}
-        spec:
-          tolerations:
-          - operator: Exists   # schedule on all nodes
-          containers:
-          - name: fluentd
-            image: fluentd
-    \end{cheatcodebash}
-
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k explain daemonset.spec --recursive
-    k explain daemonset.spec.updateStrategy --recursive
-    \end{cheatcodebash}
-
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "daemonset"
-    \end{cheatcodebash}
-
-  % === NodeSelector & nodeName ==============================================
+  % === Column 1 ===============================================================
   \tcbitem
     \begin{tcbitemize}[
       raster columns=1, raster equal height=rows,
       blanker, cheat subtitle
     ]
+
+      \tcbitem
+        \tcbsubtitle{Taints \& Tolerations}
+        \cmdhead{Taint Node}
+        \begin{cheatcodebash}
+        # Taint effects:
+        # NoSchedule        - no new pods w/o toleration
+        # PreferNoSchedule  - soft NoSchedule
+        # NoExecute         - evict existing pods too
+        k taint node <node> key=val:NoSchedule
+        k taint node <node> key=val:NoExecute
+        k taint node <node> key-       # remove
+        \end{cheatcodebash}
+
+        \cmdhead{Tolerations}
+        \begin{cheatcodebash}
+          # Node has this taint:
+          k taint node <node> dedicated=gpu:NoSchedule
+          # Pod must have this toleration to be scheduled there:
+          tolerations:           # <pod>.spec.tolerations[]
+          - key: "dedicated"
+            operator: "Equal"    # Exists
+            value: "gpu"
+            effect: "NoSchedule"
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain node.spec.taints --recursive
+        k explain pod.spec.tolerations --recursive
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "taints tolerations"
+        \end{cheatcodebash}
+
+      \tcbitem
+        \tcbsubtitle{DaemonSets}
+
+        \cmdhead{Imperative}
+        \begin{cheatcodebash}
+        # Runs exactly 1 pod per (eligible) node
+        # Use: log collectors, monitoring, CNI
+        k get ds -A
+        # Rolling restart: replace all pods one by one
+        k rollout restart ds/<name>
+        \end{cheatcodebash}
+
+        \cmdhead{Spec Essentials}
+        \begin{cheatcodebash}
+        apiVersion: apps/v1
+        kind: DaemonSet
+        metadata: {name: fluentd, namespace: kube-system}
+        spec:
+          selector: {matchLabels: {app: fluentd}}
+          updateStrategy:
+            type: RollingUpdate    # or OnDelete
+          template:
+            metadata: {labels: {app: fluentd}}
+            spec:
+              tolerations:
+              - operator: Exists   # schedule on all nodes
+              containers:
+              - name: fluentd
+                image: fluentd
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain daemonset.spec --recursive
+        k explain daemonset.spec.updateStrategy --recursive
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "daemonset"
+        \end{cheatcodebash}
+
+    \end{tcbitemize}
+
+  % === Column 2 ===============================================================
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+
+      \tcbitem
+        \tcbsubtitle{Node Affinity}
+        \cmdhead{Spec}
+        \begin{cheatcodebash}
+        affinity:              # <pod>.spec.affinity
+          nodeAffinity:
+            # Hard rule (must match):
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: disktype
+                  operator: In     # In|NotIn|Exists|DoesNotExist
+                  values: [ssd]
+            # Soft rule (prefer):
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - {key: zone, operator: In, values: [us-east]}
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain pod.spec.affinity.nodeAffinity --recursive
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "node affinity"
+        \end{cheatcodebash}
+
+        \note{\footnotesize
+          \begin{itemize}[leftmargin=*,nosep]
+            \item With \textbf{affinity} one selects nodes by their labels
+            \item With \textbf{taints/tolerations} the node repels pods, and the pod explicitly opts in by declaring a matching toleration.
+          \end{itemize}
+        }
+
       \tcbitem
         \tcbsubtitle{NodeSelector \& nodeName}
         \cmdhead{Add label to node}
@@ -241,7 +165,6 @@
         search: "assign pods nodes"
         \end{cheatcodebash}
 
-      % === Static Pods ==========================================================
       \tcbitem
         \tcbsubtitle{Static Pods}
 
@@ -271,40 +194,172 @@
 
     \end{tcbitemize}
 
-  % === PriorityClass ========================================================
+  % === Column 3 ===============================================================
   \tcbitem
-    \tcbsubtitle{PriorityClass}
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
 
-    \note{Higher-priority pods are scheduled first. If no nodes have capacity, the scheduler \textbf{preempts} (evicts) lower-priority pods to make room.}
+      \tcbitem
+        \tcbsubtitle{Pod Affinity / Anti-Affinity}
 
-    \cmdhead{Create a PriorityClass}
-    \begin{cheatcodebash}
-    apiVersion: scheduling.k8s.io/v1
-    kind: PriorityClass
-    metadata: {name: high-priority}
-    value: 1000000       # higher = more important
-    globalDefault: false  # true => default for all pods
-    preemptionPolicy: PreemptLowerPriority  # or Never
-    description: "Critical workloads"
-    \end{cheatcodebash}
+        \note{For each node, scheduler checks every preferred rule. If node satisfies, rule's weight (1-100) adds to node's score. Node with highest total score wins. Required rules have no weight — they're binary.}
 
-    \cmdhead{Use in a Pod / Deployment}
-    \begin{cheatcodebash}
-    spec:                  # <pod>.spec
-      priorityClassName: high-priority
-    \end{cheatcodebash}
+        \cmdhead{Spec}
+        \begin{cheatcodebash}
+        affinity:              # <pod>.spec.affinity
+          podAffinity:          # co-locate with matching pods
+            requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels: {app: cache}
+          podAntiAffinity:      # spread away from matching pods
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: {app: web}
+        \end{cheatcodebash}
 
-    \cmdhead{Helpers}
-    \begin{cheatcodebash}
-    k get priorityclasses   # pc is the short name
-    k explain pc.value
-    k explain pod.spec.priorityClassName
-    \end{cheatcodebash}
+        \cmdhead{topologySpreadConstraints (alternative)}
+        \begin{cheatcodebash}
+        topologySpreadConstraints:   # <pod>.spec
+        - maxSkew: 1                 # max imbalance between zones
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule  # or ScheduleAnyway
+          labelSelector:
+            matchLabels: {app: web}
+        \end{cheatcodebash}
 
-    \cmdhead{\url{https://kubernetes.io/docs/}}
-    \begin{cheatcodebash}
-    search: "pod priority preemption"
-    \end{cheatcodebash}
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain pod.spec.affinity.podAffinity --recursive
+        k explain pod.spec.affinity.podAntiAffinity --recursive
+        k explain pod.spec.topologySpreadConstraints --recursive
+        \end{cheatcodebash}
 
-    
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "inter-pod affinity"
+        search: "topology spread constraints"
+        \end{cheatcodebash}
+
+      \tcbitem
+        \tcbsubtitle{PriorityClass}
+
+        \note{Higher-priority pods are scheduled first. If no nodes have capacity, the scheduler \textbf{preempts} (evicts) lower-priority pods to make room.}
+
+        \cmdhead{Create a PriorityClass}
+        \begin{cheatcodebash}
+        apiVersion: scheduling.k8s.io/v1
+        kind: PriorityClass
+        metadata: {name: high-priority}
+        value: 1000000       # higher = more important
+        globalDefault: false  # true => default for all pods
+        preemptionPolicy: PreemptLowerPriority  # or Never
+        description: "Critical workloads"
+        \end{cheatcodebash}
+
+        \cmdhead{Use in a Pod / Deployment}
+        \begin{cheatcodebash}
+        spec:                  # <pod>.spec
+          priorityClassName: high-priority
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k get priorityclasses   # pc is the short name
+        k explain pc.value
+        k explain pod.spec.priorityClassName
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "pod priority preemption"
+        \end{cheatcodebash}
+
+    \end{tcbitemize}
+
+  % === Column 4 ===============================================================
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+
+      \tcbitem
+        \tcbsubtitle{LimitRange \& ResourceQuota}
+        \cmdhead{LimitRange sets namespace defaults}
+        \begin{cheatcodebash}
+        # CPU units: 1 = 1000m (millicores)
+        apiVersion: v1
+        kind: LimitRange
+        metadata: {name: lr, namespace: <ns>}
+        spec:
+          limits:
+          - type: Container
+            # limit applied none specified (resources.limits)
+            default:        {cpu: 500m, memory: 256Mi}
+            # request applied none requested (resources.requests)
+            defaultRequest: {cpu: 100m, memory: 128Mi}
+            # maximum allowed limit a container may set
+            max:            {cpu: "2",  memory: 1Gi}
+        \end{cheatcodebash}
+
+        \cmdhead{ResourceQuota caps total namespace usage}
+        \begin{cheatcodebash}
+        apiVersion: v1
+        kind: ResourceQuota
+        metadata: {name: rq, namespace: <ns>}
+        spec:
+          hard:
+            pods: "10"
+            requests.cpu: "4"
+            requests.memory: 8Gi
+            limits.cpu: "8"
+            persistentvolumeclaims: "5"
+        \end{cheatcodebash}
+
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+        k explain limitrange.spec --recursive
+        k explain resourcequota.spec --recursive
+        \end{cheatcodebash}
+
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+        search: "limit ranges"
+        search: "resource quotas"
+        \end{cheatcodebash}
+
+      \tcbitem
+        \cmdhead{QoS Classes (eviction order)}
+        \begin{tcolorbox}
+            [
+            skin=cheatboxtablesimple,
+            before skip=0pt,
+            after skip=0pt,
+            tabularray={
+            colspec={X[1,l]X[1.8,l]X[0.6,c]},
+            columns={valign=t, colsep=0.4em},
+            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+            hline{2}={solid, wd=0.3pt, fg=gray!40},
+            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+            }
+            ]
+          QoS Class & Condition & Evicted \\
+          Guaranteed & All containers: requests = limits (CPU + mem) & Last \\
+          Burstable & At least one request or limit set & Middle \\
+          BestEffort & No requests or limits at all & First \\
+        \end{tcolorbox}
+        \begin{cheatcodebash}
+        k get pod <name> -o jsonpath='{.status.qosClass}'
+        # docs: search "quality of service"
+        \end{cheatcodebash}
+
+    \end{tcbitemize}
+
 \end{tcbitemize}
