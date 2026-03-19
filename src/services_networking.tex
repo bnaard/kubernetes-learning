@@ -51,6 +51,13 @@
 
       % \tcbitem
           % \tcbsubtitle{Service Types Helpers}
+          \cmdhead{Inspect iptables rules for a Service}
+          \begin{cheatcodebash}
+          # On the node (ssh <node>):
+          iptables-save | grep <svc-name>
+          # Shows DNAT/KUBE-SVC/KUBE-SEP chains kube-proxy wrote
+          \end{cheatcodebash}
+
           \cmdhead{Helpers}
           \begin{cheatcodebash}
           k explain service.spec --recursive
@@ -322,9 +329,13 @@
         <ip-dashes>.<ns>.pod.cluster.local  # Pod DNS
         \end{cheatcodebash}
 
-        \cmdhead{CoreDNS config}
+        \cmdhead{Edit CoreDNS config \& apply}
         \begin{cheatcodebash}
         k get cm coredns -n kube-system -o yaml
+        k edit cm coredns -n kube-system
+        # After editing, restart to pick up changes:
+        k rollout restart deploy coredns -n kube-system
+        k rollout status  deploy coredns -n kube-system
         \end{cheatcodebash}
 
         \cmdhead{Test DNS}
@@ -417,11 +428,15 @@
                       replacePrefixMatch: / # /api/users -> /users
               backendRefs:
                 - {name: api-svc, port: 80}
-            - matches:
-                - headers:
-                    - {name: X-Env, value: canary}
-              backendRefs:
-                - {name: api-svc-v2, port: 80, weight: 100}
+            - matches:               # weighted traffic split
+                - path: {type: PathPrefix, value: /}
+              backendRefs:           # 80/20 canary split
+                - name: api-svc
+                  port: 80
+                  weight: 80         # 80% -> stable
+                - name: api-svc-v2
+                  port: 80
+                  weight: 20         # 20% -> canary
         \end{cheatcodebash}
 
     \end{tcbitemize}

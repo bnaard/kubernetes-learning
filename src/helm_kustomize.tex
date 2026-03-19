@@ -1,106 +1,123 @@
-% === Helm =================================================================
-\tcbsubtitle{Helm}
-\cmdhead{Key commands}
-\begin{cheatcodebashbold}
-helm repo add <name> <url>       # register chart repo
-helm repo update                 # refresh index
-helm search repo <keyword>       # find charts
-helm install <release> <chart> \
-  -n <ns> --create-namespace \
-  -f values.yaml --set key=val   # deploy
-helm upgrade <release> <chart> -f vals.yaml
-helm rollback <release> [revision]
-helm uninstall <release> -n <ns> # delete release
-helm list [-A]                   # show releases
-helm history <release>           # list revisions
-\end{cheatcodebashbold}
-\cmdhead{Additional}
-\begin{cheatcodebash}
-helm status <release>            # health + notes
-helm get values <release>        # current overrides
-helm template <release> <chart>  # dry-run (local render)
-helm show values <chart>         # inspect defaults
-# Find resources deployed by a release (Helm labels them):
-k get deploy -n <ns> -l app.kubernetes.io/instance=<release>
-\end{cheatcodebash}
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
 
-% === Kustomize ============================================================
-\tcbsubtitle{Kustomize}
-\begin{cheatcodebash}
-# kustomization.yaml:
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- deployment.yaml
-- service.yaml
-namespace: my-ns
-images:
-- name: nginx
-  newTag: 1.25
-patches:
-- patch: |-
-    - op: replace              # add|remove|move|copy|test
-      path: /spec/replicas
-      value: 3
-  target: {kind: Deployment, name: web}
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Apply:
-kubectl apply -k <dir>
-kubectl kustomize <dir>        # preview only (render YAML)
-kubectl kustomize <dir> | kubectl apply -f - # build+apply
-# kustomize build = kubectl kustomize (same engine)
-\end{cheatcodebash}
+  \tcbitem
+    % === Helm =================================================================
+    \tcbsubtitle{Helm}
+    \cmdhead{Key commands}
+    \begin{cheatcodebashbold}
+    helm repo add <name> <url>       # register chart repo
+    helm repo update                 # refresh index
+    helm search repo <keyword>       # find charts
+    helm install <release> <chart> \
+      -n <ns> --create-namespace \
+      -f values.yaml --set key=val   # deploy
+    helm upgrade <release> <chart> -f vals.yaml
+    helm rollback <release> [revision]
+    helm uninstall <release> -n <ns> # delete release
+    helm list [-A]                   # show releases
+    helm history <release>           # list revisions
+    \end{cheatcodebashbold}
+    \cmdhead{Local chart (downloaded / unpacked)}
+    \begin{cheatcodebash}
+    helm lint ./my-chart/            # validate chart structure
+    helm install <release> ./my-chart/ \
+      -n <ns> -f values.yaml         # install from local dir
+    \end{cheatcodebash}
+    \cmdhead{Additional}
+    \begin{cheatcodebash}
+    helm status <release>            # health + notes
+    helm get values <release>        # current overrides
+    helm template <release> <chart>  # dry-run (local render)
+    helm show values <chart>         # inspect defaults
+    # Show actual K8s manifests deployed by a release:
+    helm get manifest <release>      # rendered YAML in cluster
+    # Find resources deployed by a release (Helm labels them):
+    k get deploy -n <ns> -l app.kubernetes.io/instance=<release>
+    \end{cheatcodebash}
 
-\cmdhead{Helpers}
-\begin{cheatcodebash}
-# docs: "kustomize" or "kustomization"
-\end{cheatcodebash}
+    % === Kustomize ============================================================
+    \tcbsubtitle{Kustomize}
+    \begin{cheatcodebash}
+    # kustomization.yaml:
+    apiVersion: kustomize.config.k8s.io/v1beta1
+    kind: Kustomization
+    resources:
+    - deployment.yaml
+    - service.yaml
+    namespace: my-ns
+    images:
+    - name: nginx
+      newTag: 1.25
+    patches:
+    - patch: |-
+        - op: replace              # add|remove|move|copy|test
+          path: /spec/replicas
+          value: 3
+      target: {kind: Deployment, name: web}
+    \end{cheatcodebash}
+    \begin{cheatcodebash}
+    # Apply:
+    kubectl apply -k <dir>
+    kubectl kustomize <dir>        # preview only (render YAML)
+    kubectl kustomize <dir> | kubectl apply -f - # build+apply
+    # kustomize build = kubectl kustomize (same engine)
+    \end{cheatcodebash}
 
-% === CRDs & Operators =====================================================
-\tcbsubtitle{CRDs \& Operators}
-\begin{cheatcodebash}
-k get crd                       # list all CRDs
-k describe crd <name>           # schema + versions
-k get <custom-resource-kind>    # list custom objects
-\end{cheatcodebash}
-\begin{cheatcodebash}
-# Operators extend K8s with custom controllers
-# Install via Helm or OLM (Operator Lifecycle Manager):
-k get operators                 # if OLM installed
-\end{cheatcodebash}
+    \cmdhead{Helpers}
+    \begin{cheatcodebash}
+    # docs: "kustomize" or "kustomization"
+    \end{cheatcodebash}
 
-\begin{cheatcodebash}
-### Helpers:
-k explain customresourcedefinition.spec --recursive
-# docs: "custom resources"
-\end{cheatcodebash}
+  \tcbitem
+    % === CRDs & Operators =====================================================
+    \tcbsubtitle{CRDs \& Operators}
+    \begin{cheatcodebash}
+    k get crd                       # list all CRDs
+    k describe crd <name>           # schema + versions
+    k get <custom-resource-kind>    # list custom objects
+    \end{cheatcodebash}
+    \begin{cheatcodebash}
+    # Operators extend K8s with custom controllers
+    # Install via Helm or OLM (Operator Lifecycle Manager):
+    k get operators                 # if OLM installed
+    \end{cheatcodebash}
 
-% === Extension Interfaces =================================================
-\tcbsubtitle{Extension Interfaces}
+    \begin{cheatcodebash}
+    ### Helpers:
+    k explain customresourcedefinition.spec --recursive
+    # docs: "custom resources"
+    \end{cheatcodebash}
 
-        \begin{tcolorbox}
-            [
-            skin=cheatboxtablesimple,
-            before skip=0pt,
-            after skip=0pt,
-            tabularray={
-            colspec={X[0.4,l]X[1.3,l]X[1.9,l]},
-            columns={valign=t, colsep=0.4em},
-            rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
-            hline{2}={solid, wd=0.3pt, fg=gray!40},
-            vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
-            row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
-            }
-            ]
-IF & Purpose & Examples \\
-CNI & Pod networking & Calico, Flannel, Cilium \\
-CSI & Storage provisioning & EBS, NFS, Rook \\
-CRI & Container runtime & containerd, CRI-O \\
-        \end{tcolorbox}
+    % === Extension Interfaces =================================================
+    \tcbsubtitle{Extension Interfaces}
 
-\begin{cheatcodebash}
-# CNI config:  /etc/cni/net.d/
-# Check runtime: k get node -o wide (CONTAINER-RUNTIME col)
-crictl ps | logs | inspect <id>   # node-level tool
-\end{cheatcodebash}
+    \begin{tcolorbox}
+        [
+        skin=cheatboxtablesimple,
+        before skip=0pt,
+        after skip=0pt,
+        tabularray={
+        colspec={X[0.4,l]X[1.3,l]X[1.9,l]},
+        columns={valign=t, colsep=0.4em},
+        rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+        hline{2}={solid, wd=0.3pt, fg=gray!40},
+        vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+        row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+        }
+        ]
+    IF & Purpose & Examples \\
+    CNI & Pod networking & Calico, Flannel, Cilium \\
+    CSI & Storage provisioning & EBS, NFS, Rook \\
+    CRI & Container runtime & containerd, CRI-O \\
+    \end{tcolorbox}
+
+    \begin{cheatcodebash}
+    # CNI config:  /etc/cni/net.d/
+    # Check runtime: k get node -o wide (CONTAINER-RUNTIME col)
+    crictl ps | logs | inspect <id>   # node-level tool
+    \end{cheatcodebash}
+
+\end{tcbitemize}

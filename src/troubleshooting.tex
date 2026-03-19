@@ -144,6 +144,8 @@
         # If API server unreachable:
         crictl ps                   # list containers on node
         crictl logs <container-id>
+        crictl inspect <container-id> # full state: config,
+        # image, mounts, pid, exit code, OOM kill, etc.
         \end{cheatcodebash}
         \begin{cheatcodebash}
         # Kubeconfig:

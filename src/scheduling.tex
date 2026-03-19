@@ -1,5 +1,5 @@
 \begin{tcbitemize}[
-  raster columns=3, raster equal height=rows,
+  raster columns=4, raster equal height=rows,
   blanker, cheat subtitle
 ]
 
@@ -212,7 +212,6 @@
       blanker, cheat subtitle
     ]
       \tcbitem
-
         \tcbsubtitle{NodeSelector \& nodeName}
         \cmdhead{Add label to node}
         \begin{cheatcodebash}
@@ -242,8 +241,6 @@
         search: "assign pods nodes"
         \end{cheatcodebash}
 
-
-
       % === Static Pods ==========================================================
       \tcbitem
         \tcbsubtitle{Static Pods}
@@ -272,6 +269,42 @@
         search: "static pods"
         \end{cheatcodebash}
 
-  \end{tcbitemize}
+    \end{tcbitemize}
 
+  % === PriorityClass ========================================================
+  \tcbitem
+    \tcbsubtitle{PriorityClass}
+
+    \note{Higher-priority pods are scheduled first. If no nodes have capacity, the scheduler \textbf{preempts} (evicts) lower-priority pods to make room.}
+
+    \cmdhead{Create a PriorityClass}
+    \begin{cheatcodebash}
+    apiVersion: scheduling.k8s.io/v1
+    kind: PriorityClass
+    metadata: {name: high-priority}
+    value: 1000000       # higher = more important
+    globalDefault: false  # true => default for all pods
+    preemptionPolicy: PreemptLowerPriority  # or Never
+    description: "Critical workloads"
+    \end{cheatcodebash}
+
+    \cmdhead{Use in a Pod / Deployment}
+    \begin{cheatcodebash}
+    spec:                  # <pod>.spec
+      priorityClassName: high-priority
+    \end{cheatcodebash}
+
+    \cmdhead{Helpers}
+    \begin{cheatcodebash}
+    k get priorityclasses   # pc is the short name
+    k explain pc.value
+    k explain pod.spec.priorityClassName
+    \end{cheatcodebash}
+
+    \cmdhead{\url{https://kubernetes.io/docs/}}
+    \begin{cheatcodebash}
+    search: "pod priority preemption"
+    \end{cheatcodebash}
+
+    
 \end{tcbitemize}

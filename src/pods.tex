@@ -21,6 +21,11 @@ k run <name> --image=<img> --port=80 --env="K=v" -l "a=b"
 k run <name> --image=<img> $do | tee pod.yaml
 \end{cheatcodebashbold}
 
+\cmdhead{Replace pod (delete + recreate from YAML)}
+\begin{cheatcodebashbold}
+k replace --force -f pod.yaml   # delete then apply
+\end{cheatcodebashbold}
+
 \cmdhead{Force delete pod}
 \begin{cheatcodebashbold}
 k delete pod <name> $now

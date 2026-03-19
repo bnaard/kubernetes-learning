@@ -1,5 +1,5 @@
 \begin{tcbitemize}[
-  raster columns=2, raster equal height=rows,
+  raster columns=3, raster equal height=rows,
   blanker, cheat subtitle
 ]
   \tcbitem
@@ -67,6 +67,14 @@
             \item Fix and verify: \texttt{k get nodes}
           \end{enumerate}}
 
+    \end{tcbitemize}
+
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+
       \tcbitem
           \tcbsubtitle{etcd Backup \& Restore}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
@@ -104,14 +112,6 @@
           # docs: search "backing up etcd cluster"
           \end{cheatcodebash}
 
-    \end{tcbitemize}
-
-  \tcbitem
-    \begin{tcbitemize}[
-      raster columns=1, raster equal height=rows,
-      blanker, cheat subtitle
-    ]
-
       \tcbitem
           \tcbsubtitle{Create ServiceAccount + Bind Role}
           {\fontsize{6.5}{7.5}\selectfont\sffamily
@@ -121,6 +121,20 @@
             \item \texttt{k create clusterrolebinding crb --clusterrole=cr --serviceaccount=<ns>:deploy-admin}
             \item \texttt{k auth can-i get pods --as system:serviceaccount:<ns>:deploy-admin  \# Verify}
           \end{enumerate}}
+
+      \tcbitem
+          \tcbsubtitle{Curl the K8s API from Inside a Pod}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          Every pod gets a ServiceAccount token auto-mounted at \texttt{/var/run/secrets/kubernetes.io/serviceaccount/}.}
+          \begin{cheatcodebash}
+          # Inside a pod (e.g. k exec -it <pod> -- sh):
+          TOKEN=$(cat /var/run/secrets/kubernetes.io/\
+          serviceaccount/token)
+          curl -k https://kubernetes.default.svc/api/v1/\
+          namespaces/default/pods \
+            -H "Authorization: Bearer $TOKEN"
+          # -k = skip TLS verify (self-signed cluster CA)
+          \end{cheatcodebash}
 
       \tcbitem
           \tcbsubtitle{Create Deployment, Upgrade \& Annotate}
@@ -157,6 +171,64 @@
             mountPath: /etc/db-creds
             readOnly: true
           \end{cheatcodeyaml}
+
+    \end{tcbitemize}
+
+  \tcbitem
+    \begin{tcbitemize}[
+      raster columns=1, raster equal height=rows,
+      blanker, cheat subtitle
+    ]
+
+      \tcbitem
+          \tcbsubtitle{Change Service CIDR Range}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+            \item Edit kube-apiserver manifest:
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          vi /etc/kubernetes/manifests/kube-apiserver.yaml
+          # Change: --service-cluster-ip-range=10.96.0.0/12
+          # To:     --service-cluster-ip-range=10.100.0.0/16
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt, start=2]
+            \item Edit kube-controller-manager manifest:
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          vi /etc/kubernetes/manifests/kube-controller-manager.yaml
+          # Change: --service-cluster-ip-range=10.100.0.0/16
+          # (must match kube-apiserver)
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt, start=3]
+            \item Update ServiceCIDR objects (K8s 1.29+):
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          # Create new ServiceCIDR for the new range:
+          k apply -f - <<'EOF'
+          apiVersion: networking.k8s.io/v1beta1
+          kind: ServiceCIDR
+          metadata: {name: new-cidr}
+          spec:
+            cidrs: ["10.100.0.0/16"]
+          EOF
+          # Delete old ServiceCIDR resource:
+          k delete servicecidr <old-cidr-name>
+          \end{cheatcodebash}
+          \vspace{-0.5ex}
+          {\fontsize{6.5}{7.5}\selectfont\sffamily
+          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt, start=4]
+            \item Optional: redeploy services to pick up new range:
+          \end{enumerate}}
+          \begin{cheatcodebash}
+          # Delete and recreate services (new ClusterIPs):
+          k get svc -A -o yaml > all-svc.yaml
+          k delete svc <name> -n <ns>
+          k apply -f all-svc.yaml
+          \end{cheatcodebash}
 
       \tcbitem
           \tcbsubtitle{Install Container Runtime}

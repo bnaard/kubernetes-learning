@@ -129,7 +129,7 @@
 \pagestyle{fancy}
 
 % --- Version (must match git release tag) ------------------------------------
-\newcommand{\cheatsheetversion}{v0.3.0}
+\newcommand{\cheatsheetversion}{v0.4.0}
 
 \definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
 \newcommand{\primarycolor}{k8sblue}
@@ -393,20 +393,8 @@ size=small,skin=bicolor,
 
     % === Scheduling ============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title=Scheduling]
-        {name=scheduling, column=1, between=top and bottom, span=9}
+        {name=scheduling, column=1, between=top and bottom, span=12}
         \input{scheduling.tex}
-    \end{posterboxenv}
-
-    % === Jobs ==================================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs}]
-        {name=jobs, column=10, below=top, span=3}
-        \input{jobs.tex}
-    \end{posterboxenv}
-
-    % === Typical Limits ========================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical Limits}]
-        {name=limits, column=10, between=jobs and bottom, span=3}
-        \input{limits.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
@@ -450,10 +438,16 @@ size=small,skin=bicolor,
         \input{security.tex}
     \end{posterboxenv}
 
-    % === Helm, Kustomize & Extensions ==========================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
-        {name=helm, column=10, between=top and bottom, span=3}
-        \input{helm_kustomize.tex}
+    % === Jobs ==================================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Jobs}]
+        {name=jobs, column=10, below=top, span=3}
+        \input{jobs.tex}
+    \end{posterboxenv}
+
+    % === Typical Limits ========================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical Limits}]
+        {name=limits, column=10, between=jobs and bottom, span=3}
+        \input{limits.tex}
     \end{posterboxenv}
 
 
@@ -546,6 +540,24 @@ size=small,skin=bicolor,
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={RBAC}]
         {name=rbac, column=7, between=top and bottom, span=6}
         \input{rbac.tex}
+    \end{posterboxenv}
+
+\end{tcbposter}
+
+
+\pagebreak
+
+% === Page 7a: Helm, Kustomize & Extensions ==================================
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === Helm, Kustomize & Extensions ==========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Helm, Kustomize \& Extensions}]
+        {name=helm, column=1, between=top and bottom, span=6}
+        \input{helm_kustomize.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
