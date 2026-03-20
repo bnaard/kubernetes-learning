@@ -129,7 +129,7 @@
 \pagestyle{fancy}
 
 % --- Version (must match git release tag) ------------------------------------
-\newcommand{\cheatsheetversion}{v0.7.0}
+\newcommand{\cheatsheetversion}{v0.8.0}
 
 \definecolor{k8sblue}{RGB}{50,108,229}   % Kubernetes CI primary blue #326CE5
 \newcommand{\primarycolor}{k8sblue}
@@ -562,14 +562,8 @@ size=small,skin=bicolor,
 
     % === Kustomize =============================================================
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Kustomize}]
-        {name=kustomize, column=4, between=top and bottom, span=6}
+        {name=kustomize, column=4, between=top and bottom, span=9}
         \input{kustomize.tex}
-    \end{posterboxenv}
-
-    % === Extensions ============================================================
-    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Extensions}]
-        {name=extensions, column=10, between=top and bottom, span=3}
-        \input{extensions.tex}
     \end{posterboxenv}
 
 \end{tcbposter}
@@ -612,6 +606,54 @@ size=small,skin=bicolor,
     \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Typical Tasks}]
         {name=typicaltasks, column=1, between=top and bottom, span=12}
         \input{typical_tasks.tex}
+    \end{posterboxenv}
+
+\end{tcbposter}
+
+
+\pagebreak
+
+% === Page 10: CKAD — Container Images & Deployment Strategies ================
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === CKAD: Container Images ================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Container Images}]
+        {name=ckadimages, column=1, between=top and bottom, span=4}
+        \input{ckad_images.tex}
+    \end{posterboxenv}
+
+    % === CKAD: Deployment Strategies ===========================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={Deployment Strategies}]
+        {name=ckadstrategies, column=5, between=top and bottom, span=8}
+        \input{ckad_strategies.tex}
+    \end{posterboxenv}
+
+\end{tcbposter}
+
+
+\pagebreak
+
+% === Page 11: CKAD — API Deprecations & CRDs/Operators =======================
+\begin{tcbposter}[
+        poster = {spacing=0.6em, columns=12, height=\textheight},
+        boxes = {},
+        coverage={left=0pt, right=0pt, top=0pt, bottom=0pt},
+    ]
+
+    % === API Deprecations ======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={API Deprecations}]
+        {name=ckaddeprecations, column=1, between=top and bottom, span=4}
+        \input{ckad_deprecations.tex}
+    \end{posterboxenv}
+
+    % === CRDs / Operators ======================================================
+    \begin{posterboxenv}[skin=cheatboxskin, adjusted title={CRDs / Operators}]
+        {name=ckadcrds, column=5, between=top and bottom, span=8}
+        \input{ckad_crds.tex}
     \end{posterboxenv}
 
 \end{tcbposter}

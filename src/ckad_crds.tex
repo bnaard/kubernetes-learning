@@ -1,0 +1,145 @@
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
+
+\tcbitem
+
+  \tcbsubtitle{What is a CRD}
+  {\fontsize{6.5}{7.5}\selectfont\sffamily
+  A \textbf{Custom Resource Definition} extends the Kubernetes API with
+  user-defined resource types. Once registered, custom resources (CRs) are
+  managed like built-in resources (\texttt{get}, \texttt{describe},
+  \texttt{delete}, etc.).\par}
+
+  \tcbsubtitle{CRD Spec Structure}
+  \begin{cheatcodeyaml}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backups.stable.example.com
+spec:
+  group: stable.example.com
+  scope: Namespaced              # or Cluster
+  names:
+    kind: Backup
+    plural: backups
+    singular: backup
+    shortNames: [bk]
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              schedule:
+                type: string
+              retainDays:
+                type: integer
+  \end{cheatcodeyaml}
+
+  \tcbsubtitle{Creating \& Using Custom Resources}
+  \begin{cheatcodebash}
+k apply -f crd.yaml            # register the CRD
+k get backups                  # list custom resources
+k describe backup mybackup     # inspect a CR instance
+  \end{cheatcodebash}
+
+  \cmdhead{Minimal CR Instance}
+  \begin{cheatcodeyaml}
+apiVersion: stable.example.com/v1
+kind: Backup
+metadata:
+  name: mybackup
+spec:
+  schedule: "0 2 * * *"
+  retainDays: 7
+  \end{cheatcodeyaml}
+
+
+\tcbitem
+
+  \tcbsubtitle{Operator Pattern}
+  {\fontsize{6.5}{7.5}\selectfont\sffamily
+  \textbf{CRD + custom controller = Operator.}
+  The controller watches CR events (create/update/delete) and reconciles
+  actual state to match the desired spec.\par}
+
+  \cmdhead{Common Operator Frameworks}
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[0.6,l]X[1.4,l]},
+      columns={valign=t, colsep=0.4em},
+      rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+      }
+      ]
+    Framework & Notes \\
+    Operator SDK & Go, Ansible, or Helm-based operators \\
+    kubebuilder & Go-based, upstream scaffolding tool \\
+    OLM & Operator Lifecycle Manager --- install/upgrade operators \\
+  \end{tcolorbox}
+
+  \tcbsubtitle{Discovering \& Installing Operators}
+  \begin{cheatcodebash}
+k get crd                       # list all CRDs
+k explain <crd-kind>            # schema of a custom resource
+k describe crd <name>           # versions, scope, schema
+  \end{cheatcodebash}
+  \begin{cheatcodebash}
+# Install via Helm chart:
+helm install my-operator <chart-repo>/<chart-name>
+# Install via OLM (if available):
+k get operators                 # list installed operators
+k get csv -A                    # ClusterServiceVersions
+  \end{cheatcodebash}
+
+  \tcbsubtitle{Extension Interfaces}
+
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[0.4,l]X[1.3,l]X[1.9,l]},
+      columns={valign=t, colsep=0.4em},
+      rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2-3}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+      }
+      ]
+  IF & Purpose & Examples \\
+  CNI & Pod networking & Calico, Flannel, Cilium \\
+  CSI & Storage provisioning & EBS, NFS, Rook \\
+  CRI & Container runtime & containerd, CRI-O \\
+  \end{tcolorbox}
+
+  \begin{cheatcodebash}
+# CNI config:  /etc/cni/net.d/
+# Check runtime: k get node -o wide (CONTAINER-RUNTIME col)
+crictl ps | logs | inspect <id>   # node-level tool
+  \end{cheatcodebash}
+
+  \cmdhead{Helpers}
+  \begin{cheatcodebash}
+k explain customresourcedefinition.spec --recursive
+  \end{cheatcodebash}
+  \cmdhead{\url{https://kubernetes.io/docs/}}
+  \begin{cheatcodebash}
+search: "custom resources" "extend kubernetes api"
+  \end{cheatcodebash}
+
+\end{tcbitemize}

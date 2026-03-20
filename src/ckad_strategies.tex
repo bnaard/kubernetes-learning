@@ -1,0 +1,115 @@
+\begin{tcbitemize}[
+  raster columns=2, raster equal height=rows,
+  blanker, cheat subtitle
+]
+
+\tcbitem
+
+  \tcbsubtitle{Rolling Update (default)}
+
+  {\sffamily\small Key params in \texttt{deployment.spec.strategy.rollingUpdate}:}
+  \begin{cheatcodebash}
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1          # extra pods above replicas during update
+    maxUnavailable: 0    # min available during update
+  \end{cheatcodebash}
+  \note{See Deployments page for full rollout commands (\texttt{k rollout status/history/undo}).}
+
+  \tcbsubtitle{Blue/Green Deployment}
+
+  {\sffamily\small Two full Deployments; Service selector switches instantly.}
+  \begin{cheatcodebash}
+# Blue deployment (current production)
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: app-blue}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: myapp, version: blue}}
+  template:
+    metadata: {labels: {app: myapp, version: blue}}
+    spec:
+      containers:
+      - {name: app, image: myapp:v1}
+---
+# Green deployment (new version)
+# same but: name: app-green, version: green, image: myapp:v2
+  \end{cheatcodebash}
+
+  \cmdhead{Service pointing to blue}
+  \begin{cheatcodebash}
+apiVersion: v1
+kind: Service
+metadata: {name: myapp-svc}
+spec:
+  selector: {app: myapp, version: blue}  # current
+  ports:
+  - {port: 80, targetPort: 8080}
+  \end{cheatcodebash}
+
+  \cmdhead{Switch traffic to green (instant cutover)}
+  \begin{cheatcodebashbold}
+k patch svc myapp-svc -p '{"spec":{"selector":{"version":"green"}}}'
+# Rollback: patch version back to "blue"
+  \end{cheatcodebashbold}
+
+
+\tcbitem
+
+  \tcbsubtitle{Canary (replica-ratio)}
+
+  {\sffamily\small Two Deployments share a common label; ratio controlled by replica count.}
+  \begin{cheatcodebash}
+# Stable: 9 replicas with shared label app: myapp
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: app-stable}
+spec:
+  replicas: 9
+  selector: {matchLabels: {app: myapp, version: v1}}
+  template:
+    metadata: {labels: {app: myapp, version: v1}}
+    spec:
+      containers:
+      - {name: app, image: myapp:v1}
+---
+# Canary: 1 replica (10% traffic)
+# same but: name: app-canary, replicas: 1, version: v2,
+#           image: myapp:v2
+  \end{cheatcodebash}
+
+  \cmdhead{Service selects both via common label}
+  \begin{cheatcodebash}
+spec:
+  selector: {app: myapp}       # matches BOTH v1 and v2
+  ports:
+  - {port: 80, targetPort: 8080}
+# Traffic ratio = replica ratio: 9:1 = 90/10 split
+  \end{cheatcodebash}
+
+  \cmdhead{Scale canary up / stable down to shift traffic}
+  \begin{cheatcodebashbold}
+k scale deploy app-canary --replicas=5    # 50%
+k scale deploy app-stable --replicas=5    # 50%
+  \end{cheatcodebashbold}
+
+  \tcbsubtitle{Canary via Gateway API HTTPRoute}
+
+  {\sffamily\small Weighted \texttt{backendRefs} give precise traffic split without replica math.}
+  \begin{cheatcodebash}
+# HTTPRoute rule with weighted split
+rules:
+  - matches:
+      - path: {type: PathPrefix, value: /}
+    backendRefs:
+      - name: app-stable-svc
+        port: 80
+        weight: 90           # 90% -> stable
+      - name: app-canary-svc
+        port: 80
+        weight: 10           # 10% -> canary
+  \end{cheatcodebash}
+
+\end{tcbitemize}

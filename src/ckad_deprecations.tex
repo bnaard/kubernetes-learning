@@ -1,0 +1,92 @@
+  \tcbsubtitle{API Discovery}
+  \begin{cheatcodebash}
+k api-versions                  # list all API versions
+k api-resources                 # resources + API group + version
+k api-resources --namespaced    # only namespaced resources
+k api-resources --api-group=apps  # filter by group
+  \end{cheatcodebash}
+
+  \tcbsubtitle{Deprecation Policy}
+
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[0.6,l]X[1.4,l]},
+      columns={valign=t, colsep=0.4em},
+      rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+      }
+      ]
+    Stability & Removal Rules \\
+    GA (v1) & Never removed \\
+    Beta (v1beta1) & 3 releases or 9 months after deprecation (whichever longer) \\
+    Alpha (v1alpha1) & May be removed in any release \\
+  \end{tcolorbox}
+
+  {\fontsize{6.5}{7.5}\selectfont\sffamily
+  Version progression: \texttt{v1alpha1} $\rightarrow$ \texttt{v1beta1} $\rightarrow$ \texttt{v1}\par}
+
+  \tcbsubtitle{kubectl convert Plugin}
+  \begin{cheatcodebash}
+# Install the convert plugin:
+curl -LO "https://dl.k8s.io/release/$(curl -L -s \
+  https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/\
+  kubectl-convert"
+chmod +x kubectl-convert && mv kubectl-convert /usr/local/bin/
+  \end{cheatcodebash}
+  \begin{cheatcodebashbold}
+### Convert a manifest to a newer API version:
+k convert -f old-deploy.yaml --output-version apps/v1
+  \end{cheatcodebashbold}
+
+  \tcbsubtitle{Detecting Deprecated APIs}
+  \begin{cheatcodebash}
+# Check metrics for deprecated API usage:
+k get --raw /metrics | grep apiserver_requested_deprecated_apis
+  \end{cheatcodebash}
+
+  \cmdhead{Common Deprecated Resources}
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[1.2,l]X[1.2,l]},
+      columns={valign=t, colsep=0.4em},
+      rows={rowsep=0pt, font=\sffamily\fontsize{6}{7}\selectfont},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\fontsize{6}{7}\selectfont\bfseries},
+      }
+      ]
+    Deprecated & Replacement \\
+    extensions/v1beta1 Ingress & networking.k8s.io/v1 \\
+    rbac/v1beta1 Role & rbac.authorization.k8s.io/v1 \\
+    apps/v1beta1 Deployment & apps/v1 \\
+    batch/v1beta1 CronJob & batch/v1 \\
+    policy/v1beta1 PDB & policy/v1 \\
+  \end{tcolorbox}
+
+  \tcbsubtitle{Migration Workflow}
+  {\fontsize{6.5}{7.5}\selectfont\sffamily
+  \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+    \item Identify deprecated APIs: check metrics or use \texttt{kubectl convert}
+    \item Update manifests to new API version
+    \item \texttt{k apply -f updated-manifest.yaml}
+    \item Verify: \texttt{k get <resource>} --- confirm running with new API
+  \end{enumerate}}
+
+  \cmdhead{Helpers}
+  \begin{cheatcodebash}
+k explain <resource>.spec --recursive
+  \end{cheatcodebash}
+  \cmdhead{\url{https://kubernetes.io/docs/}}
+  \begin{cheatcodebash}
+search: "deprecated api migration guide"
+  \end{cheatcodebash}

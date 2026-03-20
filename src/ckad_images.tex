@@ -1,0 +1,89 @@
+  \tcbsubtitle{Dockerfile Key Instructions}
+
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[0.45,l]X[2,l]},
+      columns={valign=t, colsep=0.35em},
+      rows={rowsep=0pt, font=\sffamily\footnotesize},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\bfseries\footnotesize},
+      }
+      ]
+      \textbf{Instruction} & \textbf{Description}           \\
+      FROM        & Base image; starts a build stage        \\
+      RUN         & Execute command in new layer             \\
+      COPY        & Copy files from build context            \\
+      ADD         & Like COPY + URL fetch + tar auto-extract \\
+      CMD         & Default command (overridable at runtime) \\
+      ENTRYPOINT  & Fixed executable (CMD becomes args)      \\
+      EXPOSE      & Document listening port (no publish)     \\
+      ENV         & Set environment variable (persists in image) \\
+      ARG         & Build-time variable (\texttt{--build-arg})   \\
+      WORKDIR     & Set working directory for subsequent instructions \\
+      USER        & Set UID/user for RUN, CMD, ENTRYPOINT    \\
+      LABEL       & Key-value metadata on image              \\
+      VOLUME      & Declare anonymous volume mount point     \\
+      HEALTHCHECK & Container health probe (Docker daemon)   \\
+  \end{tcolorbox}
+
+  \tcbsubtitle{CMD vs ENTRYPOINT \& Kubernetes Mapping}
+
+  \begin{tcolorbox}
+      [
+      skin=cheatboxtablesimple,
+      before skip=0pt,
+      after skip=0pt,
+      tabularray={
+      colspec={X[1.1,l]X[1,l]X[1.2,l]},
+      columns={valign=t, colsep=0.35em},
+      rows={rowsep=0pt, font=\sffamily\footnotesize},
+      hline{2}={solid, wd=0.3pt, fg=gray!40},
+      vline{2,3}={dash=solid, wd=0.3pt, fg=gray!30},
+      row{1}={font=\sffamily\bfseries\footnotesize},
+      }
+      ]
+      \textbf{Dockerfile}  & \textbf{K8s field}       & \textbf{Behavior}          \\
+      ENTRYPOINT            & \texttt{command:}        & Executable (not overridden by CMD) \\
+      CMD                   & \texttt{args:}           & Default args to entrypoint  \\
+      Both set              & ---                      & ENTRYPOINT + CMD concatenated \\
+      K8s \texttt{command:} set & Replaces ENTRYPOINT  & Dockerfile ENTRYPOINT ignored \\
+      K8s \texttt{args:} set    & Replaces CMD         & Dockerfile CMD ignored      \\
+  \end{tcolorbox}
+
+  \tcbsubtitle{Multi-Stage Build}
+  \begin{cheatcodebash}
+# Dockerfile — multi-stage (minimize final image)
+FROM golang:1.22 AS builder
+WORKDIR /app
+COPY . .
+RUN go build -o /myapp .
+
+FROM alpine:3.19              # small final image
+COPY --from=builder /myapp /myapp
+USER 1000                     # non-root
+ENTRYPOINT ["/myapp"]
+  \end{cheatcodebash}
+
+  \tcbsubtitle{Build, Tag \& Push}
+  \begin{cheatcodebashbold}
+docker build -t myapp:v1 .           # build image
+docker build -t myapp:v1 -f alt.Dockerfile .  # custom file
+podman build -t myapp:v1 .           # rootless alt.
+docker tag myapp:v1 registry.io/myapp:v1
+docker push registry.io/myapp:v1
+  \end{cheatcodebashbold}
+
+  \tcbsubtitle{Best Practices}
+  \begin{itemize}[nosep, leftmargin=1em, itemsep=0.5pt, topsep=1pt]
+    \item[\tiny\textbullet] Minimize layers: chain \texttt{RUN} commands with \texttt{\&\&}
+    \item[\tiny\textbullet] Use \texttt{.dockerignore} to exclude build context bloat
+    \item[\tiny\textbullet] Run as non-root: \texttt{USER 1000} or named user
+    \item[\tiny\textbullet] Use small base images: \texttt{alpine}, \texttt{distroless}, \texttt{scratch}
+    \item[\tiny\textbullet] Pin image tags (avoid \texttt{:latest} in production)
+    \item[\tiny\textbullet] Multi-stage builds to separate build deps from runtime
+  \end{itemize}
