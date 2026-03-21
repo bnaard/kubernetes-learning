@@ -36,6 +36,8 @@
         ### Files / events / lifecycle
         k cp <pod>:/path /local
         k get events --sort-by='.lastTimestamp' -A
+        k events --for pod/<name>      # events for resource
+        k events -A --types=Warning    # cluster-wide warnings
         k delete pod <name> $now       # force delete
         \end{cheatcodebash}
 
@@ -108,50 +110,46 @@
 
       \tcbitem
         % === Node Debugging ========================================================
-        \tcbsubtitle{Node Debugging}
+        \tcbsubtitle{Fix a Broken Node}
+        {\fontsize{6.5}{7.5}\selectfont\sffamily
+        \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+          \item \texttt{k get nodes -o wide} — identify \texttt{NotReady} node
+          \item \texttt{k describe node <name>} — check Conditions, Events
+          \item \texttt{ssh <node>}
+          \item \texttt{systemctl status kubelet} (and \texttt{containerd})
+          \item \texttt{journalctl -u kubelet | grep -i error} — find error
+          \item \texttt{systemctl cat kubelet} — see config path, flags
+          \item Fix config: wrong \texttt{--config} path, bad cert path, wrong \texttt{staticPodPath}, wrong kubelet binary in \texttt{10-kubeadm.conf}
+          \item \texttt{systemctl daemon-reload} — after editing unit files!
+          \item \texttt{systemctl restart kubelet}
+          \item \texttt{systemctl enable kubelet} — ensure it survives reboot
+          \item Verify: \texttt{k get nodes} — node becomes \texttt{Ready}
+        \end{enumerate}}
         \begin{cheatcodebash}
-        k get nodes -o wide
-        k describe node <name>      # Conditions, Events
-        k cordon <node>             # mark unschedulable
-        k drain <node> --ignore-daemonsets --delete-emptydir-data
-        k uncordon <node>
-        \end{cheatcodebash}
-        \begin{cheatcodebash}
-        # On the node (SSH):
-        systemctl status kubelet
-        systemctl restart kubelet
-        journalctl -u kubelet -f
-        journalctl -u kubelet | grep -i error
-        systemctl status containerd
-        systemctl cat kubelet       # see config path
-        # Usually: /var/lib/kubelet/config.yaml
+k cordon <node>             # mark unschedulable
+k drain <node> --ignore-daemonsets --delete-emptydir-data
+k uncordon <node>
         \end{cheatcodebash}
 
       \tcbitem
         % === Control Plane Debug ==================================================
-        \tcbsubtitle{Control Plane Debug}
+        \tcbsubtitle{Fix a Broken Control Plane}
+        {\fontsize{6.5}{7.5}\selectfont\sffamily
+        \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
+          \item \texttt{k get pods -n kube-system} — or \texttt{crictl ps} if API is down
+          \item \texttt{k logs kube-apiserver-<node> -n kube-system} — or \texttt{crictl logs <id>}
+          \item Check static pod manifests in \texttt{/etc/kubernetes/manifests/}
+          \item Common fixes: wrong image tag, bad volume mount path, typo in \texttt{--etcd-servers}, wrong cert path
+          \item Save manifest — kubelet auto-restarts the pod
+          \item Verify: \texttt{k get pods -n kube-system}
+        \end{enumerate}}
         \begin{cheatcodebash}
-        # Static pods in kube-system:
-        k get pods -n kube-system
-        k logs kube-apiserver-<node> -n kube-system
-        k logs etcd-<node> -n kube-system
-        \end{cheatcodebash}
-        \begin{cheatcodebash}
-        # Edit control plane component:
-        vi /etc/kubernetes/manifests/kube-apiserver.yaml
-        \end{cheatcodebash}
-        \begin{cheatcodebash}
-        # If API server unreachable:
-        crictl ps                   # list containers on node
-        crictl logs <container-id>
-        crictl inspect <container-id> # full state: config,
-        # image, mounts, pid, exit code, OOM kill, etc.
-        crictl rm --force <container-id>  # force-delete container
-        # For docker runtime: same args, replace crictl -> docker
-        \end{cheatcodebash}
-        \begin{cheatcodebash}
-        # Kubeconfig:
-        export KUBECONFIG=/etc/kubernetes/admin.conf
+# If API server unreachable:
+crictl ps                   # list containers on node
+crictl logs <container-id>
+crictl inspect <container-id> # full state: config,
+# image, mounts, pid, exit code, OOM kill, etc.
+export KUBECONFIG=/etc/kubernetes/admin.conf
         \end{cheatcodebash}
 
       % === Persistent Volume Claim Debugging
@@ -185,33 +183,6 @@
             \item Check \texttt{targetPort} matches container port
             \item \texttt{k run tmp --rm -it --image=busybox -- wget -qO- <svc>:<port>}
             \item Check NetworkPolicy: \texttt{k get netpol -A}
-          \end{enumerate}}
-
-      \tcbitem
-          \tcbsubtitle{Fix a Broken Node}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item \texttt{k get nodes} — identify \texttt{NotReady} node
-            \item \texttt{ssh <node>}
-            \item \texttt{systemctl status kubelet} — check if running
-            \item \texttt{journalctl -u kubelet | tail -50} — find error
-            \item Fix config: wrong \texttt{--config} path, bad cert path, wrong \texttt{staticPodPath}, wrong kubelet binary in \texttt{/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf}
-            \item After editing a unit file: \texttt{systemctl daemon-reload}
-            \item \texttt{systemctl restart kubelet}
-            \item \texttt{systemctl enable kubelet} — ensure it survives reboot
-            \item Verify: \texttt{k get nodes} — node becomes \texttt{Ready}
-          \end{enumerate}}
-
-      \tcbitem
-          \tcbsubtitle{Fix a Broken Control Plane}
-          {\fontsize{6.5}{7.5}\selectfont\sffamily
-          \begin{enumerate}[leftmargin=1.2em, itemsep=0pt, parsep=0pt, topsep=1pt]
-            \item \texttt{k get pods -n kube-system} — or \texttt{crictl ps} if API is down
-            \item Check static pod manifests in \texttt{/etc/kubernetes/manifests/}
-            \item \texttt{crictl logs <id>} — find the error
-            \item Common fixes: wrong image tag, bad volume mount path, typo in \texttt{--etcd-servers}, wrong cert path
-            \item Save manifest — kubelet auto-restarts the pod
-            \item Verify: \texttt{k get pods -n kube-system}
           \end{enumerate}}
 
       \tcbitem

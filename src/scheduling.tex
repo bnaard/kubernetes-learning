@@ -249,7 +249,7 @@
       \tcbitem
         \tcbsubtitle{PriorityClass}
 
-        \note{Higher-priority pods are scheduled first. If no nodes have capacity, the scheduler \textbf{preempts} (evicts) lower-priority pods to make room.}
+        \note{Higher-priority pods are scheduled first. If no nodes have capacity, the scheduler \textbf{preempts} (evicts) lower-priority pods to make room. User values: \textbf{0\,--\,1\,000\,000\,000}. Above 1\,B is reserved for \texttt{system-cluster-critical} (2\,B) and \texttt{system-node-critical} (2\,000\,001\,000).}
 
         \cmdhead{Create a PriorityClass}
         \begin{cheatcodebash}
@@ -336,6 +336,7 @@
 
       \tcbitem
         \cmdhead{QoS Classes (eviction order)}
+        \vspace{0.5ex}
         \begin{tcolorbox}
             [
             skin=cheatboxtablesimple,
@@ -351,12 +352,14 @@
             }
             ]
           QoS Class & Condition & Evicted \\
-          Guaranteed & All containers: requests = limits (CPU + mem) & Last \\
-          Burstable & At least one request or limit set & Middle \\
           BestEffort & No requests or limits at all & First \\
+          Burstable & At least one request or limit set & Middle \\
+          Guaranteed & All containers: requests = limits (CPU + mem) & Last \\
         \end{tcolorbox}
         \begin{cheatcodebash}
-        k get pod <name> -o jsonpath='{.status.qosClass}'
+        k get pods -o custom-columns=\
+        "NAME:.metadata.name,CLASS:.status.qosClass" \
+        --sort-by=".status.qosClass"  # alphabetical = eviction order
         # docs: search "quality of service"
         \end{cheatcodebash}
 

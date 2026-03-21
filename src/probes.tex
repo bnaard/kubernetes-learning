@@ -9,13 +9,11 @@
     \tcbsubtitle{Metrics Server}
 
     \begin{cheatcodebash}
-    # Install:
-    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/\
-      releases/latest/download/components.yaml
-    \end{cheatcodebash}
-    \begin{cheatcodebash}
-    k top nodes
-    k top pods [-n <ns>] [--containers]
+k top nodes                       # CPU/mem per node
+k top pods                        # CPU/mem per pod
+k top pods --containers           # per-container breakdown
+k top pods --sort-by=cpu          # find heaviest consumer
+k top pods --sort-by=memory -A    # across all namespaces
     \end{cheatcodebash}
 
     \cmdhead{Helpers}

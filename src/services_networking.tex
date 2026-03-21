@@ -19,7 +19,7 @@
               before skip=0pt,
               after skip=0pt,
               tabularray={
-              colspec={X[1,l]X[2,l]},
+              colspec={X[0.5,l]X[2,l]},
               columns={valign=t, colsep=0.35em},
               rows={rowsep=0pt, font=\sffamily\footnotesize},   % \fontsize{5}{6}\selectfont
               hline{2}={solid, wd=0.3pt, fg=gray!40},
@@ -29,7 +29,7 @@
               ]
               \textbf{Type}    & \textbf{Description}         \\
               ClusterIP        & Internal only (default). Gets a virtual cluster IP reachable only from within the cluster.      \\
-              Headless         & \texttt{clusterIP: None} — no virtual IP. DNS returns Pod IPs directly, no proxy. Use: StatefulSets, service discovery without load balancing \\
+              Headless         & \texttt{clusterIP: None} — no virtual IP. DNS returns Pod IPs directly, bypasses kube-proxy. Use: StatefulSets, service discovery without load balancing \\
               NodePort         & Everything ClusterIP does \textbf{+} opens a static port (30000--32767) on every node's real IP for external access.      \\
               LoadBalancer     & Everything NodePort does \textbf{+} provisions a cloud LB with an external IP.      \\
               ExternalName     & DNS CNAME alias to external host (no ClusterIP, no proxying).      \\
@@ -37,36 +37,36 @@
           \end{tcolorbox}
           \vspace{0.5ex}
 
-          \cmdhead{Imperative}
-          \begin{cheatcodebash}
-          k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
-          k expose deploy <name> --port=80 --target-port=8080 --type=NodePort
-      k create svc nodeport <name> --tcp=80:8080 --node-port=30080
-          k expose deploy <name> --port=80 --type=LoadBalancer
-          # Headless: ClusterIP service with clusterIP=None
-          k create svc clusterip <name> --clusterip="None" --tcp=80:8080
-          k get svc
-          k get endpoints <svc>    # empty = label mismatch!
-          \end{cheatcodebash}
+        \cmdhead{Imperative}
+        \begin{cheatcodebash}
+k expose deploy <name> --port=80 --target-port=8080 --type=ClusterIP
+k expose deploy <name> --port=80 --target-port=8080 --type=NodePort
+k create svc nodeport <name> --tcp=80:8080 --node-port=30080
+k expose deploy <name> --port=80 --type=LoadBalancer
+# Headless: ClusterIP service with clusterIP=None
+k create svc clusterip <name> --clusterip="None" --tcp=80:8080
+k get svc
+k get endpoints <svc>    # empty = label mismatch!
+        \end{cheatcodebash}
 
       % \tcbitem
-          % \tcbsubtitle{Service Types Helpers}
-          \cmdhead{Inspect iptables rules for a Service}
-          \begin{cheatcodebash}
-          # On the node (ssh <node>):
-          iptables-save | grep <svc-name>
-          # Shows DNAT/KUBE-SVC/KUBE-SEP chains kube-proxy wrote
-          \end{cheatcodebash}
+        % \tcbsubtitle{Service Types Helpers}
+        \cmdhead{Inspect iptables rules for a Service}
+        \begin{cheatcodebash}
+# On the node (ssh <node>):
+iptables-save | grep <svc-name>
+# Shows DNAT/KUBE-SVC/KUBE-SEP chains kube-proxy wrote
+        \end{cheatcodebash}
 
-          \cmdhead{Helpers}
-          \begin{cheatcodebash}
-          k explain service.spec --recursive
-          \end{cheatcodebash}
+        \cmdhead{Helpers}
+        \begin{cheatcodebash}
+k explain service.spec --recursive
+        \end{cheatcodebash}
 
-          \cmdhead{\url{https://kubernetes.io/docs/}}
-          \begin{cheatcodebash}
-          search: "service"
-          \end{cheatcodebash}
+        \cmdhead{\url{https://kubernetes.io/docs/}}
+        \begin{cheatcodebash}
+search: "service"
+        \end{cheatcodebash}
 
     \tcbitem
         % === Ingress ==============================================================
@@ -253,9 +253,48 @@
           {\fontsize{4.5}{5.5}\selectfont\sffamily\color{gray}%
           No ClusterIP. DNS returns Pod IPs directly.\par}
 
+      \tcbitem
+          \tcbsubtitle{Traffic Flow: Gateway → Pod}
+          \begin{center}
+          \begin{tikzpicture}[
+            >=Stealth,
+            box/.style={draw=#1!60, fill=#1!15, rounded corners=2pt,
+              font=\sffamily\fontsize{6}{7}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            lbl/.style={font=\sffamily\fontsize{4.5}{5.5}\selectfont, gray},
+            fw/.style={draw=red!50, fill=red!8, rounded corners=2pt,
+              font=\sffamily\fontsize{5}{6}\selectfont\bfseries, inner sep=3pt,
+              minimum height=1.4em},
+            txt/.style={font=\sffamily\fontsize{5}{6}\selectfont, text width=5.5em, align=left},
+            ]
+            % Main flow row
+            \node[box=gray] (inet) {Internet};
+            \node[box=purple, right=1.4em of inet] (gw) {Gateway};
+            \node[box=violet, right=1.4em of gw] (route) {HTTPRoute};
+            \node[box=k8sblue, right=1.4em of route] (svc) {Service};
+            \node[box=teal, right=1.4em of svc] (pod) {Pod};
 
+            \draw[->, gray, thick] (inet) -- (gw);
+            \draw[->, purple!60, thick] (gw) -- (route);
+            \draw[->, violet!60, thick] (route) -- (svc);
+            \draw[->, k8sblue!60, thick] (svc) -- (pod);
 
+            % Layer labels
+            \node[lbl, below=0.2em of gw] {L4 entry};
+            \node[lbl, below=0.2em of route] {L7 routing};
+            \node[lbl, below=0.2em of svc] {load balance};
 
+            % NetworkPolicy below
+            \node[fw, below=1.2em of pod] (np) {\textcolor{red!70}{NetworkPolicy}};
+            \draw[->, red!40, thick, dashed] (np) -- (pod)
+              node[lbl, pos=0.5, right=0.2em] {L3/L4};
+          \end{tikzpicture}
+          \end{center}
+          \vspace{-0.5ex}
+          {\fontsize{5}{6}\selectfont\sffamily
+          \textbf{Gateway}: accepts external traffic (TLS, port).
+          \textbf{HTTPRoute}: routes by host/path/header to Service.
+          \textbf{NetworkPolicy}: independent L3/L4 firewall --- can block traffic even if routing is correct.\par}
 
       \end{tcbitemize}
 
@@ -325,12 +364,14 @@
         \tcbsubtitle{CoreDNS}
         \cmdhead{DNS Record Patterns}
         \begin{cheatcodebash}
-        <svc>.<ns>.svc.cluster.local        # Service DNS
-        <ip-dashes>.<ns>.pod.cluster.local  # Pod by IP
-        # Pod with hostname + subdomain fields set:
-        <hostname>.<subdomain>.<ns>.svc.cluster.local
-        # Requires pod spec: hostname: myhost, subdomain: mysvc
-        # + a matching headless Service named "mysvc"
+<svc>.<ns>.svc.cluster.local        # Service DNS
+<ip-dashes>.<ns>.pod.cluster.local  # Pod by IP
+# Pod with hostname + subdomain fields set:
+<hostname>.<subdomain>.<ns>.svc.cluster.local
+# Requires pod spec: hostname: myhost, subdomain: mysvc
+# + a matching headless Service named "mysvc"
+# StatefulSet pods (via headless Service):
+<sts-name>-<ordinal>.<headless-svc>.<ns>.svc.cluster.local
         \end{cheatcodebash}
 
         \cmdhead{Edit CoreDNS config \& apply}
@@ -432,6 +473,12 @@
                       replacePrefixMatch: / # /api/users -> /users
               backendRefs:
                 - {name: api-svc, port: 80}
+            - matches:               # header-based routing
+                - headers:
+                  - name: X-Env
+                    value: staging   # Exact match (default)
+              backendRefs:
+                - {name: staging-svc, port: 80}
             - matches:               # weighted traffic split
                 - path: {type: PathPrefix, value: /}
               backendRefs:           # 80/20 canary split

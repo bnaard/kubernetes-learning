@@ -11,11 +11,13 @@
 
 % === High Availability ====================================================
 \tcbsubtitle{High Availability}
+{\footnotesize
 \begin{itemize}[nosep, leftmargin=1em, label={--}]
   \item \textbf{Stacked etcd}: etcd co-located on ctrl-plane nodes (default)
   \item \textbf{External etcd}: separate etcd cluster (more resilient)
   \item Requires \textbf{loadbalancer (LB)} in front of multiple API servers
 \end{itemize}
+}
 \includegraphics[angle=1, width=\linewidth]{ha_cluster_structure.png}
 
 \vspace{0.5ex}
@@ -40,7 +42,10 @@ kubeadm init --control-plane-endpoint="<LB_IP>:6443" --upload-certs
 /etc/kubernetes/manifests/   # static pod manifests
 /var/lib/kubelet/config.yaml # kubelet config
 /etc/kubernetes/pki/         # cluster TLS certs
-/etc/kubernetes/admin.conf   # admin kubeconfig
+/etc/kubernetes/*.conf       # kubeconfigs (admin, kubelet, scheduler, …)
 /etc/cni/net.d/              # CNI plugin config
+/etc/systemd/system/kubelet.service.d/10-kubeadm.conf # kubelet drop-in
+/etc/containerd/config.toml  # containerd runtime config
+/etc/crictl.yaml             # crictl defaults (endpoint, runtime)
 \end{cheatcodebashbold}
 
