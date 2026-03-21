@@ -2,7 +2,7 @@
 
 A dense, 12-page reference sheet covering the most important Kubernetes concepts, commands, and manifest patterns. Typeset with LuaLaTeX as a compact, printable A4 landscape PDF.
 
-[![Page 1 preview](docs/preview.png)](https://codeberg.org/bnaard/kubernetes-learning/releases/latest/download/kubernetes-summary-sheet.pdf)
+[![Page 1 preview](docs/preview.png)](https://codeberg.org/bnaard/kubernetes-learning/releases/latest)
 
 ## Topics covered
 

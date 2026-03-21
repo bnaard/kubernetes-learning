@@ -5,13 +5,17 @@ SCRIPT_NAME="$(basename "$0")"
 
 usage() {
   cat <<EOF
-Usage: $SCRIPT_NAME <tag>
+Usage: $SCRIPT_NAME [--overwrite] <tag>
 
 Build the Kubernetes Summary Sheet and publish it as a Codeberg release
 with the compiled PDF attached as an asset.
 
 Arguments:
-  <tag>    Git tag for the release (e.g. v1.0.0)
+  <tag>          Git tag for the release (e.g. v1.0.0)
+
+Options:
+  --overwrite    If a release for <tag> already exists, delete its assets
+                 and re-upload the newly built PDF instead of failing
 
 Environment variables:
   CODEBERG_TOKEN   (required) Personal access token with write:repository scope.
@@ -36,6 +40,9 @@ Examples:
   # With explicit owner/repo
   CODEBERG_OWNER=myuser CODEBERG_REPO=myrepo CODEBERG_TOKEN=tok $SCRIPT_NAME v1.2.0
 
+  # Overwrite an existing release (delete old assets, re-upload PDF)
+  $SCRIPT_NAME --overwrite v1.0.0
+
   # Export token once, then release
   export CODEBERG_TOKEN=your_token
   $SCRIPT_NAME v1.0.0
@@ -46,9 +53,15 @@ EOF
 die() { echo "Error: $*" >&2; exit 1; }
 
 # --- Parse arguments --------------------------------------------------------
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  usage 0
-fi
+OVERWRITE=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)    usage 0 ;;
+    --overwrite)  OVERWRITE=true; shift ;;
+    -*)           die "Unknown option: $1. Run '$SCRIPT_NAME --help' for usage." ;;
+    *)            break ;;
+  esac
+done
 
 TAG="${1:?Error: missing <tag> argument. Run '$SCRIPT_NAME --help' for usage.}"
 
@@ -183,10 +196,38 @@ if [[ "$RELEASES_HTTP" != "200" ]]; then
     Enable them at: https://codeberg.org/${CODEBERG_OWNER}/${CODEBERG_REPO}/settings"
 fi
 
-# --- Create the release (which also creates the tag on the remote) ----------
-echo "==> Creating Codeberg release ${TAG}..."
-echo "    Target branch: ${DEFAULT_BRANCH} (from API)"
-RELEASE_BODY=$(cat <<BODY
+# --- Check for existing release ----------------------------------------------
+echo "==> Checking for existing release ${TAG}..."
+EXISTING_RESPONSE=$(curl -s -w "\n%{http_code}" \
+  -H "Authorization: token ${CODEBERG_TOKEN}" \
+  "${API}/releases/tags/${TAG}")
+
+EXISTING_HTTP=$(echo "$EXISTING_RESPONSE" | tail -1)
+EXISTING_JSON=$(echo "$EXISTING_RESPONSE" | sed '$d')
+
+if [[ "$EXISTING_HTTP" == "200" ]]; then
+  RELEASE_ID=$(echo "$EXISTING_JSON" | jq -r '.id')
+  if [[ "$OVERWRITE" != "true" ]]; then
+    die "Release ${TAG} already exists (ID ${RELEASE_ID}). Use --overwrite to replace its assets."
+  fi
+
+  echo "    Found existing release ID: ${RELEASE_ID} — removing old assets..."
+  OLD_ASSETS=$(echo "$EXISTING_JSON" | jq -r '.assets[]?.id // empty')
+  for ASSET_ID in $OLD_ASSETS; do
+    echo "    Deleting asset ${ASSET_ID}..."
+    DEL_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+      -H "Authorization: token ${CODEBERG_TOKEN}" \
+      "${API}/releases/${RELEASE_ID}/assets/${ASSET_ID}")
+    if [[ "$DEL_HTTP" -lt 200 || "$DEL_HTTP" -ge 300 ]]; then
+      die "Failed to delete asset ${ASSET_ID} (HTTP ${DEL_HTTP})."
+    fi
+  done
+  echo "    Old assets removed."
+else
+  # --- Create new release (which also creates the tag on the remote) --------
+  echo "==> Creating Codeberg release ${TAG}..."
+  echo "    Target branch: ${DEFAULT_BRANCH} (from API)"
+  RELEASE_BODY=$(cat <<BODY
 {
   "tag_name": "${TAG}",
   "target_commitish": "${DEFAULT_BRANCH}",
@@ -197,31 +238,32 @@ RELEASE_BODY=$(cat <<BODY
 }
 BODY
 )
-echo "    Request body: ${RELEASE_BODY}"
+  echo "    Request body: ${RELEASE_BODY}"
 
-RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-  -H "Authorization: token ${CODEBERG_TOKEN}" \
-  -H "Content-Type: application/json" \
-  "${API}/releases" \
-  -d "$RELEASE_BODY")
+  RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+    -H "Authorization: token ${CODEBERG_TOKEN}" \
+    -H "Content-Type: application/json" \
+    "${API}/releases" \
+    -d "$RELEASE_BODY")
 
-RELEASE_HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -1)
-RELEASE_JSON=$(echo "$RELEASE_RESPONSE" | sed '$d')
+  RELEASE_HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -1)
+  RELEASE_JSON=$(echo "$RELEASE_RESPONSE" | sed '$d')
 
-echo "    Response HTTP ${RELEASE_HTTP_CODE}"
+  echo "    Response HTTP ${RELEASE_HTTP_CODE}"
 
-if [[ "$RELEASE_HTTP_CODE" -lt 200 || "$RELEASE_HTTP_CODE" -ge 300 ]]; then
-  echo "    Response body: ${RELEASE_JSON}" >&2
-  die "Failed to create release (HTTP ${RELEASE_HTTP_CODE})."
+  if [[ "$RELEASE_HTTP_CODE" -lt 200 || "$RELEASE_HTTP_CODE" -ge 300 ]]; then
+    echo "    Response body: ${RELEASE_JSON}" >&2
+    die "Failed to create release (HTTP ${RELEASE_HTTP_CODE})."
+  fi
+
+  RELEASE_ID=$(echo "$RELEASE_JSON" | jq -r '.id')
+
+  if [[ -z "$RELEASE_ID" || "$RELEASE_ID" == "null" ]]; then
+    echo "    Response body: ${RELEASE_JSON}" >&2
+    die "Release created but could not extract release ID from response."
+  fi
+  echo "    Created release ID: ${RELEASE_ID}"
 fi
-
-RELEASE_ID=$(echo "$RELEASE_JSON" | jq -r '.id')
-
-if [[ -z "$RELEASE_ID" || "$RELEASE_ID" == "null" ]]; then
-  echo "    Response body: ${RELEASE_JSON}" >&2
-  die "Release created but could not extract release ID from response."
-fi
-echo "    Created release ID: ${RELEASE_ID}"
 
 # --- Upload the PDF as a release asset --------------------------------------
 echo "==> Uploading ${PDF_NAME} to release ${RELEASE_ID}..."
