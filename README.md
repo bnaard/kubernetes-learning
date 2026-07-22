@@ -2,6 +2,14 @@
 
 A dense, 12-page reference sheet covering the most important Kubernetes concepts, commands, and manifest patterns. Typeset with LuaLaTeX as a compact, printable A4 landscape PDF.
 
+## Project boundary and status
+
+GitHub is the canonical source repository and issue tracker. Codeberg is used
+for published PDF releases because the release script uploads artifacts there.
+The project is an educational reference sheet, not an official Kubernetes
+distribution or a production dependency. The latest commit on `main` is the
+reference version; there are no compatibility guarantees.
+
 [![Page 1 preview](docs/preview.png)](https://codeberg.org/bnaard/kubernetes-learning/releases/latest)
 
 ## Topics covered
@@ -75,6 +83,15 @@ Run `./scripts/release.sh --help` for all options.
 
 > **Note:** Releases must be enabled in your Codeberg repository settings for the script to work.
 
+The release script is an explicit, maintainer-run Codeberg operation. It does
+not run automatically after a commit.
+
+## Automation policy
+
+This project intentionally does not use GitHub Actions or checked-in workflow
+files. Build and release validation is performed locally by maintainers, and
+pull requests are reviewed without an automated GitHub CI status check.
+
 ## Project structure
 
 ```
@@ -97,3 +114,9 @@ Much of the content is derived from the [official Kubernetes documentation](http
 This work is provided **as-is, without warranties of any kind**. See Section 5 of the license for the full disclaimer.
 
 This document was created with AI assistance.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request and
+[SECURITY.md](SECURITY.md) before reporting a security concern. Issues and
+pull requests are welcome, but response times are not guaranteed.
